@@ -1,0 +1,52 @@
+use std::io;
+
+struct StringStats {
+    pub is_palindrome: bool,
+    pub is_alphanumeric: bool,
+    pub length: usize,
+}
+
+impl StringStats {
+    fn init(source: String) -> Self {
+        Self {
+            is_palindrome: Self::is_palindrome(source),
+            is_alphanumeric: Self::is_alphanumeric(source),
+            length: source.len()
+        }
+    }
+
+    fn is_palindrome(self, source: String) -> bool {
+        let idx = source.len() - 1;
+
+        while idx >= 0 {
+            if source[idx] != source[source.len() - idx - 1] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    fn is_alphanumeric(self, source: String) -> bool {
+        let is_alnum = true;
+
+        // iterations
+        for ch in source {
+            if !ch.is_alnum() {
+                is_alnum = false;
+            }
+        }
+
+        return is_alnum;
+    }
+}
+
+fn main() {
+    loop {
+        let input = io::input("Enter a string: ");
+        let string_stats = StringStats::init(input);
+
+        io::output("is_palindrome? {string_stats.is_palindrome}\nis_alphanumeric? {string_stats.is_alphanumeric}\n
+length = {string_stats.length}");
+    }
+}
