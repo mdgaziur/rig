@@ -1,7 +1,6 @@
-fn main() {
-    print "Hello world! This is \"Rig\" language
-    \"Multiline stuff\"";
-    let x = 1..2;
-    print "Pretty normal string. has \r\n, has \ttab, has \\";
-    print "Invalid escape character \getrickrolledlol";
-    print "\
+pub fn hello() {
+    print "Hello World!";
+    let x = std::io::get("Give input: ");
+    print "Input: \"" + x + "\"\n";
+    print "terminating...";
+}

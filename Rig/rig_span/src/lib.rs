@@ -21,7 +21,7 @@
 /// };
 /// ```
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Span {
     /// File name
     pub file_name: String,
@@ -46,9 +46,9 @@ pub struct Span {
 }
 
 impl Span {
-    pub fn for_single_char(file_name: String, line: usize, offset: usize) -> Self {
+    pub fn for_single_char(file_name: &str, line: usize, offset: usize) -> Self {
         Self {
-            file_name,
+            file_name: file_name.to_string(),
             starting_line: line,
             starting_line_offset: offset,
             starting_line_end_offset: offset,
@@ -59,19 +59,34 @@ impl Span {
     }
 
     pub fn for_single_line(
-        file_name: String,
+        file_name: &str,
         line: usize,
         offset_start: usize,
         offset_end: usize,
     ) -> Self {
         Self {
-            file_name,
+            file_name: file_name.to_string(),
             starting_line: line,
             starting_line_offset: offset_start,
             starting_line_end_offset: offset_end,
             ending_line: line,
             ending_line_offset: offset_start,
             ending_line_end_offset: offset_end,
+        }
+    }
+
+    pub fn merge(
+        s1: Span,
+        s2: Span,
+    ) -> Self {
+        Self {
+            file_name: s1.file_name.to_string(),
+            starting_line: s1.starting_line,
+            starting_line_offset: s1.starting_line_offset,
+            starting_line_end_offset: s1.starting_line_end_offset,
+            ending_line: s2.ending_line,
+            ending_line_offset: s2.ending_line_offset,
+            ending_line_end_offset: s2.ending_line_end_offset,
         }
     }
 }

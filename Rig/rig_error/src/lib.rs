@@ -7,7 +7,7 @@ use std::cmp::max;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
-pub struct RigError<'e> {
+pub struct RigError {
     /// Describes the type of error
     pub error_type: ErrorType,
 
@@ -25,9 +25,6 @@ pub struct RigError<'e> {
 
     /// File path
     pub file_path: String,
-
-    /// File content
-    pub file_content: &'e str,
 }
 
 /// Describes the type of error
@@ -49,15 +46,14 @@ impl Display for ErrorType {
     }
 }
 
-impl<'e> RigError<'e> {
+impl RigError {
     fn write_marker(
         &self,
         starting_offset: usize,
         ending_offset: usize,
         blank_line: &str,
         hint: Option<&String>,
-        f: &mut Formatter<'_>,
-    ) -> std::fmt::Result {
+    ) {
         let mut hint_string = String::new();
         let mut marker_count = ending_offset - starting_offset + 1;
         if hint.is_some() && marker_count == 1 {
@@ -67,49 +63,33 @@ impl<'e> RigError<'e> {
             hint_string = String::from("^ hint: ") + hint;
         }
         if marker_count > 0 {
-            writeln!(
-                f,
+            eprintln!(
                 "{} {}{}",
                 blank_line.bold().blue(),
                 " ".repeat(starting_offset),
                 "^".repeat(marker_count).yellow().bold(),
-            )?;
+            );
         }
         if hint.is_some() {
-            writeln!(
-                f,
+            eprintln!(
                 "{} {}{}",
                 blank_line.blue().bold(),
                 " ".repeat(starting_offset + marker_count),
                 hint_string.blue().bold()
-            )?;
+            );
         }
-
-        Ok(())
     }
 
-    fn write_line(
-        &self,
-        prefix: &str,
-        line_number: usize,
-        f: &mut Formatter<'_>,
-    ) -> std::fmt::Result {
-        writeln!(
-            f,
+    fn write_line(&self, prefix: &str, line_number: usize, file_content: &str) {
+        eprintln!(
             "{} {}",
             prefix.blue().bold(),
-            self.file_content.split('\n').nth(line_number - 1).unwrap()
+            file_content.split('\n').nth(line_number - 1).unwrap()
         )
     }
-}
 
-impl<'e> Display for RigError<'e> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            f,
-            "{}[{}]: {}",
-            self.error_type, self.error_code, self.message
-        )?;
+    pub fn print(&self, file_content: &str) {
+        eprintln!("{}[{}]: {}", self.error_type, self.error_code, self.message);
         let starting_line_num_len = number_len(self.span.starting_line);
         let ending_line_num_len = number_len(self.span.ending_line);
         let max_line_num_len = max(starting_line_num_len, ending_line_num_len);
@@ -125,58 +105,52 @@ impl<'e> Display for RigError<'e> {
             " ".repeat(max_line_num_len - ending_line_num_len + 1)
         );
 
-        writeln!(
-            f,
+        eprintln!(
             "{}{} {}:{}:{}",
             " ".repeat(max_line_num_len),
             "-->".blue().bold(),
             self.file_path,
             self.span.starting_line,
             self.span.starting_line_offset + 1
-        )?;
-        writeln!(f, "{}", blank_line)?;
-        self.write_line(&first_line_number, self.span.starting_line, f)?;
+        );
+        eprintln!("{}", blank_line);
+        self.write_line(&first_line_number, self.span.starting_line, file_content);
         if self.span.starting_line != self.span.ending_line {
             self.write_marker(
                 self.span.starting_line_offset,
                 self.span.starting_line_end_offset,
                 &blank_line,
                 None,
-                f,
-            )?;
+            );
         } else {
             self.write_marker(
                 self.span.starting_line_offset,
                 self.span.starting_line_end_offset,
                 &blank_line,
                 self.hint.as_ref(),
-                f,
-            )?;
+            );
         }
 
         if self.span.ending_line - self.span.starting_line > 1 {
-            writeln!(f, "{} {}", blank_line, "...".blue().bold())?;
+            eprintln!("{} {}", blank_line, "...".blue().bold());
         }
         if self.span.ending_line - self.span.starting_line >= 1 {
-            self.write_line(&last_line_number, self.span.ending_line, f)?;
+            self.write_line(&last_line_number, self.span.ending_line, file_content);
             self.write_marker(
                 self.span.ending_line_offset,
                 self.span.ending_line_end_offset,
                 &blank_line,
                 self.hint.as_ref(),
-                f,
-            )?;
+            );
         }
-        writeln!(f, "{}", blank_line)?;
+        eprintln!("{}", blank_line);
 
-        writeln!(f)?;
-        writeln!(
-            f,
+        eprintln!();
+        eprintln!(
             "{}{}{}",
             "note: use `rig explain ".blue().bold(),
             self.error_code.blue().bold(),
             "` to know more about the error".blue().bold()
-        )?;
-        Ok(())
+        );
     }
 }

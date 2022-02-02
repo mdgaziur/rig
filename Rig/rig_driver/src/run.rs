@@ -1,6 +1,7 @@
 use crate::OutputType;
 use colored::Colorize;
 use rig_lexer::Lexer;
+use rig_parser::{parse, Parser};
 
 pub fn run(file_name: String, unpretty: Option<OutputType>) {
     let file = match std::fs::read_to_string(&file_name) {
@@ -23,8 +24,21 @@ pub fn run(file_name: String, unpretty: Option<OutputType>) {
 
     if !tokens.1.is_empty() {
         for err in tokens.1 {
-            eprintln!("{}", err);
+            err.print(&file);
         }
         return;
+    }
+
+    let mut parser = Parser::new(&file, &file_name, &tokens.0);
+    let ast = parse(&mut parser);
+
+    if unpretty == Some(OutputType::Ast) {
+        println!("{:#?}", ast.0);
+    }
+
+    if !ast.1.is_empty() {
+        for err in ast.1 {
+            err.print(&file);
+        }
     }
 }

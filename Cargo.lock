@@ -189,6 +189,7 @@ dependencies = [
  "colored",
  "rig_error",
  "rig_lexer",
+ "rig_parser",
  "rig_span",
 ]
 
