@@ -124,12 +124,12 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let mut stmts = Vec::new();
     loop {
         stmts.push(Box::new(expr_stmt(parser)?));
-        if parser.check(TokenType::RightBrace) {
+        if parser.check(TokenType::RightBrace) || parser.is_eof() {
             break;
         }
         parser.advance();
     }
-    parser.advance();
+    let _ = parser.consume(TokenType::RightBrace, "Expected `}` at the end of block statement", None)?;
 
     Ok(Stmt::BlockStmt {
         exprs: stmts,
