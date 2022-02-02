@@ -13,7 +13,7 @@ pub struct Prototype {
 impl ToString for Prototype {
     fn to_string(&self) -> String {
         format!(
-            "{} {} {:?}",
+            "{} {} ({:?})",
             self.visibility.to_string(),
             &self.name,
             self.args
@@ -35,12 +35,12 @@ pub struct Argument {
 
 impl ToString for Argument {
     fn to_string(&self) -> String {
-        format!("({}: {:?})", self.name, self.type_)
+        format!("{}: {:?}, ", self.name, self.type_)
     }
 }
 
 impl Debug for Argument {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
