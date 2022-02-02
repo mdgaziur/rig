@@ -7,7 +7,7 @@ pub struct Prototype {
     pub visibility: Visibility,
     pub name: String,
     pub args: Vec<Argument>,
-    pub return_ty: Expr,
+    pub return_ty: Option<Expr>,
 }
 
 impl ToString for Prototype {
