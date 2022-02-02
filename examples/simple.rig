@@ -1,6 +1,3 @@
-pub fn hello() {
-    print "Hello World!";
-    let x = std::io::get("Give input: ");
-    print "Input: \"" + x + "\"\n";
-    print "terminating...";
-}
+use std::fs::File;
+
+fn hello(f: File) {}

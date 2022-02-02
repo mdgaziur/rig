@@ -30,15 +30,9 @@ pub fn run(file_name: String, unpretty: Option<OutputType>) {
     }
 
     let mut parser = Parser::new(&file, &file_name, &tokens.0);
-    let ast = parse(&mut parser);
+    let ast = parse(&mut parser, &file);
 
     if unpretty == Some(OutputType::Ast) {
         println!("{:#?}", ast.0);
-    }
-
-    if !ast.1.is_empty() {
-        for err in ast.1 {
-            err.print(&file);
-        }
     }
 }

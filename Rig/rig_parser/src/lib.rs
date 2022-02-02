@@ -7,6 +7,7 @@ use rig_ast::token::{Token, TokenType};
 use rig_ast::visibility::Visibility;
 use rig_error::{ErrorType, RigError};
 use rig_span::Span;
+use crate::expr::path;
 use crate::stmt::program;
 
 pub struct Parser<'p> {
@@ -109,19 +110,29 @@ impl<'p> Parser<'p> {
     }
 }
 
-pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
+/// Return: (AST, hadError)
+pub fn parse(parser: &mut Parser, file_content: &str) -> (Vec<Stmt>, bool) {
     let mut statements = Vec::new();
-    let mut errs = Vec::new();
+    let mut had_error = false;
 
     while !parser.is_eof() {
         match program(parser) {
             Ok(stmt) => statements.push(stmt),
             Err(e) => {
-                errs.push(e);
+                had_error = true;
+                e.print(file_content);
                 parser.synchronize();
             }
         }
     }
 
-    (statements, errs)
+    (statements, had_error)
+}
+
+fn name_with_type(parser: &mut Parser) -> Result<(Token, Expr), RigError> {
+    let name = parser.consume(TokenType::Identifier, "Expected name", None)?.clone();
+    let _ = parser.consume(TokenType::Colon, "Expected colon after name", None)?;
+    let ty = path(parser)?;
+
+    Ok((name, ty))
 }

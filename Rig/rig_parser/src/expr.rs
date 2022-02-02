@@ -5,7 +5,10 @@ use rig_span::Span;
 use crate::Parser;
 
 pub fn expr(_parser: &mut Parser) -> Result<Expr, RigError> {
-    todo!()
+    Ok(Expr::IntegerLiteralExpr {
+        span: Span::for_single_char("onga_bonga", 0, 0),
+        value: 69420
+    })
 }
 
 pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
@@ -76,7 +79,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
     let start_span = parser.peek().span.clone();
     path.push(parser.consume(TokenType::Identifier, "Expected identifier", None)?.lexeme.clone());
 
-    if parser.peek().token_type == TokenType::Scope {
+    if parser.check(TokenType::Scope) {
         parser.advance();
         path.extend(parse_path(parser)?);
         let end_span = parser.peek().span.clone();
@@ -98,7 +101,7 @@ fn parse_path(parser: &mut Parser) -> Result<Vec<String>, RigError> {
     let mut path = Vec::new();
     path.push(name.lexeme.clone());
 
-    if parser.peek().token_type == TokenType::Scope {
+    if parser.check(TokenType::Scope) {
         parser.advance();
         path.extend(parse_path(parser)?);
     }
