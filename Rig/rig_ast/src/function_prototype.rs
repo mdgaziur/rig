@@ -13,10 +13,11 @@ pub struct Prototype {
 impl ToString for Prototype {
     fn to_string(&self) -> String {
         format!(
-            "{} {} ({:?})",
+            "{} {} ({:?}) -> {:?}",
             self.visibility.to_string(),
             &self.name,
-            self.args
+            self.args,
+            self.return_ty
         )
     }
 }
@@ -35,7 +36,7 @@ pub struct Argument {
 
 impl ToString for Argument {
     fn to_string(&self) -> String {
-        format!("{}: {:?}, ", self.name, self.type_)
+        format!("{}: {:?}", self.name, self.type_)
     }
 }
 
