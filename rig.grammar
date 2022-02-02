@@ -35,7 +35,7 @@ exprStmt            -> expression ";" ;
 printStmt           -> expression ";" ;
 
 expression          -> assignment ;
-assignment          -> ( call "." )? IDENTIFIER (
+assignment          -> ( call "." )? IDENTIFIER ( "[" expression "]" )? (
                                                 "="
                                                 "&="    |
                                                 "^="    |
@@ -59,7 +59,7 @@ bitwise_shift       -> term ( ( "<<" | ">>" ) term )* ;
 term                -> factor ( ( "+" | "-" ) factor)* ;
 factor              -> unary  ( ( "/" | "*" | "%" ) unary )* ;
 unary               -> ( "!" | "-" ) unary | call ;
-call                -> primary ( "(" arguments ")" | "." IDENTIFIER ) ;
+call                -> primary ( "(" arguments ")" | "." IDENTIFIER )* ;
 arguments           -> expression ( "," expression )* ;
 primary             -> NUMBER | STRING | "true" | "false" | "null" | "(" expression ")" | path ;
 path                -> ( IDENTIFIER ( "::" path )* ) ;
