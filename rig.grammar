@@ -8,15 +8,18 @@
 # |     or, left or right may appear
 # #     comment
 
-program             -> declaration* EOF ;
+program             -> ( visibility | structImpl | extern )* EOF ;
 
-declaration         -> useDecl | fnDecl | structDecl | structMethodDecl | varDecl | externDecl ;
+visibility          -> "pub"? declaration ;
+declaration         -> useDecl | fnDecl | structDecl | varDecl ;
 useDecl             -> "use" path ";" ;
-externDecl          -> "extern" "{" ( "pub"? prototype ";" )* "}" ;
+extern              -> "extern" "{" ( "pub"? prototype ";" )* "}" ;
 fnDecl              -> prototype blockStmt ;
-prototype           -> "pub"? "fn" IDENTIFIER "(" name_with_type ( "," name_with_type )* ")" ( "->" path )? ;
-structDecl          -> "pub"? "struct" IDENTIFIER "{" "pub"? name_with_type ( "," "pub"? name_with_type )* "}" ;
-structMethodDecl    -> "impl" IDENTIFIER "{" structFnDecl* "}" ;
+prototype           -> "fn" IDENTIFIER "(" name_with_type ( "," name_with_type )* ")" ( "->" path )? ;
+structDecl          -> struct" IDENTIFIER "{" "pub"? name_with_type ( "," "pub"? name_with_type )* "}" ;
+structImpl          -> "impl" IDENTIFIER "{" structFnDecl* "}" ;
+structFnDecl        -> "pub"? "fn" IDENTIFIER "(" (name_with_type | "self")
+                                ( "," name_with_type )* ")" ( "->" path )? ;
 varDecl             -> "let"  IDENTIFIER ( ":" path )? "=" expression ";" ;
 
 fnDecl              -> "fn" IDENTIFIER "(" name_with_type | "self" ( "," name_with_type )* ")" statement ;
@@ -33,6 +36,7 @@ printStmt           -> expression ";" ;
 
 expression          -> assignment ;
 assignment          -> ( call "." )? IDENTIFIER (
+                                                "="
                                                 "&="    |
                                                 "^="    |
                                                 "|="    |
@@ -57,5 +61,5 @@ factor              -> unary  ( ( "/" | "*" | "%" ) unary )* ;
 unary               -> ( "!" | "-" ) unary | call ;
 call                -> primary ( "(" arguments ")" | "." IDENTIFIER ) ;
 arguments           -> expression ( "," expression )* ;
-primary             -> NUMBER | STRING | "true" | "false" | "null" | "(" expression ")" | IDENTIFIER | path ;
-path                -> ( IDENTIFIER ( "::" path )* ) | ( "{" path ( "," path )* "}" ) ;
+primary             -> NUMBER | STRING | "true" | "false" | "null" | "(" expression ")" | path ;
+path                -> ( IDENTIFIER ( "::" path )* ) ;
