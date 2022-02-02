@@ -1,7 +1,7 @@
 use rig_span::Span;
 
 /// [Token] contains a lexically analyzed token's information
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     /// Token's type
     pub token_type: TokenType,
@@ -17,7 +17,7 @@ pub struct Token {
 }
 
 /// [TokenType] represents a token type.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
     /// reserved keywords
     Keyword,
