@@ -10,7 +10,7 @@ fn test_single_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(";");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -22,13 +22,13 @@ fn test_single_char() {
                 token_type: TokenType::Semicolon,
                 lexeme: ";".to_string(),
                 literal: ";".to_string(),
-                span: Span::for_single_char("<test>".to_string(), 1, 0)
+                span: Span::for_single_char("<test>", 1, 0)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 1)
+                span: Span::for_single_char("<test>", 1, 1)
             }
         ]
     );
@@ -42,7 +42,7 @@ fn test_plus_single_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("+");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -54,13 +54,13 @@ fn test_plus_single_char() {
                 token_type: TokenType::Plus,
                 lexeme: "+".to_string(),
                 literal: "+".to_string(),
-                span: Span::for_single_char("<test>".to_string(), 1, 0)
+                span: Span::for_single_char("<test>", 1, 0)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 1)
+                span: Span::for_single_char("<test>", 1, 1)
             }
         ]
     );
@@ -74,7 +74,7 @@ fn test_plus_equals_double_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("+=");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -86,13 +86,13 @@ fn test_plus_equals_double_char() {
                 token_type: TokenType::PlusEquals,
                 lexeme: "+=".to_string(),
                 literal: "+=".to_string(),
-                span: Span::for_single_line("<test>".to_string(), 1, 0, 1)
+                span: Span::for_single_line("<test>", 1, 0, 1)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 2)
+                span: Span::for_single_char("<test>", 1, 2)
             }
         ]
     );
@@ -106,7 +106,7 @@ fn test_less_than_double_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("<");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -118,13 +118,13 @@ fn test_less_than_double_char() {
                 token_type: TokenType::LessThan,
                 lexeme: "<".to_string(),
                 literal: "<".to_string(),
-                span: Span::for_single_char("<test>".to_string(), 1, 0)
+                span: Span::for_single_char("<test>", 1, 0)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 1)
+                span: Span::for_single_char("<test>", 1, 1)
             }
         ]
     );
@@ -138,7 +138,7 @@ fn test_less_than_equals_triple_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("<=");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -150,13 +150,13 @@ fn test_less_than_equals_triple_char() {
                 token_type: TokenType::LessThanOrEquals,
                 lexeme: "<=".to_string(),
                 literal: "<=".to_string(),
-                span: Span::for_single_line("<test>".to_string(), 1, 0, 1)
+                span: Span::for_single_line("<test>", 1, 0, 1)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 2)
+                span: Span::for_single_char("<test>", 1, 2)
             }
         ]
     );
@@ -170,7 +170,7 @@ fn test_left_shift_triple_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("<<");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -182,13 +182,13 @@ fn test_left_shift_triple_char() {
                 token_type: TokenType::LeftShift,
                 lexeme: "<<".to_string(),
                 literal: "<<".to_string(),
-                span: Span::for_single_line("<test>".to_string(), 1, 0, 1)
+                span: Span::for_single_line("<test>", 1, 0, 1)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 2)
+                span: Span::for_single_char("<test>", 1, 2)
             }
         ]
     );
@@ -202,7 +202,7 @@ fn test_left_shift_equals_triple_char() {
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print("<<=");
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -214,13 +214,13 @@ fn test_left_shift_equals_triple_char() {
                 token_type: TokenType::LeftShiftEquals,
                 lexeme: "<<=".to_string(),
                 literal: "<<=".to_string(),
-                span: Span::for_single_line("<test>".to_string(), 1, 0, 2)
+                span: Span::for_single_line("<test>", 1, 0, 2)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 3)
+                span: Span::for_single_char("<test>", 1, 3)
             }
         ]
     );
@@ -228,13 +228,14 @@ fn test_left_shift_equals_triple_char() {
 
 #[test]
 fn test_single_line_string() {
-    let mut lexer = Lexer::new("\"Hello World\"", "<test>");
+    let file_content = "\"Hello World\"";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -246,13 +247,13 @@ fn test_single_line_string() {
                 token_type: TokenType::StringLiteral,
                 lexeme: "\"Hello World\"".to_string(),
                 literal: "Hello World".to_string(),
-                span: Span::for_single_line("<test>".to_string(), 1, 0, 12)
+                span: Span::for_single_line("<test>", 1, 0, 12)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 1, 13)
+                span: Span::for_single_char("<test>", 1, 13)
             }
         ]
     );
@@ -260,13 +261,14 @@ fn test_single_line_string() {
 
 #[test]
 fn test_double_line_string() {
-    let mut lexer = Lexer::new("\"Hello\nWorld\"", "<test>");
+    let file_content = "\"Hello\nWorld\"";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -279,7 +281,7 @@ fn test_double_line_string() {
                 lexeme: "\"Hello\nWorld\"".to_string(),
                 literal: "Hello\nWorld".to_string(),
                 span: Span {
-                    file_name: String::from("<test>"),
+                    file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
                     starting_line_end_offset: 5,
@@ -292,7 +294,7 @@ fn test_double_line_string() {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 2, 6)
+                span: Span::for_single_char("<test>", 2, 6)
             }
         ]
     );
@@ -300,13 +302,14 @@ fn test_double_line_string() {
 
 #[test]
 fn test_multi_line_string() {
-    let mut lexer = Lexer::new("\"Hello\nWorld\nfrom\nRig!\"", "<test>");
+    let file_content = "\"Hello\nWorld\nfrom\nRig!\"";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -319,7 +322,7 @@ fn test_multi_line_string() {
                 lexeme: "\"Hello\nWorld\nfrom\nRig!\"".to_string(),
                 literal: "Hello\nWorld\nfrom\nRig!".to_string(),
                 span: Span {
-                    file_name: String::from("<test>"),
+                    file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
                     starting_line_end_offset: 5,
@@ -332,7 +335,7 @@ fn test_multi_line_string() {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 4, 5)
+                span: Span::for_single_char("<test>", 4, 5)
             }
         ]
     );
@@ -340,16 +343,14 @@ fn test_multi_line_string() {
 
 #[test]
 fn test_multi_line_escaped_string() {
-    let mut lexer = Lexer::new(
-        "\"Hello \\\"Rig\\\"!\n\\tThis is behind a tab character\"",
-        "<test>",
-    );
+    let file_content = "\"Hello \\\"Rig\\\"!\n\\tThis is behind a tab character\"";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -362,7 +363,7 @@ fn test_multi_line_escaped_string() {
                 lexeme: "\"Hello \\\"Rig\\\"!\n\\tThis is behind a tab character\"".to_string(),
                 literal: "Hello \"Rig\"!\n\tThis is behind a tab character".to_string(),
                 span: Span {
-                    file_name: String::from("<test>"),
+                    file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
                     starting_line_end_offset: 14,
@@ -375,7 +376,7 @@ fn test_multi_line_escaped_string() {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 2, 33)
+                span: Span::for_single_char("<test>", 2, 33)
             }
         ]
     );
@@ -383,58 +384,59 @@ fn test_multi_line_escaped_string() {
 
 #[test]
 fn test_multi_line_escaped_invalid_string() {
-    let mut lexer = Lexer::new(
-        "\"Hello \\aRig\\\"!\n\\tThis is behind a tab character\"",
-        "<test>",
-    );
+    let file_content = "\"Hello \\aRig\\\"!\n\\tThis is behind a tab character\"";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
 
     if lexer_output.1.is_empty() {
         panic!("lexer didn't throw error");
     } else {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
     }
 }
 
 #[test]
 fn test_multi_line_unterminated_string() {
-    let mut lexer = Lexer::new("\"Hello\nWorld\nfrom\nRig!", "<test>");
+    let file_content = "\"Hello\nWorld\nfrom\nRig!";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
 
     if lexer_output.1.is_empty() {
         panic!("lexer didn't throw error");
     } else {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
     }
 }
 
 #[test]
 fn test_string_unterminated_string() {
-    let mut lexer = Lexer::new("\"Hello World!", "<test>");
+    let file_content = "\"Hello World!";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
 
     if lexer_output.1.is_empty() {
         panic!("lexer didn't throw error");
     } else {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
     }
 }
 
 #[test]
 fn test_ident() {
-    let mut lexer = Lexer::new("ident1\nident2 ident3\nident4\nident5!use", "<test>");
+    let file_content = "ident1\nident2 ident3\nident4\nident5!use";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -446,49 +448,49 @@ fn test_ident() {
                 token_type: TokenType::Identifier,
                 literal: String::from("ident1"),
                 lexeme: String::from("ident1"),
-                span: Span::for_single_line(String::from("<test>"), 1, 0, 5)
+                span: Span::for_single_line("<test>", 1, 0, 5)
             },
             Token {
                 token_type: TokenType::Identifier,
                 literal: String::from("ident2"),
                 lexeme: String::from("ident2"),
-                span: Span::for_single_line(String::from("<test>"), 2, 0, 5)
+                span: Span::for_single_line("<test>", 2, 0, 5)
             },
             Token {
                 token_type: TokenType::Identifier,
                 literal: String::from("ident3"),
                 lexeme: String::from("ident3"),
-                span: Span::for_single_line(String::from("<test>"), 2, 7, 12)
+                span: Span::for_single_line("<test>", 2, 7, 12)
             },
             Token {
                 token_type: TokenType::Identifier,
                 literal: String::from("ident4"),
                 lexeme: String::from("ident4"),
-                span: Span::for_single_line(String::from("<test>"), 3, 0, 5)
+                span: Span::for_single_line("<test>", 3, 0, 5)
             },
             Token {
                 token_type: TokenType::Identifier,
                 literal: String::from("ident5"),
                 lexeme: String::from("ident5"),
-                span: Span::for_single_line(String::from("<test>"), 4, 0, 5)
+                span: Span::for_single_line("<test>", 4, 0, 5)
             },
             Token {
                 token_type: TokenType::Bang,
                 literal: String::from("!"),
                 lexeme: String::from("!"),
-                span: Span::for_single_line(String::from("<test>"), 4, 6, 6)
+                span: Span::for_single_line("<test>", 4, 6, 6)
             },
             Token {
                 token_type: TokenType::Keyword,
                 literal: String::from("use"),
                 lexeme: String::from("use"),
-                span: Span::for_single_line(String::from("<test>"), 4, 7, 9)
+                span: Span::for_single_line("<test>", 4, 7, 9)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 4, 10)
+                span: Span::for_single_char("<test>", 4, 10)
             }
         ]
     );
@@ -496,13 +498,14 @@ fn test_ident() {
 
 #[test]
 fn test_number_literal() {
-    let mut lexer = Lexer::new("1234\n123.4 1234\n123. 1234!", "<test>");
+    let file_content = "1234\n123.4 1234\n123. 1234!";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
     if !lexer_output.1.is_empty() {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
         panic!("unexpected error occurred in the lexer");
     }
@@ -514,43 +517,43 @@ fn test_number_literal() {
                 token_type: TokenType::NumberLiteral,
                 literal: String::from("1234"),
                 lexeme: String::from("1234"),
-                span: Span::for_single_line(String::from("<test>"), 1, 0, 3)
+                span: Span::for_single_line("<test>", 1, 0, 3)
             },
             Token {
                 token_type: TokenType::NumberLiteral,
                 literal: String::from("123.4"),
                 lexeme: String::from("123.4"),
-                span: Span::for_single_line(String::from("<test>"), 2, 0, 4)
+                span: Span::for_single_line("<test>", 2, 0, 4)
             },
             Token {
                 token_type: TokenType::NumberLiteral,
                 literal: String::from("1234"),
                 lexeme: String::from("1234"),
-                span: Span::for_single_line(String::from("<test>"), 2, 6, 9)
+                span: Span::for_single_line("<test>", 2, 6, 9)
             },
             Token {
                 token_type: TokenType::NumberLiteral,
                 literal: String::from("123."),
                 lexeme: String::from("123."),
-                span: Span::for_single_line(String::from("<test>"), 3, 0, 3)
+                span: Span::for_single_line("<test>", 3, 0, 3)
             },
             Token {
                 token_type: TokenType::NumberLiteral,
                 literal: String::from("1234"),
                 lexeme: String::from("1234"),
-                span: Span::for_single_line(String::from("<test>"), 3, 5, 8)
+                span: Span::for_single_line("<test>", 3, 5, 8)
             },
             Token {
                 token_type: TokenType::Bang,
                 literal: String::from("!"),
                 lexeme: String::from("!"),
-                span: Span::for_single_line(String::from("<test>"), 3, 9, 9)
+                span: Span::for_single_line("<test>", 3, 9, 9)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>".to_string(), 3, 10)
+                span: Span::for_single_char("<test>", 3, 10)
             }
         ]
     );
@@ -558,28 +561,30 @@ fn test_number_literal() {
 
 #[test]
 fn test_invalid_number() {
-    let mut lexer = Lexer::new("123..456", "<test>");
+    let file_content = "123..456";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
 
     if lexer_output.1.is_empty() {
         panic!("lexer didn't throw error");
     } else {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
     }
 }
 
 #[test]
 fn test_unknown_char() {
-    let mut lexer = Lexer::new("@use lexer::Lexer;", "<test>");
+    let file_content = "@use lexer::Lexer;";
+    let mut lexer = Lexer::new(file_content, "<test>");
     let lexer_output = lexer.lex();
 
     if lexer_output.1.is_empty() {
         panic!("lexer didn't throw error");
     } else {
         for err in lexer_output.1 {
-            println!("{}", err);
+            err.print(file_content);
         }
     }
 }

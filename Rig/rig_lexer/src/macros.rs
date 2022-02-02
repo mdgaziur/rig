@@ -1,7 +1,7 @@
 macro_rules! single_char_token {
     ($self:ident, $lexeme:literal, $type:expr) => {
         Token {
-            span: Span::for_single_char($self.file_path.clone(), $self.line, $self.offset),
+            span: Span::for_single_char($self.file_path, $self.line, $self.offset),
             lexeme: String::from($lexeme),
             literal: String::from($lexeme),
             token_type: $type,
@@ -14,7 +14,7 @@ macro_rules! double_char_token {
         if !$self.eof() && $self.peek_next() == Some($repeat) {
             $tokens.push(Token {
                 span: Span::for_single_line(
-                    $self.file_path.clone(),
+                    $self.file_path,
                     $self.line,
                     $self.offset,
                     $self.offset + 1,
@@ -26,7 +26,7 @@ macro_rules! double_char_token {
             $self.advance();
         } else {
             $tokens.push(Token {
-                span: Span::for_single_char($self.file_path.clone(), $self.line, $self.offset),
+                span: Span::for_single_char($self.file_path, $self.line, $self.offset),
                 lexeme: String::from($single_lexeme),
                 literal: String::from($single_lexeme),
                 token_type: $single_type,
@@ -38,7 +38,7 @@ macro_rules! double_char_token {
         if !$self.eof() && $self.peek_next() == Some($repeat) {
             $tokens.push(Token {
                 span: Span::for_single_line(
-                    $self.file_path.clone(),
+                    $self.file_path,
                     $self.line,
                     $self.offset,
                     $self.offset + 1,
@@ -51,7 +51,7 @@ macro_rules! double_char_token {
         } else if !$self.eof() && $self.peek_next() == Some($repeat_2) {
             $tokens.push(Token {
                 span: Span::for_single_line(
-                    $self.file_path.clone(),
+                    $self.file_path,
                     $self.line,
                     $self.offset,
                     $self.offset + 1,
@@ -63,7 +63,7 @@ macro_rules! double_char_token {
             $self.advance();
         } else {
             $tokens.push(Token {
-                span: Span::for_single_char($self.file_path.clone(), $self.line, $self.offset),
+                span: Span::for_single_char($self.file_path, $self.line, $self.offset),
                 lexeme: String::from($single_lexeme),
                 literal: String::from($single_lexeme),
                 token_type: $single_type,
@@ -79,7 +79,7 @@ macro_rules! triple_char_token {
             if !$self.eof() && $self.peek_next() == Some($third_char) {
                 $tokens.push(Token {
                     span: Span::for_single_line(
-                        $self.file_path.clone(),
+                        $self.file_path,
                         $self.line,
                         $self.pos - 1,
                         $self.pos + 1,
@@ -92,7 +92,7 @@ macro_rules! triple_char_token {
             } else {
                 $tokens.push(Token {
                     span: Span::for_single_line(
-                        $self.file_path.clone(),
+                        $self.file_path,
                         $self.line,
                         $self.pos - 1,
                         $self.pos,
@@ -104,12 +104,7 @@ macro_rules! triple_char_token {
             }
         } else if !$self.eof() && $self.peek_next() == Some($second_char2) {
             $tokens.push(Token {
-                span: Span::for_single_line(
-                    $self.file_path.clone(),
-                    $self.line,
-                    $self.pos,
-                    $self.pos + 1,
-                ),
+                span: Span::for_single_line($self.file_path, $self.line, $self.pos, $self.pos + 1),
                 literal: String::from($second_char_lexeme2),
                 lexeme: String::from($second_char_lexeme2),
                 token_type: $two_char_type2,
@@ -117,7 +112,7 @@ macro_rules! triple_char_token {
             $self.advance();
         } else {
             $tokens.push(Token {
-                span: Span::for_single_char($self.file_path.clone(), $self.line, $self.pos),
+                span: Span::for_single_char($self.file_path, $self.line, $self.pos),
                 literal: String::from($single_char_lexeme),
                 lexeme: String::from($single_char_lexeme),
                 token_type: $single_type,

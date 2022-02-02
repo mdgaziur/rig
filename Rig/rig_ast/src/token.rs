@@ -46,11 +46,20 @@ pub enum TokenType {
     /// }
     RightBrace,
 
+    /// [
+    LeftThirdBracket,
+
+    /// ]
+    RightThirdBracket,
+
     /// ,
     Comma,
 
     /// :
     Colon,
+
+    /// ::
+    Scope,
 
     /// !
     Bang,

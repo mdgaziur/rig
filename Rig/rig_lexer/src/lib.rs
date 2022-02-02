@@ -9,17 +9,17 @@ use rig_span::Span;
 
 pub struct Lexer<'l> {
     file_contents: &'l str,
-    file_path: String,
+    file_path: &'l str,
     line: usize,
     offset: usize,
     pos: usize,
 }
 
 impl<'l> Lexer<'l> {
-    pub fn new(file_contents: &'l str, file_path: &str) -> Self {
+    pub fn new(file_contents: &'l str, file_path: &'l str) -> Self {
         Lexer {
             file_contents,
-            file_path: file_path.to_string(),
+            file_path,
             pos: 0,
             line: 1,
             offset: 0,
@@ -37,12 +37,24 @@ impl<'l> Lexer<'l> {
                 ')' => tokens.push(single_char_token!(self, ')', TokenType::RightParen)),
                 '{' => tokens.push(single_char_token!(self, '{', TokenType::LeftBrace)),
                 '}' => tokens.push(single_char_token!(self, '}', TokenType::RightBrace)),
+                '[' => tokens.push(single_char_token!(self, '}', TokenType::LeftThirdBracket)),
+                ']' => tokens.push(single_char_token!(self, '}', TokenType::RightThirdBracket)),
                 ',' => tokens.push(single_char_token!(self, ',', TokenType::Comma)),
-                ':' => tokens.push(single_char_token!(self, ':', TokenType::Colon)),
                 ';' => tokens.push(single_char_token!(self, ';', TokenType::Semicolon)),
                 '.' => tokens.push(single_char_token!(self, ';', TokenType::Dot)),
 
                 // double or single character tokens
+                ':' => {
+                    double_char_token!(
+                        self,
+                        tokens,
+                        ':',
+                        "::",
+                        ':',
+                        TokenType::Scope,
+                        TokenType::Colon
+                    )
+                }
                 '!' => {
                     double_char_token!(
                         self,
@@ -106,6 +118,7 @@ impl<'l> Lexer<'l> {
                         if ch == '\n' {
                             break;
                         }
+                        self.advance();
                         self.advance();
                     }
                 }
@@ -237,12 +250,11 @@ impl<'l> Lexer<'l> {
                                         errors.push(RigError {
                                             message: String::from("invalid escape character"),
                                             error_type: ErrorType::Hard,
-                                            file_path: self.file_path.clone(),
-                                            file_content: self.file_contents,
+                                            file_path: self.file_path.to_string(),
                                             hint: None,
                                             error_code: String::from("E0004"),
                                             span: Span::for_single_line(
-                                                self.file_path.clone(),
+                                                self.file_path,
                                                 escape_char_line,
                                                 escape_char_offset,
                                                 escape_char_offset,
@@ -254,12 +266,11 @@ impl<'l> Lexer<'l> {
                                         errors.push(RigError {
                                             message: String::from("invalid escape character"),
                                             error_type: ErrorType::Hard,
-                                            file_path: self.file_path.clone(),
-                                            file_content: self.file_contents,
+                                            file_path: self.file_path.to_string(),
                                             hint: None,
                                             error_code: String::from("E0004"),
                                             span: Span::for_single_line(
-                                                self.file_path.clone(),
+                                                self.file_path,
                                                 escape_char_line,
                                                 escape_char_offset,
                                                 self.offset,
@@ -273,12 +284,11 @@ impl<'l> Lexer<'l> {
                                 errors.push(RigError {
                                     message: String::from("unexpected eof"),
                                     error_type: ErrorType::Hard,
-                                    file_path: self.file_path.clone(),
-                                    file_content: self.file_contents,
+                                    file_path: self.file_path.to_string(),
                                     hint: None,
                                     error_code: String::from("E0004"),
                                     span: Span::for_single_char(
-                                        self.file_path.clone(),
+                                        self.file_path,
                                         self.line,
                                         self.offset,
                                     ),
@@ -302,12 +312,11 @@ impl<'l> Lexer<'l> {
                         errors.push(RigError {
                             message: String::from("unterminated string literal"),
                             error_type: ErrorType::Hard,
-                            file_path: self.file_path.clone(),
-                            file_content: self.file_contents,
+                            file_path: self.file_path.to_string(),
                             hint: Some(String::from("insert '\"' here")),
                             error_code: String::from("E0002"),
                             span: Span::for_single_line(
-                                self.file_path.clone(),
+                                self.file_path,
                                 starting_line,
                                 starting_line_offset,
                                 starting_line_end_offset,
@@ -320,7 +329,7 @@ impl<'l> Lexer<'l> {
                             lexeme,
                             literal,
                             span: Span::for_single_line(
-                                self.file_path.clone(),
+                                self.file_path,
                                 starting_line,
                                 starting_line_offset,
                                 starting_line_end_offset + 1,
@@ -369,12 +378,11 @@ impl<'l> Lexer<'l> {
                                         errors.push(RigError {
                                             message: String::from("invalid escape character"),
                                             error_type: ErrorType::Hard,
-                                            file_path: self.file_path.clone(),
-                                            file_content: self.file_contents,
+                                            file_path: self.file_path.to_string(),
                                             hint: None,
                                             error_code: String::from("E0004"),
                                             span: Span::for_single_line(
-                                                self.file_path.clone(),
+                                                self.file_path,
                                                 escape_char_line,
                                                 escape_char_offset,
                                                 escape_char_offset,
@@ -386,12 +394,11 @@ impl<'l> Lexer<'l> {
                                         errors.push(RigError {
                                             message: String::from("invalid escape character"),
                                             error_type: ErrorType::Hard,
-                                            file_path: self.file_path.clone(),
-                                            file_content: self.file_contents,
+                                            file_path: self.file_path.to_string(),
                                             hint: None,
                                             error_code: String::from("E0004"),
                                             span: Span::for_single_line(
-                                                self.file_path.clone(),
+                                                self.file_path,
                                                 escape_char_line,
                                                 escape_char_offset,
                                                 self.offset,
@@ -404,12 +411,11 @@ impl<'l> Lexer<'l> {
                                 errors.push(RigError {
                                     message: String::from("unexpected eof"),
                                     error_type: ErrorType::Hard,
-                                    file_path: self.file_path.clone(),
-                                    file_content: self.file_contents,
+                                    file_path: self.file_path.to_string(),
                                     hint: None,
                                     error_code: String::from("E0004"),
                                     span: Span::for_single_char(
-                                        self.file_path.clone(),
+                                        self.file_path,
                                         self.line,
                                         self.offset,
                                     ),
@@ -430,7 +436,7 @@ impl<'l> Lexer<'l> {
                     }
 
                     let mut span = Span {
-                        file_name: self.file_path.clone(),
+                        file_name: self.file_path.to_string(),
                         starting_line,
                         starting_line_offset,
                         starting_line_end_offset,
@@ -444,8 +450,7 @@ impl<'l> Lexer<'l> {
                         errors.push(RigError {
                             message: String::from("unterminated string literal"),
                             error_type: ErrorType::Hard,
-                            file_path: self.file_path.clone(),
-                            file_content: self.file_contents,
+                            file_path: self.file_path.to_string(),
                             hint: Some(String::from("insert '\"' here")),
                             error_code: String::from("E0002"),
                             span,
@@ -462,7 +467,7 @@ impl<'l> Lexer<'l> {
                     }
                 }
 
-                ch if ch.is_alphabetic() => {
+                ch if ch.is_alphabetic() || ch == '_' => {
                     let mut ident = String::new();
                     let line = self.line;
                     let starting_position = self.offset;
@@ -490,7 +495,7 @@ impl<'l> Lexer<'l> {
                         literal: ident.clone(),
                         lexeme: ident.clone(),
                         span: Span::for_single_line(
-                            self.file_path.clone(),
+                            self.file_path,
                             line,
                             starting_position,
                             ending_position,
@@ -521,12 +526,11 @@ impl<'l> Lexer<'l> {
                                     "invalid integer literal: too many dots in one literal",
                                 ),
                                 error_type: ErrorType::Hard,
-                                file_path: self.file_path.clone(),
-                                file_content: self.file_contents,
+                                file_path: self.file_path.to_string(),
                                 hint: Some(String::from("remove this dot")),
                                 error_code: String::from("E0003"),
                                 span: Span::for_single_line(
-                                    self.file_path.clone(),
+                                    self.file_path,
                                     line,
                                     starting_position,
                                     ending_position,
@@ -557,7 +561,7 @@ impl<'l> Lexer<'l> {
                         literal: num.clone(),
                         lexeme: num.clone(),
                         span: Span::for_single_line(
-                            self.file_path.clone(),
+                            self.file_path,
                             line,
                             starting_position,
                             ending_position,
@@ -572,11 +576,10 @@ impl<'l> Lexer<'l> {
                 _ => errors.push(RigError {
                     message: String::from("unknown character"),
                     error_type: ErrorType::Hard,
-                    file_path: self.file_path.clone(),
-                    file_content: self.file_contents,
+                    file_path: self.file_path.to_string(),
                     hint: None,
                     error_code: String::from("E0001"),
-                    span: Span::for_single_char(self.file_path.clone(), self.line, self.offset),
+                    span: Span::for_single_char(self.file_path, self.line, self.offset),
                 }),
             }
             self.advance();
@@ -586,7 +589,7 @@ impl<'l> Lexer<'l> {
             token_type: TokenType::EOF,
             lexeme: String::new(),
             literal: String::new(),
-            span: Span::for_single_char(self.file_path.clone(), self.line, self.offset),
+            span: Span::for_single_char(self.file_path, self.line, self.offset),
         });
 
         (tokens, errors)
