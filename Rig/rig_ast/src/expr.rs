@@ -46,6 +46,13 @@ pub enum Expr {
         value: i64,
         span: Span,
     },
+    BooleanLiteralExpr {
+        value: bool,
+        span: Span,
+    },
+    NullLiteralExpr {
+        span: Span
+    },
     FloatLiteralExpr {
         value: f64,
         span: Span,

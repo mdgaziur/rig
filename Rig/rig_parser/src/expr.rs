@@ -436,13 +436,16 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
         }
         TokenType::Keyword => {
             let ret = match parser.peek().lexeme.as_str() {
-                "true" => Ok(Expr::IntegerLiteralExpr {
-                    value: 1,
+                "true" => Ok(Expr::BooleanLiteralExpr {
+                    value: true,
                     span: parser.peek().span.clone(),
                 }),
-                "false" | "null" => Ok(Expr::IntegerLiteralExpr {
-                    value: 0,
+                "false" => Ok(Expr::BooleanLiteralExpr {
+                    value: false,
                     span: parser.peek().span.clone(),
+                }),
+                "null" => Ok(Expr::NullLiteralExpr {
+                    span: parser.peek().span.clone()
                 }),
                 _ => Err(RigError {
                     error_type: ErrorType::Hard,
