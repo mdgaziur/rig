@@ -481,7 +481,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
             error_type: ErrorType::Hard,
             error_code: String::from("E0005"),
             message: format!(
-                "Expected primary expression`, found `{}`",
+                "Expected primary expression, found `{}`",
                 &parser.peek().lexeme
             ),
             hint: None,
