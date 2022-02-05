@@ -1,7 +1,7 @@
 use crate::op::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rig_span::Span;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     AssignmentExpr {
         name: String,
@@ -35,7 +35,7 @@ pub enum Expr {
         span: Span,
     },
     GroupingExpr {
-        expr: Vec<Expr>,
+        expr: Box<Expr>,
         span: Span,
     },
     StringLiteralExpr {
@@ -61,6 +61,11 @@ pub enum Expr {
         span: Span,
     },
     SelfExpr {
+        span: Span,
+    },
+    CallExpr {
+        name: Box<Expr>,
+        args: Vec<Box<Expr>>,
         span: Span,
     },
 }

@@ -2,7 +2,7 @@ use crate::expr::Expr;
 use crate::visibility::Visibility;
 use std::fmt::{Debug, Formatter};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Prototype {
     pub visibility: Visibility,
     pub name: String,
@@ -28,7 +28,7 @@ impl Debug for Prototype {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Argument {
     pub name: String,
     pub type_: Expr,

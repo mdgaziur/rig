@@ -35,7 +35,7 @@ exprStmt            -> expression ";" ;
 printStmt           -> expression ";" ;
 
 expression          -> assignment ;
-assignment          -> ( call "." )? IDENTIFIER ( "[" expression "]" )? (
+assignment          -> ( call "." )? IDENTIFIER (
                                                 "="
                                                 "&="    |
                                                 "^="    |

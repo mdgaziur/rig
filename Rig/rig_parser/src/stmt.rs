@@ -1,11 +1,11 @@
+use crate::expr::{expr, path};
+use crate::{name_with_type, Parser};
 use rig_ast::function_prototype::{Argument, Prototype};
 use rig_ast::stmt::Stmt;
 use rig_ast::token::TokenType;
 use rig_ast::visibility::Visibility;
 use rig_error::{ErrorType, RigError};
 use rig_span::Span;
-use crate::expr::{expr, path};
-use crate::{name_with_type, Parser};
 
 pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
     match parser.peek().token_type {
@@ -107,7 +107,11 @@ fn fn_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.advance();
     let prototype = prototype(parser, visibility)?;
 
-    let _ = parser.consume(TokenType::LeftBrace, "Expected '{' after function prototype", None)?;
+    let _ = parser.consume(
+        TokenType::LeftBrace,
+        "Expected '{' after function prototype",
+        None,
+    )?;
 
     let body = Box::new(block_stmt(parser)?);
 
@@ -115,7 +119,7 @@ fn fn_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         prototype,
         visibility: Visibility::from(visibility),
         body,
-        span: Span::merge(sp_start, parser.previous().span.clone())
+        span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
 
@@ -123,34 +127,69 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let start_sp = parser.previous().span.clone();
     let mut stmts = Vec::new();
     loop {
-        stmts.push(Box::new(expr_stmt(parser)?));
         if parser.check(TokenType::RightBrace) || parser.is_eof() {
             break;
         }
-        parser.advance();
+        stmts.push(Box::new(stmt(parser)?));
     }
-    let _ = parser.consume(TokenType::RightBrace, "Expected `}` at the end of block statement", None)?;
+    let _ = parser.consume(
+        TokenType::RightBrace,
+        "Expected `}` at the end of block statement",
+        None,
+    )?;
 
     Ok(Stmt::BlockStmt {
         exprs: stmts,
-        span: Span::merge(start_sp, parser.previous().span.clone())
+        span: Span::merge(start_sp, parser.previous().span.clone()),
     })
+}
+
+/// Parses valid statement inside blocks
+fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
+    match parser.peek().token_type {
+        TokenType::Keyword => {
+            match parser.peek().lexeme.as_str() {
+                "let" => let_(parser, false),
+                "use" => use_(parser, false),
+                _ => Err(RigError {
+                    error_code: String::from("E0005"),
+                    message: format!("Expected expression, `if`, `for`, `while`, `struct`, `impl`, `use`, `let`, `print` or `extern`. But found: `{}`", parser.peek().lexeme),
+                    error_type: ErrorType::Hard,
+                    file_path: parser.source_path.to_string(),
+                    hint: None,
+                    span: parser.peek().span.clone(),
+                })
+            }
+        },
+        _ => expr_stmt(parser),
+    }
 }
 
 fn expr_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let start_sp = parser.peek().span.clone();
     let expr = expr(parser)?;
-    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after expression", None);
+    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
 
     Ok(Stmt::ExprStmt {
         expr,
-        span: Span::merge(start_sp, parser.previous().span.clone())
+        span: Span::merge(start_sp, parser.previous().span.clone()),
     })
 }
 
 fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigError> {
-    let name = parser.consume(TokenType::Identifier, "Expected identifier after 'fn' keyword", None)?.lexeme.clone();
-    let _ = parser.consume(TokenType::LeftParen, "Expected '(' after function name", None);
+    let name = parser
+        .consume(
+            TokenType::Identifier,
+            "Expected identifier after 'fn' keyword",
+            None,
+        )?
+        .lexeme
+        .clone();
+    let _ = parser.consume(
+        TokenType::LeftParen,
+        "Expected '(' after function name",
+        None,
+    );
     let mut args = Vec::new();
 
     if !parser.check(TokenType::RightParen) {
@@ -168,7 +207,11 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         }
     }
 
-    let _ = parser.consume(TokenType::RightParen, "Expected ')' after function argument list", None)?;
+    let _ = parser.consume(
+        TokenType::RightParen,
+        "Expected ')' after function argument list",
+        None,
+    )?;
 
     let mut return_ty = None;
 
@@ -185,6 +228,33 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
     })
 }
 
-fn let_(_parser: &mut Parser, _visibility: bool) -> Result<Stmt, RigError> {
-    todo!()
+fn let_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
+    let sp_start = parser.previous().span.clone();
+    parser.advance();
+    let name = parser
+        .consume(TokenType::Identifier, "Expected name after `let`", None)?
+        .lexeme
+        .clone();
+    let mut ty = None;
+
+    if parser.peek().token_type == TokenType::Colon {
+        parser.advance();
+        ty = Some(path(parser)?);
+    }
+
+    let _ = parser.consume(TokenType::Equal, "Expected `=` after name", None)?;
+    let value = expr(parser)?;
+    let _ = parser.consume(
+        TokenType::Semicolon,
+        "Expected `;` after variable declaration",
+        None,
+    )?;
+
+    Ok(Stmt::LetStmt {
+        visibility: Visibility::from(visibility),
+        name,
+        value,
+        ty,
+        span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
 }

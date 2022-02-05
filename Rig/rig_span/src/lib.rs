@@ -75,10 +75,7 @@ impl Span {
         }
     }
 
-    pub fn merge(
-        s1: Span,
-        s2: Span,
-    ) -> Self {
+    pub fn merge(s1: Span, s2: Span) -> Self {
         Self {
             file_name: s1.file_name.to_string(),
             starting_line: s1.starting_line,

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LogicalOperator {
     And,
     Or,
@@ -45,7 +45,7 @@ impl FromStr for LogicalOperator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -96,7 +96,7 @@ impl FromStr for BinaryOperator {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOperator {
     Not,
     Negate,

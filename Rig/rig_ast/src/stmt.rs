@@ -3,7 +3,7 @@ use crate::function_prototype::Prototype;
 use crate::visibility::Visibility;
 use rig_span::Span;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     UseStmt {
         path: Expr,
@@ -24,7 +24,7 @@ pub enum Stmt {
     },
     LetStmt {
         name: String,
-        r#type: Expr,
+        ty: Option<Expr>,
         value: Expr,
         visibility: Visibility,
         span: Span,

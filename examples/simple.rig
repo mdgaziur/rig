@@ -1,3 +1,7 @@
 use std::fs::File;
 
-fn hello(f: File) {}
+fn hello(f: File) {
+    let x: File = (2*3) * x = 1 * 2;
+    let y: YetAnotherType = x + 1;
+    let NoTypeAnnotation = y = x;
+}

@@ -1,26 +1,24 @@
-mod stmt;
 mod expr;
+mod stmt;
 
+use crate::expr::path;
+use crate::stmt::program;
 use rig_ast::expr::Expr;
 use rig_ast::stmt::Stmt;
 use rig_ast::token::{Token, TokenType};
-use rig_ast::visibility::Visibility;
+
 use rig_error::{ErrorType, RigError};
-use rig_span::Span;
-use crate::expr::path;
-use crate::stmt::program;
+
 
 pub struct Parser<'p> {
-    source: &'p str,
     source_path: &'p str,
     lexical_tokens: &'p [Token],
     pos: usize,
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(source: &'p str, source_path: &'p str, lexical_tokens: &'p [Token]) -> Self {
+    pub fn new(source_path: &'p str, lexical_tokens: &'p [Token]) -> Self {
         Self {
-            source,
             source_path,
             lexical_tokens,
             pos: 0,
@@ -77,7 +75,7 @@ impl<'p> Parser<'p> {
                 message: format!("{}, but found unexpected eof", message),
                 hint,
                 file_path: self.source_path.to_string(),
-            })
+            });
         }
         Err(RigError {
             error_type: ErrorType::Hard,
@@ -130,7 +128,9 @@ pub fn parse(parser: &mut Parser, file_content: &str) -> (Vec<Stmt>, bool) {
 }
 
 fn name_with_type(parser: &mut Parser) -> Result<(Token, Expr), RigError> {
-    let name = parser.consume(TokenType::Identifier, "Expected name", None)?.clone();
+    let name = parser
+        .consume(TokenType::Identifier, "Expected name", None)?
+        .clone();
     let _ = parser.consume(TokenType::Colon, "Expected colon after name", None)?;
     let ty = path(parser)?;
 

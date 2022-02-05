@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Visibility {
     Pub,
     NotPub,
