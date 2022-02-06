@@ -12,11 +12,12 @@ pub struct Prototype {
 
 impl ToString for Prototype {
     fn to_string(&self) -> String {
+        let args_string: Vec<String> = self.args.iter().map(|a| a.to_string()).collect();
         format!(
-            "{} {} ({:?}) -> {:?}",
+            "{} {}({}) -> {:?}",
             self.visibility.to_string(),
             &self.name,
-            self.args,
+            args_string.join(","),
             self.return_ty
         )
     }
@@ -36,7 +37,7 @@ pub struct Argument {
 
 impl ToString for Argument {
     fn to_string(&self) -> String {
-        format!("{}: {:?}", self.name, self.type_)
+        format!("{}: {}", self.name, self.type_.to_string())
     }
 }
 
