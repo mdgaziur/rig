@@ -51,23 +51,17 @@ pub fn logical_or(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = LogicalOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == LogicalOperator::Or {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == LogicalOperator::Or {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::LogicalExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::LogicalExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -80,23 +74,17 @@ pub fn logical_and(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = LogicalOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == LogicalOperator::And {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == LogicalOperator::And {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::LogicalExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::LogicalExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -109,23 +97,17 @@ pub fn equality(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = LogicalOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == LogicalOperator::Equal || op == LogicalOperator::NotEqual {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == LogicalOperator::Equal || op == LogicalOperator::NotEqual {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::LogicalExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::LogicalExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -138,27 +120,21 @@ pub fn comparison(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = LogicalOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == LogicalOperator::Less
-                || op == LogicalOperator::LessEq
-                || op == LogicalOperator::Greater
-                || op == LogicalOperator::GreaterEq
-            {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == LogicalOperator::Less
+            || op == LogicalOperator::LessEq
+            || op == LogicalOperator::Greater
+            || op == LogicalOperator::GreaterEq
+        {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::LogicalExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::LogicalExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -171,23 +147,17 @@ pub fn bitwise_or(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::Or {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::Or {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -200,23 +170,17 @@ pub fn bitwise_xor(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::Xor {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::Xor {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -229,23 +193,17 @@ pub fn bitwise_and(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::And {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::And {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -258,23 +216,17 @@ pub fn bitwise_shift(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::LeftShift || op == BinaryOperator::RightShift {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::LeftShift || op == BinaryOperator::RightShift {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -287,23 +239,17 @@ pub fn term(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::Plus || op == BinaryOperator::Minus {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::Plus || op == BinaryOperator::Minus {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -316,26 +262,20 @@ pub fn factor(parser: &mut Parser) -> Result<Expr, RigError> {
 
     let op = BinaryOperator::from_str(&parser.peek().lexeme);
 
-    loop {
-        if let Ok(op) = op.clone() {
-            if op == BinaryOperator::Multiply
-                || op == BinaryOperator::Divide
-                || op == BinaryOperator::Modulus
-            {
-                parser.advance();
-                let rhs = crate::expr::expr(parser)?;
+    if let Ok(op) = op.clone() {
+        if op == BinaryOperator::Multiply
+            || op == BinaryOperator::Divide
+            || op == BinaryOperator::Modulus
+        {
+            parser.advance();
+            let rhs = crate::expr::expr(parser)?;
 
-                return Ok(Expr::BinaryExpr {
-                    lhs: Box::new(expr),
-                    op: op.clone(),
-                    rhs: Box::new(rhs),
-                    span: Span::merge(sp_start, parser.previous().span.clone()),
-                });
-            } else {
-                break;
-            }
-        } else {
-            break;
+            return Ok(Expr::BinaryExpr {
+                lhs: Box::new(expr),
+                op: op.clone(),
+                rhs: Box::new(rhs),
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            });
         }
     }
 
@@ -352,7 +292,7 @@ pub fn unary(parser: &mut Parser) -> Result<Expr, RigError> {
 
     Ok(Expr::UnaryExpr {
         op,
-        rhs: Box::new(unary(parser)?),
+        rhs: Box::new(crate::expr::expr(parser)?),
         span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
@@ -363,6 +303,7 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
 
     loop {
         if parser.peek().token_type == TokenType::LeftParen {
+            parser.advance();
             let args = arguments(parser)?;
 
             let _ = parser.consume(
@@ -376,6 +317,7 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
                 span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
             }
         } else if parser.peek().token_type == TokenType::Dot {
+            parser.advance();
             let name = parser.consume(TokenType::Identifier, "Expected identifier", None)?;
             expr = Expr::GetExpr {
                 name: name.lexeme.clone(),
@@ -411,10 +353,19 @@ pub fn arguments(parser: &mut Parser) -> Result<Vec<Box<Expr>>, RigError> {
 pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
     match parser.peek().token_type {
         TokenType::Identifier => path(parser),
+        TokenType::StringLiteral => {
+            let ret = Ok(Expr::StringLiteralExpr {
+                value: parser.peek().literal.clone(),
+                span: parser.peek().span.clone(),
+            });
+
+            parser.advance();
+            ret
+        }
         TokenType::NumberLiteral => {
             if parser.peek().lexeme.contains('.') {
                 let ret = Ok(Expr::FloatLiteralExpr {
-                    value: parser.peek().lexeme.parse().expect(
+                    value: parser.peek().literal.parse().expect(
                         "Lexer emitted invalid float literal or value is too big to store in f64",
                     ),
                     span: parser.peek().span.clone(),
@@ -424,7 +375,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                 ret
             } else {
                 let ret = Ok(Expr::IntegerLiteralExpr {
-                    value: parser.peek().lexeme.parse().expect(
+                    value: parser.peek().literal.parse().expect(
                         "Lexer emitted invalid integer literal or value is too big to store in i64",
                     ),
                     span: parser.peek().span.clone(),
@@ -445,7 +396,10 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                     span: parser.peek().span.clone(),
                 }),
                 "null" => Ok(Expr::NullLiteralExpr {
-                    span: parser.peek().span.clone()
+                    span: parser.peek().span.clone(),
+                }),
+                "self" => Ok(Expr::SelfExpr {
+                    span: parser.peek().span.clone(),
                 }),
                 _ => Err(RigError {
                     error_type: ErrorType::Hard,

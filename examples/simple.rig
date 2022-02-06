@@ -2,6 +2,9 @@ use std::fs::File;
 
 fn hello(f: File) {
     let x: File = (2*3) * x = 1 * 2;
-    let y: YetAnotherType = x + 1;
+    let y: YetAnotherType = x + 1 + x.call();
     let NoTypeAnnotation = y = x;
+    let s = File::open("/dev/urandom");
+    x.y = "hello";break;
+
 }
