@@ -58,4 +58,10 @@ pub enum Stmt {
         expr: Expr,
         span: Span,
     },
+    BreakStmt {
+        span: Span,
+    },
+    ContinueStmt {
+        span: Span,
+    }
 }

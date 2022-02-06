@@ -151,9 +151,13 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             match parser.peek().lexeme.as_str() {
                 "let" => let_(parser, false),
                 "use" => use_(parser, false),
+                "break" => break_(parser),
+                "continue" => continue_(parser),
                 _ => Err(RigError {
                     error_code: String::from("E0005"),
-                    message: format!("Expected expression, `if`, `for`, `while`, `struct`, `impl`, `use`, `let`, `print` or `extern`. But found: `{}`", parser.peek().lexeme),
+                    message: format!("Expected expression, `if`, `for`, `while`, \
+                    `struct`, `impl`, `use`, `let`, `print`, `break`, `continue` \
+                     or `extern`. But found: `{}`", parser.peek().lexeme),
                     error_type: ErrorType::Hard,
                     file_path: parser.source_path.to_string(),
                     hint: None,
@@ -163,6 +167,24 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         },
         _ => expr_stmt(parser),
     }
+}
+
+fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let brek = Ok(Stmt::BreakStmt {
+        span: parser.peek().span.clone(),
+    });
+    parser.advance();
+    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    brek
+}
+
+fn continue_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let contnue = Ok(Stmt::ContinueStmt {
+        span: parser.peek().span.clone(),
+    });
+    parser.advance();
+    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    contnue
 }
 
 fn expr_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
