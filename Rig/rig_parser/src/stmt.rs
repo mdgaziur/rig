@@ -165,6 +165,10 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
                 })
             }
         },
+        TokenType::LeftBrace => {
+            parser.advance();
+            block_stmt(parser)
+        },
         _ => expr_stmt(parser),
     }
 }
