@@ -164,7 +164,7 @@ pub enum TokenType {
     EOF,
 }
 
-pub const KEYWORDS: [&str; 17] = [
+pub const KEYWORDS: [&str; 19] = [
     "use", "pub", "extern", "fn", "struct", "impl", "for", "loop", "while", "let", "if", "else",
-    "self", "true", "false", "null", "in",
+    "self", "true", "false", "null", "in", "continue", "break"
 ];
