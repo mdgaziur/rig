@@ -38,7 +38,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
 
     if reconstruct_from_ast {
         for node in ast.0 {
-            println!("{}", node.to_string());
+            println!("{}", node.to_string(0));
         }
     }
 }

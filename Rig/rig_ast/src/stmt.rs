@@ -66,8 +66,8 @@ pub enum Stmt {
     }
 }
 
-impl ToString for Stmt {
-    fn to_string(&self) -> String {
+impl Stmt {
+    pub fn to_string(&self, block_depth: usize) -> String {
         match self {
             Stmt::UseStmt { path, visibility, .. } => {
                 let mut vis = visibility.to_string();
@@ -84,7 +84,7 @@ impl ToString for Stmt {
                     vis.push(' ');
                 }
 
-                format!("{}fn{:?} {}", vis, prototype, body.to_string())
+                format!("{}fn{:?} {}", vis, prototype, body.to_string(block_depth))
             },
             Stmt::LetStmt { name,  value, ty, visibility, .. } => {
                 let mut vis = visibility.to_string();
@@ -110,10 +110,10 @@ impl ToString for Stmt {
                     res += "\n";
                 }
                 for expr in exprs {
-                    res += &format!("\t{}\n", expr.to_string());
+                    res += &format!("{}{}\n", "\t".repeat(block_depth + 1), expr.to_string(block_depth + 1));
                 }
 
-                res += "}";
+                res += &format!("{}}}", "\t".repeat(block_depth));
                 res
             }
             Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string()),
