@@ -48,17 +48,17 @@ assignment          -> ( call "." )? IDENTIFIER (
                                                 "/="    |
                                                 "%="
                                                 ) assignment | logical_or ;
-logical_or          -> logical_and  ( "||" expr )* ;
-logical_and         -> equality   ( "&&" expr  )* ;
-equality            -> comparison ( ( "==" | "!=" ) expr )* ;
-comparison          -> bitwise_or ( ( "<"  | "<=" | ">" | ">=" ) expr )* ;
-bitwise_or          -> bitwise_xor ( "|" expr )* ;
-bitwise_xor         -> bitwise_and ( "^" expr )* ;
-bitwise_and         -> bitwise_shift ( "&" expr )* ;
-bitwise_shift       -> term ( ( "<<" | ">>" ) expr )* ;
-term                -> factor ( ( "+" | "-" ) expr)* ;
-factor              -> unary  ( ( "/" | "*" | "%" ) expr )* ;
-unary               -> ( "!" | "-" ) expr | call ;
+logical_or          -> logical_and  ( "||" logical_and )* ;
+logical_and         -> equality   ( "&&" equality  )* ;
+equality            -> comparison ( ( "==" | "!=" ) comparison )* ;
+comparison          -> bitwise_or ( ( "<"  | "<=" | ">" | ">=" ) bitwise_or )* ;
+bitwise_or          -> bitwise_xor ( "|" bitwise_xor )* ;
+bitwise_xor         -> bitwise_and ( "^" bitwise_and )* ;
+bitwise_and         -> bitwise_shift ( "&" bitwise_shift )* ;
+bitwise_shift       -> term ( ( "<<" | ">>" ) term )* ;
+term                -> factor ( ( "+" | "-" ) factor)* ;
+factor              -> unary  ( ( "/" | "*" | "%" ) unary )* ;
+unary               -> ( "!" | "-" ) unary | call ;
 call                -> primary ( "(" arguments ")" | "." IDENTIFIER )* ;
 arguments           -> expression ( "," expression )* ;
 primary             -> NUMBER | STRING | "true" | "false" | "null" | "(" expression ")" | path ;
