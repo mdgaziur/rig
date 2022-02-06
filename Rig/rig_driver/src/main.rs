@@ -17,9 +17,13 @@ enum Subcommands {
         /// File to execute
         file: String,
 
-        /// Output AST and exit
+        /// Output generated unpretty stuff
         #[clap(short, long, name = "type")]
         unpretty: Option<OutputType>,
+
+        /// Reconstruct source code from ast(debugging purpose)
+        #[clap(short, long)]
+        reconstruct_from_ast: bool,
     },
     Explain {
         /// Error code to explain
@@ -54,7 +58,7 @@ fn main() {
     let cli: RigCLI = RigCLI::parse();
 
     match cli.subcommands {
-        Subcommands::Run { file, unpretty } => run(file, unpretty),
+        Subcommands::Run { file, unpretty, reconstruct_from_ast } => run(file, unpretty, reconstruct_from_ast),
         Subcommands::Explain { error_code: _ } => {}
     }
 }

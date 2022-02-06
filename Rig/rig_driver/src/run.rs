@@ -3,7 +3,7 @@ use colored::Colorize;
 use rig_lexer::Lexer;
 use rig_parser::{parse, Parser};
 
-pub fn run(file_name: String, unpretty: Option<OutputType>) {
+pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast: bool) {
     let file = match std::fs::read_to_string(&file_name) {
         Ok(f) => f,
         Err(e) => {
@@ -34,5 +34,11 @@ pub fn run(file_name: String, unpretty: Option<OutputType>) {
 
     if unpretty == Some(OutputType::Ast) {
         println!("{:#?}", ast.0);
+    }
+
+    if reconstruct_from_ast {
+        for node in ast.0 {
+            println!("{}", node.to_string());
+        }
     }
 }
