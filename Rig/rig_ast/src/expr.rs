@@ -81,9 +81,9 @@ impl ToString for Expr {
     fn to_string(&self) -> String {
         match self {
             Expr::AssignmentExpr { name, value, .. } => format!("{} = {}", name, value.to_string()),
-            Expr::BinaryExpr { lhs, op, rhs, .. } => format!("{} {} {}", lhs.to_string(), op.to_string(), rhs.to_string()),
-            Expr::LogicalExpr { lhs, op, rhs, .. } => format!("{} {} {}", lhs.to_string(), op.to_string(), rhs.to_string()),
-            Expr::UnaryExpr { op, rhs, .. } => format!("{}{}", op.to_string(), rhs.to_string()),
+            Expr::BinaryExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(), op.to_string(), rhs.to_string()),
+            Expr::LogicalExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(), op.to_string(), rhs.to_string()),
+            Expr::UnaryExpr { op, rhs, .. } => format!("({}{})", op.to_string(), rhs.to_string()),
             Expr::GetExpr { name, object, .. } => format!("{}.{}", object.to_string(), name),
             Expr::PathExpr { path, .. } => path.join("::"),
             Expr::GroupingExpr { expr, .. } => format!("({})", expr.to_string()),
