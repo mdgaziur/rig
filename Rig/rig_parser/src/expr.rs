@@ -375,11 +375,11 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
             parser.advance();
             let args = arguments(parser)?;
 
-            let _ = parser.consume(
+            parser.consume(
                 TokenType::RightParen,
                 "Expected `)` after argument list",
                 None,
-            );
+            )?;
             expr = Expr::CallExpr {
                 name: Box::new(expr),
                 args,

@@ -93,7 +93,7 @@ fn use_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.advance();
     let import_path = path(parser)?;
 
-    let _ = parser.consume(TokenType::Semicolon, "Expected semicolon after path", None)?;
+    parser.consume(TokenType::Semicolon, "Expected semicolon after path", None)?;
 
     Ok(Stmt::UseStmt {
         path: import_path,
@@ -107,7 +107,7 @@ fn fn_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.advance();
     let prototype = prototype(parser, visibility)?;
 
-    let _ = parser.consume(
+    parser.consume(
         TokenType::LeftBrace,
         "Expected '{' after function prototype",
         None,
@@ -132,7 +132,7 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         stmts.push(Box::new(stmt(parser)?));
     }
-    let _ = parser.consume(
+    parser.consume(
         TokenType::RightBrace,
         "Expected `}` at the end of block statement",
         None,
@@ -178,7 +178,7 @@ fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
         span: parser.peek().span.clone(),
     });
     parser.advance();
-    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
     brek
 }
 
@@ -187,14 +187,14 @@ fn continue_(parser: &mut Parser) -> Result<Stmt, RigError> {
         span: parser.peek().span.clone(),
     });
     parser.advance();
-    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
     contnue
 }
 
 fn expr_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let start_sp = parser.peek().span.clone();
     let expr = expr(parser)?;
-    let _ = parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
 
     Ok(Stmt::ExprStmt {
         expr,
@@ -211,11 +211,11 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         )?
         .lexeme
         .clone();
-    let _ = parser.consume(
+    parser.consume(
         TokenType::LeftParen,
         "Expected '(' after function name",
         None,
-    );
+    )?;
     let mut args = Vec::new();
 
     if !parser.check(TokenType::RightParen) {
@@ -233,7 +233,7 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         }
     }
 
-    let _ = parser.consume(
+    parser.consume(
         TokenType::RightParen,
         "Expected ')' after function argument list",
         None,
@@ -268,9 +268,9 @@ fn let_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         ty = Some(path(parser)?);
     }
 
-    let _ = parser.consume(TokenType::Equal, "Expected `=` after name", None)?;
+    parser.consume(TokenType::Equal, "Expected `=` after name", None)?;
     let value = expr(parser)?;
-    let _ = parser.consume(
+    parser.consume(
         TokenType::Semicolon,
         "Expected `;` after variable declaration",
         None,

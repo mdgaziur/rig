@@ -131,7 +131,7 @@ fn name_with_type(parser: &mut Parser) -> Result<(Token, Expr), RigError> {
     let name = parser
         .consume(TokenType::Identifier, "Expected name", None)?
         .clone();
-    let _ = parser.consume(TokenType::Colon, "Expected colon after name", None)?;
+    parser.consume(TokenType::Colon, "Expected colon after name", None)?;
     let ty = path(parser)?;
 
     Ok((name, ty))
