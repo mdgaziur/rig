@@ -16,7 +16,7 @@ useDecl             -> "use" path ";" ;
 extern              -> "extern" "{" ( "pub"? prototype ";" )* "}" ;
 fnDecl              -> prototype blockStmt ;
 prototype           -> "fn" IDENTIFIER "(" name_with_type ( "," name_with_type )* ")" ( "->" path )? ;
-structDecl          -> struct" IDENTIFIER "{" "pub"? name_with_type ( "," "pub"? name_with_type )* "}" ;
+structDecl          -> "struct" IDENTIFIER "{" "pub"? name_with_type ( "," "pub"? name_with_type )* "}" ;
 structImpl          -> "impl" IDENTIFIER "{" structFnDecl* "}" ;
 structFnDecl        -> "pub"? "fn" IDENTIFIER "(" (name_with_type | "self")
                                 ( "," name_with_type )* ")" ( "->" path )? ;
@@ -48,6 +48,7 @@ assignment          -> ( call "." )? IDENTIFIER (
                                                 "/="    |
                                                 "%="
                                                 ) assignment | logical_or ;
+struct              -> path "{" ( expr ( "," expr )* )? "}"
 logical_or          -> logical_and  ( "||" logical_and )* ;
 logical_and         -> equality   ( "&&" equality  )* ;
 equality            -> comparison ( ( "==" | "!=" ) comparison )* ;

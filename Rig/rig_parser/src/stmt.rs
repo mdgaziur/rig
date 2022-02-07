@@ -2,6 +2,7 @@ use crate::expr::{expr, path};
 use crate::{name_with_type, Parser};
 use rig_ast::function_prototype::{Argument, Prototype};
 use rig_ast::stmt::Stmt;
+use rig_ast::struct_field::StructField;
 use rig_ast::token::TokenType;
 use rig_ast::visibility::Visibility;
 use rig_error::{ErrorType, RigError};
@@ -75,8 +76,46 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
     }
 }
 
-fn struct_(_parser: &mut Parser, _visibility: bool) -> Result<Stmt, RigError> {
-    todo!()
+fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let name = parser.consume(TokenType::Identifier, "Expected struct name after `struct`", None)?
+        .lexeme.clone();
+    let mut fields = Vec::new();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name", None)?;
+
+    while parser.peek().token_type != TokenType::RightBrace && !parser.is_eof() {
+        let vis;
+        if parser.peek().lexeme == "pub" {
+            parser.advance();
+            vis = Visibility::Pub;
+        } else {
+            vis = Visibility::NotPub;
+        }
+
+        let name_w_ty = name_with_type(parser)?;
+
+        fields.push(StructField {
+            visibility: vis,
+            name: name_w_ty.0.lexeme,
+            ty: name_w_ty.1,
+        });
+
+        if parser.peek().token_type != TokenType::Comma {
+            break;
+        }
+        parser.advance(); // eat comma
+    }
+
+    parser.consume(TokenType::RightBrace, "Expected `}` after struct field list", None)?;
+
+    Ok(Stmt::StructStmt {
+        visibility: Visibility::from(visibility),
+        name,
+        fields,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
 }
 
 fn struct_impl(_parser: &mut Parser) -> Result<Stmt, RigError> {
@@ -151,6 +190,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             match parser.peek().lexeme.as_str() {
                 "let" => let_(parser, false),
                 "use" => use_(parser, false),
+                "struct" => struct_(parser, false),
                 "break" => break_(parser),
                 "continue" => continue_(parser),
                 _ => Err(RigError {

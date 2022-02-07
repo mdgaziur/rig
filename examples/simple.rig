@@ -1,6 +1,18 @@
 use std::fs::File;
 
+pub struct TestXYZ {
+    x: sometype,
+    pub y: ty,
+    pub anotherfield: x,
+}
+
 fn hello(f: File) {
+    struct TestXYZ {
+        x: sometype,
+        pub y: ty,
+        pub anotherfield: x,
+    }
+
     let x: File = (2*3) * x * 2 + 2 / 3 << 3 & 1 == 2 % !3;
     let y: YetAnotherType = x + 1 + x.call();
     let NoTypeAnnotation = y = x * 2;
