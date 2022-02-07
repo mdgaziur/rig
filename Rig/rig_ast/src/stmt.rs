@@ -14,8 +14,12 @@ pub enum Stmt {
     StructStmt {
         name: String,
         fields: Vec<StructField>,
-        methods: Vec<Box<Stmt>>,
         visibility: Visibility,
+        span: Span,
+    },
+    ImplStmt {
+        struct_name: String,
+        methods: Vec<Box<Stmt>>,
         span: Span,
     },
     FnStmt {
@@ -79,7 +83,25 @@ impl Stmt {
 
                 format!("{}use {};", vis, path.to_string())
             }
-            Stmt::StructStmt { .. } => todo!(),
+            Stmt::StructStmt { visibility, name, fields, .. } => {
+                let mut vis = visibility.to_string();
+                if !vis.is_empty() {
+                    vis.push(' ');
+                }
+
+                let mut res = format!("{}struct {} {{", vis, name);
+                if !fields.is_empty() {
+                    res.push('\n');
+                }
+
+                for field in fields {
+                    res += &format!("{}{},\n", "\t".repeat(block_depth + 1), field.to_string());
+                }
+
+                res += &format!("{}}}", "\t".repeat(block_depth));
+                res
+            },
+            Stmt::ImplStmt { .. } => todo!(),
             Stmt::FnStmt { prototype, body, visibility, .. } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
