@@ -2,6 +2,7 @@ use crate::expr::Expr;
 use crate::function_prototype::Prototype;
 use crate::visibility::Visibility;
 use rig_span::Span;
+use crate::struct_field::StructField;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -12,6 +13,7 @@ pub enum Stmt {
     },
     StructStmt {
         name: String,
+        fields: Vec<StructField>,
         methods: Vec<Box<Stmt>>,
         visibility: Visibility,
         span: Span,

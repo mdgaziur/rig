@@ -4,3 +4,4 @@ pub mod op;
 pub mod stmt;
 pub mod token;
 pub mod visibility;
+pub mod struct_field;
