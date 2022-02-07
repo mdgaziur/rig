@@ -74,7 +74,7 @@ pub enum Stmt {
 
 impl Stmt {
     pub fn to_string(&self, block_depth: usize) -> String {
-        match self {
+        let mut res = match self {
             Stmt::UseStmt { path, visibility, .. } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
@@ -143,6 +143,9 @@ impl Stmt {
             Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string()),
             Stmt::BreakStmt { .. } => String::from("break;"),
             Stmt::ContinueStmt { .. } => String::from("continue;"),
-        }
+        };
+
+        res.push('\n');
+        res
     }
 }
