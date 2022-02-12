@@ -13,12 +13,19 @@ pub struct Prototype {
 impl ToString for Prototype {
     fn to_string(&self) -> String {
         let args_string: Vec<String> = self.args.iter().map(|a| a.to_string()).collect();
+        let ty_string;
+        if let Some(ty) = &self.return_ty {
+            ty_string = ty.to_string(0);
+        } else {
+            ty_string = String::new();
+        }
+
         format!(
-            "{} {}({}) -> {:?}",
+            "{} {}({}) -> {}",
             self.visibility.to_string(),
             &self.name,
             args_string.join(","),
-            self.return_ty
+            ty_string,
         )
     }
 }
@@ -37,7 +44,7 @@ pub struct Argument {
 
 impl ToString for Argument {
     fn to_string(&self) -> String {
-        format!("{}: {}", self.name, self.type_.to_string())
+        format!("{}: {}", self.name, self.type_.to_string(0))
     }
 }
 

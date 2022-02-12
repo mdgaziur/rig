@@ -47,8 +47,8 @@ assignment          -> ( call "." )? IDENTIFIER (
                                                 "*="    |
                                                 "/="    |
                                                 "%="
-                                                ) assignment | logical_or ;
-struct              -> path "{" ( expr ( "," expr )* )? "}"
+                                                ) assignment | struct ;
+struct              -> ( path "{" IDENTIFIER ":" expr ( "," IDENTIFIER ":" expr )* "}" ) | logical_or ;
 logical_or          -> logical_and  ( "||" logical_and )* ;
 logical_and         -> equality   ( "&&" equality  )* ;
 equality            -> comparison ( ( "==" | "!=" ) comparison )* ;

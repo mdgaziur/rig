@@ -15,6 +15,18 @@ impl ToString for StructField {
             vis.push(' ');
         }
 
-        format!("{}{}: {}", vis, self.name, self.ty.to_string())
+        format!("{}{}: {}", vis, self.name, self.ty.to_string(0))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct StructExprField {
+    pub name: String,
+    pub val: Expr
+}
+
+impl StructExprField {
+    pub fn to_string(&self, depth: usize) -> String {
+        format!("{}: {}", self.name, self.val.to_string(depth))
     }
 }

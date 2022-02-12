@@ -81,7 +81,7 @@ impl Stmt {
                     vis.push(' ');
                 }
 
-                format!("{}use {};", vis, path.to_string())
+                format!("{}use {};", vis, path.to_string(block_depth))
             }
             Stmt::StructStmt { visibility, name, fields, .. } => {
                 let mut vis = visibility.to_string();
@@ -117,11 +117,11 @@ impl Stmt {
                 }
 
                 let type_ = match ty {
-                    Some(t) => format!(": {}", t.to_string()),
+                    Some(t) => format!(": {}", t.to_string(block_depth)),
                     None => String::new(),
                 };
 
-                format!("{}let {}{} = {};", vis, name, type_, value.to_string())
+                format!("{}let {}{} = {};", vis, name, type_, value.to_string(block_depth))
             }
             Stmt::IfStmt { .. } => todo!(),
             Stmt::WhileStmt { .. } => todo!(),
@@ -140,7 +140,7 @@ impl Stmt {
                 res += &format!("{}}}", "\t".repeat(block_depth));
                 res
             }
-            Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string()),
+            Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string(block_depth)),
             Stmt::BreakStmt { .. } => String::from("break;"),
             Stmt::ContinueStmt { .. } => String::from("continue;"),
         };

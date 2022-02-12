@@ -1,5 +1,6 @@
 use crate::op::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rig_span::Span;
+use crate::struct_field::StructExprField;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -75,34 +76,47 @@ pub enum Expr {
         args: Vec<Box<Expr>>,
         span: Span,
     },
+    StructExpr {
+        name: Box<Expr>,
+        vals: Vec<StructExprField>,
+        span: Span,
+    },
 }
 
-impl ToString for Expr {
-    fn to_string(&self) -> String {
+impl Expr {
+    pub fn to_string(&self, depth: usize) -> String {
         match self {
-            Expr::AssignmentExpr { name, value, .. } => format!("{} = {}", name, value.to_string()),
-            Expr::BinaryExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(), op.to_string(), rhs.to_string()),
-            Expr::LogicalExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(), op.to_string(), rhs.to_string()),
-            Expr::UnaryExpr { op, rhs, .. } => format!("({}{})", op.to_string(), rhs.to_string()),
-            Expr::GetExpr { name, object, .. } => format!("{}.{}", object.to_string(), name),
+            Expr::AssignmentExpr { name, value, .. } => format!("{} = {}", name, value.to_string(depth)),
+            Expr::BinaryExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(depth), op.to_string(), rhs.to_string(depth)),
+            Expr::LogicalExpr { lhs, op, rhs, .. } => format!("({} {} {})", lhs.to_string(depth), op.to_string(), rhs.to_string(depth)),
+            Expr::UnaryExpr { op, rhs, .. } => format!("({}{})", op.to_string(), rhs.to_string(depth)),
+            Expr::GetExpr { name, object, .. } => format!("{}.{}", object.to_string(depth), name),
             Expr::PathExpr { path, .. } => path.join("::"),
-            Expr::GroupingExpr { expr, .. } => format!("({})", expr.to_string()),
+            Expr::GroupingExpr { expr, .. } => format!("({})", expr.to_string(depth)),
             Expr::StringLiteralExpr { value, .. } => format!("\"{}\"", value),
             Expr::IntegerLiteralExpr { value, .. } => value.to_string(),
             Expr::BooleanLiteralExpr { value, .. } => value.to_string(),
             Expr::NullLiteralExpr { .. } => String::from("null"),
             Expr::FloatLiteralExpr { value, .. } => value.to_string(),
-            Expr::SetExpr { object, name, value, .. } => format!("{}.{} = {}", object.to_string(), name, value.to_string()),
+            Expr::SetExpr { object, name, value, .. } => format!("{}.{} = {}", object.to_string(depth), name, value.to_string(depth)),
             Expr::VariableExpr { name, .. } => name.clone(),
             Expr::SelfExpr { .. } => String::from("self"),
             Expr::CallExpr { name, args, .. } => {
                 let mut arg_list = Vec::new();
 
                 for arg in args {
-                    arg_list.push(arg.to_string());
+                    arg_list.push(arg.to_string(depth));
                 }
 
-                format!("{}({})", name.to_string(), arg_list.join(","))
+                format!("{}({})", name.to_string(depth), arg_list.join(","))
+            }
+            Expr::StructExpr { name, vals, .. } => {
+                let mut string_vals = Vec::new();
+                for val in vals {
+                    string_vals.push(String::from("\t".repeat(depth + 1)) + &val.to_string(depth + 1));
+                }
+
+                format!("{} {{\n{}\n{}}}", name.to_string(depth + 1), string_vals.join(",\n"), "\t".repeat(depth))
             }
         }
     }

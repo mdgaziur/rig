@@ -5,13 +5,14 @@ use rig_ast::token::TokenType;
 use rig_error::{ErrorType, RigError};
 use rig_span::Span;
 use std::str::FromStr;
+use rig_ast::struct_field::StructExprField;
 
 pub fn expr(parser: &mut Parser) -> Result<Expr, RigError> {
     assignment(parser)
 }
 
 pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
-    let expr = logical_or(parser)?;
+    let expr = struct_(parser)?;
 
     if let Ok(_) = parser.consume(TokenType::Equal, "", None) {
         let eq_span = parser.previous().span.clone();
@@ -43,6 +44,59 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
     }
 
     Ok(expr)
+}
+
+pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
+    let sp_start = parser.peek().span.clone();
+    let expr = logical_or(parser)?;
+
+    match expr {
+        Expr::PathExpr { .. } | Expr::VariableExpr { .. } => {
+            if parser.peek().token_type == TokenType::LeftBrace {
+                parser.advance();
+                let mut vals = Vec::new();
+                vals.push(field_with_val(parser)?);
+
+                if parser.peek().token_type == TokenType::RightBrace {
+                    parser.advance();
+                    return Ok(Expr::StructExpr {
+                        name: Box::new(expr),
+                        vals,
+                        span: Span::merge(sp_start, parser.previous().span.clone()),
+                    })
+                }
+                loop {
+                    parser.consume(TokenType::Comma, "Expected comma before expression", None)?;
+                    vals.push(field_with_val(parser)?);
+
+                    if parser.peek().token_type == TokenType::RightBrace {
+                        parser.advance();
+                        break;
+                    }
+                }
+
+                Ok(Expr::StructExpr {
+                    name: Box::new(expr),
+                    vals,
+                    span: Span::merge(sp_start, parser.previous().span.clone()),
+                })
+            } else {
+                Ok(expr)
+            }
+        },
+        _ => Ok(expr)
+    }
+}
+
+fn field_with_val(parser: &mut Parser) -> Result<StructExprField, RigError> {
+    let field = parser.consume(TokenType::Identifier, "Expected field name", None)?.lexeme.clone();
+    parser.consume(TokenType::Colon, "Expected `:` after field name", None)?;
+    let val = assignment(parser)?;
+
+    Ok(StructExprField {
+        name: field,
+        val,
+    })
 }
 
 pub fn logical_or(parser: &mut Parser) -> Result<Expr, RigError> {
