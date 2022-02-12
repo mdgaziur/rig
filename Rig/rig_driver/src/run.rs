@@ -29,7 +29,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
-    let mut parser = Parser::new(&file_name, &tokens.0);
+    let mut parser = Parser::new(&file_name, &file, &tokens.0);
     let ast = parse(&mut parser, &file);
 
     if unpretty == Some(OutputType::Ast) {

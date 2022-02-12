@@ -12,14 +12,18 @@ use rig_error::{ErrorType, RigError};
 
 pub struct Parser<'p> {
     source_path: &'p str,
+    source: &'p str,
+    pub has_error_inside_block_stmt: bool,
     lexical_tokens: &'p [Token],
     pos: usize,
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(source_path: &'p str, lexical_tokens: &'p [Token]) -> Self {
+    pub fn new(source_path: &'p str, source: &'p str, lexical_tokens: &'p [Token]) -> Self {
         Self {
             source_path,
+            source,
+            has_error_inside_block_stmt: false,
             lexical_tokens,
             pos: 0,
         }

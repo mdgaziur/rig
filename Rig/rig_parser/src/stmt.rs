@@ -169,7 +169,15 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         if parser.check(TokenType::RightBrace) || parser.is_eof() {
             break;
         }
-        stmts.push(Box::new(stmt(parser)?));
+        let stmt = stmt(parser);
+        if let Err(e) = stmt {
+            parser.synchronize();
+            e.print(parser.source);
+            parser.has_error_inside_block_stmt = true;
+            continue;
+        } else if let Ok(stmt) = stmt {
+            stmts.push(Box::new(stmt));
+        }
     }
     parser.consume(
         TokenType::RightBrace,
