@@ -22,8 +22,6 @@ impl StringStats {
             if (source.get(idx) != source.get(source.len() - idx - 1)) {
                 return false;
             }
-
-            idx = idx + 1;
         }
 
         return true;

@@ -68,7 +68,7 @@ fn test_plus_single_char() {
 
 #[test]
 fn test_plus_equals_double_char() {
-    let mut lexer = Lexer::new("+", "<test>");
+    let mut lexer = Lexer::new("+=", "<test>");
     let lexer_output = lexer.lex();
     let tokens = lexer_output.0;
 
@@ -83,16 +83,16 @@ fn test_plus_equals_double_char() {
         tokens,
         [
             Token {
-                token_type: TokenType::Plus,
-                lexeme: "+".to_string(),
-                literal: "+".to_string(),
-                span: Span::for_single_char("<test>", 1, 0),
+                token_type: TokenType::PlusEquals,
+                lexeme: "+=".to_string(),
+                literal: "+=".to_string(),
+                span: Span::for_single_line("<test>", 1, 0, 1)
             },
             Token {
                 token_type: TokenType::EOF,
                 lexeme: String::new(),
                 literal: String::new(),
-                span: Span::for_single_char("<test>", 1, 1)
+                span: Span::for_single_char("<test>", 1, 2)
             }
         ]
     );
@@ -189,6 +189,38 @@ fn test_left_shift_triple_char() {
                 lexeme: String::new(),
                 literal: String::new(),
                 span: Span::for_single_char("<test>", 1, 2)
+            }
+        ]
+    );
+}
+
+#[test]
+fn test_left_shift_equals_triple_char() {
+    let mut lexer = Lexer::new("<<=", "<test>");
+    let lexer_output = lexer.lex();
+    let tokens = lexer_output.0;
+
+    if !lexer_output.1.is_empty() {
+        for err in lexer_output.1 {
+            err.print("<<=");
+        }
+        panic!("unexpected error occurred in the lexer");
+    }
+
+    assert_eq!(
+        tokens,
+        [
+            Token {
+                token_type: TokenType::LeftShiftEquals,
+                lexeme: "<<=".to_string(),
+                literal: "<<=".to_string(),
+                span: Span::for_single_line("<test>", 1, 0, 2)
+            },
+            Token {
+                token_type: TokenType::EOF,
+                lexeme: String::new(),
+                literal: String::new(),
+                span: Span::for_single_char("<test>", 1, 3)
             }
         ]
     );
