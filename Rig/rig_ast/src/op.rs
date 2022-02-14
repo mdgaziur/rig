@@ -81,16 +81,34 @@ impl FromStr for BinaryOperator {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "+" | "+=" => Ok(Self::Plus),
-            "-" | "-=" => Ok(Self::Minus),
-            "*" | "*=" => Ok(Self::Multiply),
-            "/" | "/=" => Ok(Self::Divide),
-            "%" | "%=" => Ok(Self::Modulus),
-            "|" | "|=" => Ok(Self::Or),
-            "^" | "^=" => Ok(Self::Xor),
-            "&" | "&=" => Ok(Self::And),
-            "<<" | "<<=" => Ok(Self::LeftShift),
-            ">>" | ">>=" => Ok(Self::RightShift),
+            "+" => Ok(Self::Plus),
+            "-" => Ok(Self::Minus),
+            "*" => Ok(Self::Multiply),
+            "/" => Ok(Self::Divide),
+            "%" => Ok(Self::Modulus),
+            "|" => Ok(Self::Or),
+            "^" => Ok(Self::Xor),
+            "&" => Ok(Self::And),
+            "<<" => Ok(Self::LeftShift),
+            ">>" => Ok(Self::RightShift),
+            _ => Err(()),
+        }?)
+    }
+}
+
+impl BinaryOperator {
+    pub fn from_assignequal(s: &str) -> Result<Self, ()> {
+        Ok(match s {
+            "+=" => Ok(Self::Plus),
+            "-=" => Ok(Self::Minus),
+            "*=" => Ok(Self::Multiply),
+            "/=" => Ok(Self::Divide),
+            "%=" => Ok(Self::Modulus),
+            "|=" => Ok(Self::Or),
+            "^=" => Ok(Self::Xor),
+            "&=" => Ok(Self::And),
+            "<<=" => Ok(Self::LeftShift),
+            ">>=" => Ok(Self::RightShift),
             _ => Err(()),
         }?)
     }

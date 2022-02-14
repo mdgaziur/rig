@@ -12,9 +12,59 @@ pub fn expr(parser: &mut Parser) -> Result<Expr, RigError> {
 }
 
 pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
+    let sp_start = parser.peek().span.clone();
     let expr = struct_(parser)?;
 
-    if let Ok(_) = parser.consume(TokenType::Equal, "", None) {
+    match parser.peek().token_type {
+        TokenType::PlusEquals | TokenType::LeftShiftEquals | TokenType::RightShiftEquals
+        | TokenType::MinusEquals | TokenType::MultiplyEquals | TokenType::DivideEquals
+        | TokenType::AndOpEquals | TokenType::OrOpEquals | TokenType::XorEquals
+        | TokenType::ModulusEquals => {
+            let op = BinaryOperator::from_assignequal(&parser.peek().lexeme)
+                .unwrap();
+            parser.advance();
+            let eq_span = parser.peek().span.clone();
+            let rhs = Box::new(crate::expr::expr(parser)?);
+
+            return match &expr {
+                Expr::GetExpr { object, name, .. } => Ok(Expr::SetExpr {
+                    object: object.clone(),
+                    name: name.clone(),
+                    value: Box::new(Expr::BinaryExpr {
+                        lhs: Box::new(expr.clone()),
+                        op,
+                        rhs,
+                        span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
+                    }),
+                    span: Span::merge(sp_start, parser.peek().span.clone()),
+                }),
+                Expr::VariableExpr { name, .. } => Ok(Expr::AssignmentExpr {
+                    value: Box::new(Expr::BinaryExpr {
+                        lhs: Box::new(expr.clone()),
+                        op,
+                        rhs,
+                        span: Span::merge(sp_start.clone(), parser.previous().span.clone())
+                    }),
+                    name: name.clone(),
+                    span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
+                }),
+                _ => Err(RigError {
+                    error_code: String::from("EOOO6"),
+                    message: String::from(
+                        "Invalid assignment. Expected property or a variable as lvalue",
+                    ),
+                    hint: None,
+                    error_type: ErrorType::Hard,
+                    file_path: parser.source_path.to_string(),
+                    span: eq_span,
+                }),
+            };
+        }
+        _ => ()
+    }
+
+    if parser.check(TokenType::Equal) {
+        parser.advance();
         let eq_span = parser.previous().span.clone();
         let rhs = crate::expr::expr(parser)?;
 
