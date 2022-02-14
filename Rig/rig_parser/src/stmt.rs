@@ -333,6 +333,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "loop" => loop_(parser),
             "break" => break_(parser),
             "continue" => continue_(parser),
+            "print" => print(parser),
             "return" => return_(parser),
             _ => Err(RigError {
                 error_code: String::from("E0005"),
@@ -473,6 +474,18 @@ fn return_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
 
     Ok(Stmt::ReturnStmt {
+        expr,
+        span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
+}
+
+fn print(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let expr = expr(parser)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+
+    Ok(Stmt::PrintStmt {
         expr,
         span: Span::merge(sp_start, parser.previous().span.clone()),
     })

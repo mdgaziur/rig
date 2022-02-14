@@ -49,4 +49,6 @@ fn main() {
         io::output("is_palindrome? {string_stats.is_palindrome}\nis_alphanumeric? {string_stats.is_alphanumeric}\n
 length = {string_stats.length}");
     }
+
+    print f(g<a,b>(c));
 }

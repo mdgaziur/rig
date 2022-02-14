@@ -179,7 +179,7 @@ impl Stmt {
             Stmt::ForStmt { var, iterable, body, .. } => {
                 format!("for ({} in {}) {}", var, iterable.to_string(block_depth), body.to_string(block_depth))
             },
-            Stmt::PrintStmt { .. } => todo!(),
+            Stmt::PrintStmt { expr, .. } => format!("print {};", expr.to_string(block_depth)),
             Stmt::BlockStmt { exprs, .. } => {
                 let mut res = vec![String::from("{")];
 
