@@ -53,7 +53,11 @@ pub enum Stmt {
         span: Span,
     },
     PrintStmt {
-        expr: Box<Stmt>,
+        expr: Expr,
+        span: Span,
+    },
+    ReturnStmt {
+        expr: Expr,
         span: Span,
     },
     BlockStmt {
@@ -108,7 +112,14 @@ impl Stmt {
                 res += &format!("{}}}", "\t".repeat(block_depth));
                 res
             }
-            Stmt::ImplStmt { .. } => todo!(),
+            Stmt::ImplStmt { struct_name, methods, .. } => {
+                let stringified_methods = methods.iter()
+                    .map(|m| "\t".repeat(block_depth + 1) + &m.to_string(block_depth + 1))
+                    .collect::<Vec<String>>()
+                    .join("\n");
+
+                format!("impl {} {{\n{}{}}}\n", struct_name, stringified_methods, "\t".repeat(block_depth))
+            },
             Stmt::FnStmt {
                 prototype,
                 body,
@@ -171,6 +182,7 @@ impl Stmt {
             Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string(block_depth)),
             Stmt::BreakStmt { .. } => String::from("break;"),
             Stmt::ContinueStmt { .. } => String::from("continue;"),
+            Stmt::ReturnStmt { expr, .. } => format!("return {};", expr.to_string(block_depth)),
         };
 
         res.push('\n');

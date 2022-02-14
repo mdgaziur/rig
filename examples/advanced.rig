@@ -8,11 +8,11 @@ struct StringStats {
 
 impl StringStats {
     fn init(source: String) -> Self {
-        Self {
+        return StringStats {
             is_palindrome: Self::is_palindrome(source),
             is_alphanumeric: Self::is_alphanumeric(source),
             length: source.len()
-        }
+        };
     }
 
     fn is_palindrome(self, source: String) -> bool {

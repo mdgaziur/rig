@@ -1,6 +1,6 @@
 use crate::expr::{expr, path};
 use crate::{name_with_type, Parser};
-use rig_ast::function_prototype::{Argument, Prototype};
+use rig_ast::function_prototype::{Argument, FnType, Prototype};
 use rig_ast::stmt::Stmt;
 use rig_ast::struct_field::StructField;
 use rig_ast::token::TokenType;
@@ -128,8 +128,125 @@ fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     })
 }
 
-fn struct_impl(_parser: &mut Parser) -> Result<Stmt, RigError> {
-    todo!()
+fn struct_impl(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let struct_name = parser.consume(TokenType::Identifier, "Expected struct name after `impl`", None)?
+        .lexeme
+        .clone();
+    let mut methods = Vec::new();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name", None)?;
+
+    while parser.peek().token_type != TokenType::RightBrace || parser.is_eof() {
+        methods.push(Box::new(struct_fn(parser)?));
+    }
+
+    parser.consume(TokenType::RightBrace, "Expected `}` after struct methods", None)?;
+
+    Ok(Stmt::ImplStmt {
+        struct_name,
+        methods,
+        span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
+}
+
+fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let keyword = parser.consume(TokenType::Keyword, "Expected keyword `fn` or `pub` inside struct impl", None)?
+        .lexeme
+        .clone();
+    let sp_start = parser.peek().span.clone();
+    let visibility;
+
+    if keyword == "pub" {
+        visibility = Visibility::Pub;
+        let keyword = parser.consume(TokenType::Keyword, "Expected keyword `fn` after `pub`", None)?
+            .lexeme
+            .clone();
+
+        if keyword != "fn" {
+            return Err(RigError {
+                error_type: ErrorType::Hard,
+                error_code: String::from("E0005"),
+                message: String::from("Expected keyword `fn` after `pub`"),
+                span: parser.peek().span.clone(),
+                hint: None,
+                file_path: parser.source_path.to_string()
+            })
+        }
+    } else if keyword != "fn" {
+        return Err(RigError {
+            error_type: ErrorType::Hard,
+            error_code: String::from("E0005"),
+            message: String::from("Expected keyword `fn`"),
+            span: parser.peek().span.clone(),
+            hint: None,
+            file_path: parser.source_path.to_string()
+        })
+    } else {
+        visibility = Visibility::NotPub;
+    }
+
+    let method_name = parser.consume(TokenType::Identifier, "Expected name after `fn`", None)?
+        .lexeme
+        .clone();
+    let mut args = Vec::new();
+
+    parser.consume(TokenType::LeftParen, "Expected `(` after method name", None)?;
+
+    let fn_type;
+
+    if parser.peek().token_type == TokenType::Keyword && parser.peek().lexeme == "self" {
+        fn_type = FnType::Method;
+        parser.advance();
+    } else {
+        let arg = name_with_type(parser)?;
+
+        args.push(Argument {
+            name: arg.0.lexeme.clone(),
+            type_: arg.1,
+        });
+        fn_type = FnType::Fn;
+    }
+
+    while parser.peek().token_type != TokenType::RightParen && !parser.is_eof() {
+        parser.consume(TokenType::Comma, "Expected `,` before argument", None)?;
+        let arg = name_with_type(parser)?;
+
+        args.push(Argument {
+            name: arg.0.lexeme.clone(),
+            type_: arg.1,
+        });
+    }
+
+    parser.consume(TokenType::RightParen, "Expected `)` after argument list", None)?;
+
+    let return_ty;
+    if parser.peek().token_type == TokenType::Arrow {
+        parser.advance();
+        return_ty = Some(path(parser)?);
+    } else {
+        return_ty = None;
+    }
+
+    let prototype = Prototype {
+        name: method_name,
+        visibility: visibility.clone(),
+        return_ty,
+        args,
+        fn_type,
+    };
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+
+    let body = Box::new(block_stmt(parser)?);
+
+    Ok(Stmt::FnStmt {
+        prototype,
+        body,
+        visibility,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
 }
 
 fn extern_block(_parser: &mut Parser) -> Result<Stmt, RigError> {
@@ -208,8 +325,10 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "let" => let_(parser, false),
             "use" => use_(parser, false),
             "struct" => struct_(parser, false),
+            "impl" => struct_impl(parser),
             "break" => break_(parser),
             "continue" => continue_(parser),
+            "return" => return_(parser),
             _ => Err(RigError {
                 error_code: String::from("E0005"),
                 message: format!(
@@ -230,6 +349,18 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         _ => expr_stmt(parser),
     }
+}
+
+fn return_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let expr = expr(parser)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+
+    Ok(Stmt::ReturnStmt {
+        expr,
+        span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
 }
 
 fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
@@ -310,6 +441,7 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         args,
         visibility: Visibility::from(visibility),
         return_ty,
+        fn_type: FnType::Fn
     })
 }
 

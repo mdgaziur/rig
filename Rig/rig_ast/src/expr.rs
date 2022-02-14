@@ -107,7 +107,7 @@ impl Expr {
             Expr::GetExpr { name, object, .. } => format!("{}.{}", object.to_string(depth), name),
             Expr::PathExpr { path, .. } => path.join("::"),
             Expr::GroupingExpr { expr, .. } => format!("({})", expr.to_string(depth)),
-            Expr::StringLiteralExpr { value, .. } => format!("\"{}\"", value),
+            Expr::StringLiteralExpr { value, .. } => format!("{:?}", value),
             Expr::IntegerLiteralExpr { value, .. } => value.to_string(),
             Expr::BooleanLiteralExpr { value, .. } => value.to_string(),
             Expr::NullLiteralExpr { .. } => String::from("null"),

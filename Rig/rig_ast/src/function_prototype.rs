@@ -8,11 +8,20 @@ pub struct Prototype {
     pub name: String,
     pub args: Vec<Argument>,
     pub return_ty: Option<Expr>,
+    pub fn_type: FnType,
 }
 
 impl ToString for Prototype {
     fn to_string(&self) -> String {
-        let args_string: Vec<String> = self.args.iter().map(|a| a.to_string()).collect();
+        let mut args_string;
+        if self.fn_type == FnType::Method {
+            args_string = String::from("self, ");
+        } else {
+            args_string = String::new();
+        }
+        args_string = args_string + &self.args.iter().map(|a| a.to_string()).collect::<Vec<String>>()
+            .join(", ");
+
         let ty_string;
         if let Some(ty) = &self.return_ty {
             ty_string = ty.to_string(0);
@@ -24,7 +33,7 @@ impl ToString for Prototype {
             "{} {}({}) -> {}",
             self.visibility.to_string(),
             &self.name,
-            args_string.join(","),
+            args_string,
             ty_string,
         )
     }
@@ -34,6 +43,11 @@ impl Debug for Prototype {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         f.write_str(&self.to_string())
     }
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum FnType {
+    Method,
+    Fn,
 }
 
 #[derive(Clone, PartialEq)]
