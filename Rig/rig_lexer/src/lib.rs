@@ -478,7 +478,7 @@ impl<'l> Lexer<'l> {
                         ending_position = self.offset;
 
                         if let Some(ch) = self.peek_next() {
-                            if !ch.is_alphanumeric() {
+                            if !ch.is_alphanumeric() && ch != '_' {
                                 break;
                             }
                         }

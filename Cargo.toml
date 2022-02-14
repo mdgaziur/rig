@@ -1,2 +1,8 @@
+[profile.release]
+lto = true
+debug-assertions = false
+overflow-checks = false
+panic = "abort"
+
 [workspace]
 members = ["Rig/*"]
