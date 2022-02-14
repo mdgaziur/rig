@@ -19,7 +19,7 @@ impl StringStats {
         let idx = source.len() - 1;
 
         while idx >= 0 {
-            if source[idx] != source[source.len() - idx - 1] {
+            if source.get(idx) != source.get(source.len() - idx - 1) {
                 return false;
             }
         }
@@ -30,7 +30,7 @@ impl StringStats {
     fn is_alphanumeric(self, source: String) -> bool {
         let is_alnum = true;
 
-        // iterations
+        # iterations
         for ch in source {
             if !ch.is_alnum() {
                 is_alnum = false;

@@ -1,3 +1,4 @@
+use rig_ast::expr::Expr;
 use crate::expr::{expr, path};
 use crate::{name_with_type, Parser};
 use rig_ast::function_prototype::{Argument, FnType, Prototype};
@@ -327,6 +328,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "struct" => struct_(parser, false),
             "impl" => struct_impl(parser),
             "while" => while_(parser),
+            "if" => conditional_(parser),
             "break" => break_(parser),
             "continue" => continue_(parser),
             "return" => return_(parser),
@@ -363,6 +365,44 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
         condition,
         body,
         span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
+}
+
+fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let condition = expr(parser)?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+    let body = Box::new(block_stmt(parser)?);
+    let else_branch;
+
+    if parser.peek().lexeme == "else" {
+        parser.advance();
+        if parser.peek().lexeme == "if" {
+            else_branch = Some(Box::new(conditional_(parser)?));
+        } else {
+            let sp_start = parser.previous().span.clone();
+            parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+            let body = Box::new(block_stmt(parser)?);
+            else_branch = Some(Box::new(Stmt::IfStmt {
+                condition: Expr::BooleanLiteralExpr {
+                    value: true,
+                    span: parser.previous().span.clone(),
+                },
+                body,
+                else_branch: None,
+                span: Span::merge(sp_start, parser.previous().span.clone()),
+            }));
+        }
+    } else {
+        else_branch = None;
+    }
+
+    Ok(Stmt::IfStmt {
+        condition,
+        body,
+        else_branch,
+        span: Span::merge(sp_start, parser.previous().span.clone())
     })
 }
 
