@@ -78,7 +78,7 @@ pub enum Stmt {
 
 impl Stmt {
     pub fn to_string(&self, block_depth: usize) -> String {
-        let mut res = match self {
+        let res = match self {
             Stmt::UseStmt {
                 path, visibility, ..
             } => {
@@ -113,10 +113,13 @@ impl Stmt {
                 res
             }
             Stmt::ImplStmt { struct_name, methods, .. } => {
-                let stringified_methods = methods.iter()
+                let mut stringified_methods = methods.iter()
                     .map(|m| "\t".repeat(block_depth + 1) + &m.to_string(block_depth + 1))
                     .collect::<Vec<String>>()
                     .join("\n");
+                if !stringified_methods.is_empty() {
+                    stringified_methods.push('\n');
+                }
 
                 format!("impl {} {{\n{}{}}}\n", struct_name, stringified_methods, "\t".repeat(block_depth))
             },
@@ -158,26 +161,38 @@ impl Stmt {
                     value.to_string(block_depth)
                 )
             }
-            Stmt::IfStmt { .. } => todo!(),
-            Stmt::WhileStmt { .. } => todo!(),
-            Stmt::ForStmt { .. } => todo!(),
+            Stmt::IfStmt { condition, body, else_branch, .. } => {
+                let top = format!("if ({}) {}", condition.to_string(block_depth), body.to_string(block_depth));
+
+                if let Some(else_branch) = else_branch {
+                    format!("{} else {}", top, else_branch.to_string(block_depth))
+                } else {
+                    top
+                }
+            },
+            Stmt::WhileStmt { condition, body, .. } => {
+                format!("while ({}) {}",
+                        condition.to_string(block_depth),
+                    body.to_string(block_depth),
+                )
+            }
+            Stmt::ForStmt { var, iterable, body, .. } => {
+                format!("for ({} in {}) {}", var, iterable.to_string(block_depth), body.to_string(block_depth))
+            },
             Stmt::PrintStmt { .. } => todo!(),
             Stmt::BlockStmt { exprs, .. } => {
-                let mut res = String::from("{");
+                let mut res = vec![String::from("{")];
 
-                if !exprs.is_empty() {
-                    res += "\n";
-                }
                 for expr in exprs {
-                    res += &format!(
-                        "{}{}\n",
+                    res.push(format!(
+                        "{}{}",
                         "\t".repeat(block_depth + 1),
                         expr.to_string(block_depth + 1)
-                    );
+                    ));
                 }
 
-                res += &format!("{}}}", "\t".repeat(block_depth));
-                res
+                res.push(format!("{}}}", "\t".repeat(block_depth)));
+                res.join("\n")
             }
             Stmt::ExprStmt { expr, .. } => format!("{};", expr.to_string(block_depth)),
             Stmt::BreakStmt { .. } => String::from("break;"),
@@ -185,7 +200,6 @@ impl Stmt {
             Stmt::ReturnStmt { expr, .. } => format!("return {};", expr.to_string(block_depth)),
         };
 
-        res.push('\n');
         res
     }
 }

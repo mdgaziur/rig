@@ -18,8 +18,8 @@ impl StringStats {
     fn is_palindrome(self, source: String) -> bool {
         let idx = source.len() - 1;
 
-        while idx >= 0 {
-            if source.get(idx) != source.get(source.len() - idx - 1) {
+        while (idx >= 0) {
+            if (source.get(idx) != source.get(source.len() - idx - 1)) {
                 return false;
             }
         }
@@ -31,8 +31,8 @@ impl StringStats {
         let is_alnum = true;
 
         # iterations
-        for ch in source {
-            if !ch.is_alnum() {
+        for (ch in source) {
+            if (!ch.is_alnum()) {
                 is_alnum = false;
             }
         }

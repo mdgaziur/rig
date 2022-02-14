@@ -170,7 +170,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
                 error_type: ErrorType::Hard,
                 error_code: String::from("E0005"),
                 message: String::from("Expected keyword `fn` after `pub`"),
-                span: parser.peek().span.clone(),
+                span: parser.previous().span.clone(),
                 hint: None,
                 file_path: parser.source_path.to_string()
             })
@@ -180,7 +180,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
             error_type: ErrorType::Hard,
             error_code: String::from("E0005"),
             message: String::from("Expected keyword `fn`"),
-            span: parser.peek().span.clone(),
+            span: parser.previous().span.clone(),
             hint: None,
             file_path: parser.source_path.to_string()
         })
@@ -329,6 +329,8 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "impl" => struct_impl(parser),
             "while" => while_(parser),
             "if" => conditional_(parser),
+            "for" => for_(parser),
+            "loop" => loop_(parser),
             "break" => break_(parser),
             "continue" => continue_(parser),
             "return" => return_(parser),
@@ -357,7 +359,9 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
+    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
     let condition = expr(parser)?;
+    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
     let body = Box::new(block_stmt(parser)?);
 
@@ -371,7 +375,9 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
+    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
     let condition = expr(parser)?;
+    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
     let body = Box::new(block_stmt(parser)?);
     let else_branch;
@@ -402,6 +408,60 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
         condition,
         body,
         else_branch,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
+}
+
+fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
+    let var = parser.consume(TokenType::Identifier, "Expected variable name after `for`", None)?
+        .lexeme
+        .clone();
+
+    let in_ = parser.consume(TokenType::Keyword, "Expected `in` after variable name", None)?
+        .lexeme
+        .clone();
+    if in_ != "in" {
+        return Err(RigError {
+            error_type: ErrorType::Hard,
+            error_code: String::from("E0005"),
+            message: String::from("Expected keyword `in`"),
+            span: parser.previous().span.clone(),
+            hint: None,
+            file_path: parser.source_path.to_string()
+        })
+    }
+
+    let iterable = expr(parser)?;
+    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+
+    let body = Box::new(block_stmt(parser)?);
+
+    Ok(Stmt::ForStmt {
+        var,
+        iterable,
+        body,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
+}
+
+fn loop_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+    let body = Box::new(block_stmt(parser)?);
+
+    Ok(Stmt::WhileStmt {
+        condition: Expr::BooleanLiteralExpr {
+            value: true,
+            span: sp_start.clone(),
+        },
+        body,
         span: Span::merge(sp_start, parser.previous().span.clone())
     })
 }
