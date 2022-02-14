@@ -102,7 +102,13 @@ impl<'p> Parser<'p> {
             }
 
             match self.peek().token_type {
-                TokenType::Keyword => return,
+                TokenType::Keyword => {
+                    match self.peek().lexeme.as_str() {
+                        "struct" | "let" | "if" | "while" | "loop" | "for" | "fn" | "pub" | "return" | "use" |
+                        "impl" | "continue" | "break" => break,
+                        _ => ()
+                    }
+                },
                 _ => (),
             }
 
