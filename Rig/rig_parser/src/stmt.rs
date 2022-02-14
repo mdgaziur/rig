@@ -79,8 +79,14 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    let name = parser.consume(TokenType::Identifier, "Expected struct name after `struct`", None)?
-        .lexeme.clone();
+    let name = parser
+        .consume(
+            TokenType::Identifier,
+            "Expected struct name after `struct`",
+            None,
+        )?
+        .lexeme
+        .clone();
     let mut fields = Vec::new();
 
     parser.consume(TokenType::LeftBrace, "Expected `{` after struct name", None)?;
@@ -108,13 +114,17 @@ fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         parser.advance(); // eat comma
     }
 
-    parser.consume(TokenType::RightBrace, "Expected `}` after struct field list", None)?;
+    parser.consume(
+        TokenType::RightBrace,
+        "Expected `}` after struct field list",
+        None,
+    )?;
 
     Ok(Stmt::StructStmt {
         visibility: Visibility::from(visibility),
         name,
         fields,
-        span: Span::merge(sp_start, parser.previous().span.clone())
+        span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
 
@@ -194,29 +204,30 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
 /// Parses valid statement inside blocks
 fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     match parser.peek().token_type {
-        TokenType::Keyword => {
-            match parser.peek().lexeme.as_str() {
-                "let" => let_(parser, false),
-                "use" => use_(parser, false),
-                "struct" => struct_(parser, false),
-                "break" => break_(parser),
-                "continue" => continue_(parser),
-                _ => Err(RigError {
-                    error_code: String::from("E0005"),
-                    message: format!("Expected expression, `if`, `for`, `while`, \
+        TokenType::Keyword => match parser.peek().lexeme.as_str() {
+            "let" => let_(parser, false),
+            "use" => use_(parser, false),
+            "struct" => struct_(parser, false),
+            "break" => break_(parser),
+            "continue" => continue_(parser),
+            _ => Err(RigError {
+                error_code: String::from("E0005"),
+                message: format!(
+                    "Expected expression, `if`, `for`, `while`, \
                     `struct`, `impl`, `use`, `let`, `print`, `break`, `continue` \
-                     or `extern`. But found: `{}`", parser.peek().lexeme),
-                    error_type: ErrorType::Hard,
-                    file_path: parser.source_path.to_string(),
-                    hint: None,
-                    span: parser.peek().span.clone(),
-                })
-            }
+                     or `extern`. But found: `{}`",
+                    parser.peek().lexeme
+                ),
+                error_type: ErrorType::Hard,
+                file_path: parser.source_path.to_string(),
+                hint: None,
+                span: parser.peek().span.clone(),
+            }),
         },
         TokenType::LeftBrace => {
             parser.advance();
             block_stmt(parser)
-        },
+        }
         _ => expr_stmt(parser),
     }
 }

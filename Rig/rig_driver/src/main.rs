@@ -58,7 +58,11 @@ fn main() {
     let cli: RigCLI = RigCLI::parse();
 
     match cli.subcommands {
-        Subcommands::Run { file, unpretty, reconstruct_from_ast } => run(file, unpretty, reconstruct_from_ast),
+        Subcommands::Run {
+            file,
+            unpretty,
+            reconstruct_from_ast,
+        } => run(file, unpretty, reconstruct_from_ast),
         Subcommands::Explain { error_code: _ } => {}
     }
 }

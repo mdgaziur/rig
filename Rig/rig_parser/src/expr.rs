@@ -1,11 +1,11 @@
 use crate::Parser;
 use rig_ast::expr::Expr;
 use rig_ast::op::{BinaryOperator, LogicalOperator, UnaryOperator};
+use rig_ast::struct_field::StructExprField;
 use rig_ast::token::TokenType;
 use rig_error::{ErrorType, RigError};
 use rig_span::Span;
 use std::str::FromStr;
-use rig_ast::struct_field::StructExprField;
 
 pub fn expr(parser: &mut Parser) -> Result<Expr, RigError> {
     assignment(parser)
@@ -63,7 +63,7 @@ pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
                         name: Box::new(expr),
                         vals,
                         span: Span::merge(sp_start, parser.previous().span.clone()),
-                    })
+                    });
                 }
                 loop {
                     parser.consume(TokenType::Comma, "Expected comma before expression", None)?;
@@ -83,20 +83,20 @@ pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
             } else {
                 Ok(expr)
             }
-        },
-        _ => Ok(expr)
+        }
+        _ => Ok(expr),
     }
 }
 
 fn field_with_val(parser: &mut Parser) -> Result<StructExprField, RigError> {
-    let field = parser.consume(TokenType::Identifier, "Expected field name", None)?.lexeme.clone();
+    let field = parser
+        .consume(TokenType::Identifier, "Expected field name", None)?
+        .lexeme
+        .clone();
     parser.consume(TokenType::Colon, "Expected `:` after field name", None)?;
     let val = assignment(parser)?;
 
-    Ok(StructExprField {
-        name: field,
-        val,
-    })
+    Ok(StructExprField { name: field, val })
 }
 
 pub fn logical_or(parser: &mut Parser) -> Result<Expr, RigError> {

@@ -9,7 +9,6 @@ use rig_ast::token::{Token, TokenType};
 
 use rig_error::{ErrorType, RigError};
 
-
 pub struct Parser<'p> {
     source_path: &'p str,
     source: &'p str,

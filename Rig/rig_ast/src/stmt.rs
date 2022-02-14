@@ -1,8 +1,8 @@
 use crate::expr::Expr;
 use crate::function_prototype::Prototype;
+use crate::struct_field::StructField;
 use crate::visibility::Visibility;
 use rig_span::Span;
-use crate::struct_field::StructField;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -69,13 +69,15 @@ pub enum Stmt {
     },
     ContinueStmt {
         span: Span,
-    }
+    },
 }
 
 impl Stmt {
     pub fn to_string(&self, block_depth: usize) -> String {
         let mut res = match self {
-            Stmt::UseStmt { path, visibility, .. } => {
+            Stmt::UseStmt {
+                path, visibility, ..
+            } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
                     vis.push(' ');
@@ -83,7 +85,12 @@ impl Stmt {
 
                 format!("{}use {};", vis, path.to_string(block_depth))
             }
-            Stmt::StructStmt { visibility, name, fields, .. } => {
+            Stmt::StructStmt {
+                visibility,
+                name,
+                fields,
+                ..
+            } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
                     vis.push(' ');
@@ -100,17 +107,28 @@ impl Stmt {
 
                 res += &format!("{}}}", "\t".repeat(block_depth));
                 res
-            },
+            }
             Stmt::ImplStmt { .. } => todo!(),
-            Stmt::FnStmt { prototype, body, visibility, .. } => {
+            Stmt::FnStmt {
+                prototype,
+                body,
+                visibility,
+                ..
+            } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
                     vis.push(' ');
                 }
 
                 format!("{}fn{:?} {}", vis, prototype, body.to_string(block_depth))
-            },
-            Stmt::LetStmt { name,  value, ty, visibility, .. } => {
+            }
+            Stmt::LetStmt {
+                name,
+                value,
+                ty,
+                visibility,
+                ..
+            } => {
                 let mut vis = visibility.to_string();
                 if !vis.is_empty() {
                     vis.push(' ');
@@ -121,7 +139,13 @@ impl Stmt {
                     None => String::new(),
                 };
 
-                format!("{}let {}{} = {};", vis, name, type_, value.to_string(block_depth))
+                format!(
+                    "{}let {}{} = {};",
+                    vis,
+                    name,
+                    type_,
+                    value.to_string(block_depth)
+                )
             }
             Stmt::IfStmt { .. } => todo!(),
             Stmt::WhileStmt { .. } => todo!(),
@@ -134,7 +158,11 @@ impl Stmt {
                     res += "\n";
                 }
                 for expr in exprs {
-                    res += &format!("{}{}\n", "\t".repeat(block_depth + 1), expr.to_string(block_depth + 1));
+                    res += &format!(
+                        "{}{}\n",
+                        "\t".repeat(block_depth + 1),
+                        expr.to_string(block_depth + 1)
+                    );
                 }
 
                 res += &format!("{}}}", "\t".repeat(block_depth));

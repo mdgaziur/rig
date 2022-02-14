@@ -22,7 +22,7 @@ impl ToString for StructField {
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructExprField {
     pub name: String,
-    pub val: Expr
+    pub val: Expr,
 }
 
 impl StructExprField {
