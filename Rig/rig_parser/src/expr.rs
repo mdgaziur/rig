@@ -205,7 +205,6 @@ pub fn comparison(parser: &mut Parser) -> Result<Expr, RigError> {
             {
                 parser.advance();
                 let rhs = bitwise_or(parser)?;
-
                 expr = Expr::LogicalExpr {
                     lhs: Box::new(expr),
                     op: op.clone(),
@@ -467,6 +466,7 @@ pub fn arguments(parser: &mut Parser) -> Result<Vec<Box<Expr>>, RigError> {
             break;
         }
 
+        parser.advance();
         args.push(Box::new(expr(parser)?));
     }
 
