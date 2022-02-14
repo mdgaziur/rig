@@ -70,14 +70,8 @@ pub enum TokenType {
     /// +
     Plus,
 
-    /// +=
-    PlusEquals,
-
     /// -
     Minus,
-
-    /// -=
-    MinusEquals,
 
     /// ->
     Arrow,
@@ -85,26 +79,14 @@ pub enum TokenType {
     /// *
     Multiply,
 
-    /// *=
-    MultiplyEquals,
-
     /// /
     Divide,
-
-    /// /=
-    DivideEquals,
 
     /// %
     Modulus,
 
-    /// %=
-    ModulusEquals,
-
     /// &
     AndOp,
-
-    /// &=
-    AndOpEquals,
 
     /// &&
     And,
@@ -114,9 +96,6 @@ pub enum TokenType {
 
     /// ||
     Or,
-
-    /// |=
-    OrOpEquals,
 
     /// =
     Equal,
@@ -133,9 +112,6 @@ pub enum TokenType {
     /// <<
     LeftShift,
 
-    /// <<=
-    LeftShiftEquals,
-
     /// <=
     LessThanOrEquals,
 
@@ -145,17 +121,11 @@ pub enum TokenType {
     /// >>
     RightShift,
 
-    /// >>=
-    RightShiftEquals,
-
     /// >=
     GreaterThanOrEquals,
 
     /// ^
     Xor,
-
-    /// ^=
-    XorEquals,
 
     /// .
     Dot,

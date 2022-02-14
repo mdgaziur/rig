@@ -42,6 +42,11 @@ impl<'l> Lexer<'l> {
                 ',' => tokens.push(single_char_token!(self, ',', TokenType::Comma)),
                 ';' => tokens.push(single_char_token!(self, ';', TokenType::Semicolon)),
                 '.' => tokens.push(single_char_token!(self, ';', TokenType::Dot)),
+                '+' => tokens.push(single_char_token!(self, '+', TokenType::Plus)),
+                '*' => tokens.push(single_char_token!(self, '*', TokenType::Multiply)),
+                '/' => tokens.push(single_char_token!(self, '/', TokenType::Divide)),
+                '%' => tokens.push(single_char_token!(self, '%', TokenType::Modulus)),
+                '^' => tokens.push(single_char_token!(self, '^', TokenType::Xor)),
 
                 // double or single character tokens
                 ':' => {
@@ -66,51 +71,15 @@ impl<'l> Lexer<'l> {
                         TokenType::Bang
                     )
                 }
-                '+' => {
-                    double_char_token!(
-                        self,
-                        tokens,
-                        '=',
-                        "+=",
-                        '+',
-                        TokenType::PlusEquals,
-                        TokenType::Plus
-                    )
-                }
                 '-' => {
                     double_char_token!(
                         self,
                         tokens,
-                        '=',
-                        "+=",
                         '>',
                         "->",
-                        '+',
-                        TokenType::MinusEquals,
+                        '-',
                         TokenType::Arrow,
                         TokenType::Minus
-                    )
-                }
-                '*' => {
-                    double_char_token!(
-                        self,
-                        tokens,
-                        '=',
-                        "*=",
-                        '*',
-                        TokenType::MultiplyEquals,
-                        TokenType::Multiply
-                    )
-                }
-                '/' => {
-                    double_char_token!(
-                        self,
-                        tokens,
-                        '=',
-                        "/=",
-                        '/',
-                        TokenType::DivideEquals,
-                        TokenType::Divide
                     )
                 }
                 '#' => {
@@ -122,27 +91,13 @@ impl<'l> Lexer<'l> {
                         self.advance();
                     }
                 }
-                '%' => {
-                    double_char_token!(
-                        self,
-                        tokens,
-                        '=',
-                        "%=",
-                        '%',
-                        TokenType::ModulusEquals,
-                        TokenType::Modulus
-                    )
-                }
                 '&' => {
                     double_char_token!(
                         self,
                         tokens,
-                        '=',
-                        "&=",
                         '&',
                         "&&",
                         '&',
-                        TokenType::AndOpEquals,
                         TokenType::And,
                         TokenType::AndOp
                     )
@@ -151,12 +106,9 @@ impl<'l> Lexer<'l> {
                     double_char_token!(
                         self,
                         tokens,
-                        '=',
-                        "|=",
                         '|',
                         "||",
                         '|',
-                        TokenType::OrOpEquals,
                         TokenType::Or,
                         TokenType::OrOp
                     )
@@ -173,49 +125,32 @@ impl<'l> Lexer<'l> {
                     )
                 }
                 '<' => {
-                    triple_char_token!(
-                        self,
-                        tokens,
-                        '<',
-                        '=',
-                        '=',
-                        '<',
-                        "<<",
-                        "<=",
-                        "<<=",
-                        TokenType::LessThan,
-                        TokenType::LeftShift,
-                        TokenType::LessThanOrEquals,
-                        TokenType::LeftShiftEquals
-                    );
-                }
-                '>' => {
-                    triple_char_token!(
-                        self,
-                        tokens,
-                        '>',
-                        '=',
-                        '=',
-                        '>',
-                        ">>",
-                        ">=",
-                        ">>=",
-                        TokenType::GreaterThan,
-                        TokenType::RightShift,
-                        TokenType::GreaterThanOrEquals,
-                        TokenType::RightShiftEquals
-                    );
-                }
-                '^' => {
                     double_char_token!(
                         self,
                         tokens,
+                        '<',
+                        "<<",
                         '=',
-                        "^=",
-                        '^',
-                        TokenType::XorEquals,
-                        TokenType::Xor
-                    )
+                        "<=",
+                        '<',
+                        TokenType::LeftShift,
+                        TokenType::LessThanOrEquals,
+                        TokenType::LessThan
+                    );
+                }
+                '>' => {
+                    double_char_token!(
+                        self,
+                        tokens,
+                        '>',
+                        ">>",
+                        '=',
+                        ">=",
+                        '>',
+                        TokenType::RightShift,
+                        TokenType::GreaterThanOrEquals,
+                        TokenType::GreaterThan
+                    );
                 }
                 '"' => {
                     let mut lexeme = String::new();
