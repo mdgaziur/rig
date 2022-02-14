@@ -326,6 +326,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "use" => use_(parser, false),
             "struct" => struct_(parser, false),
             "impl" => struct_impl(parser),
+            "while" => while_(parser),
             "break" => break_(parser),
             "continue" => continue_(parser),
             "return" => return_(parser),
@@ -349,6 +350,20 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         _ => expr_stmt(parser),
     }
+}
+
+fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+    let condition = expr(parser)?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
+    let body = Box::new(block_stmt(parser)?);
+
+    Ok(Stmt::WhileStmt {
+        condition,
+        body,
+        span: Span::merge(sp_start, parser.previous().span.clone()),
+    })
 }
 
 fn return_(parser: &mut Parser) -> Result<Stmt, RigError> {
