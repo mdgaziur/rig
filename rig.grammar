@@ -36,7 +36,19 @@ printStmt           -> "print" expression ";" ;
 returnStmt          -> "return" expression ";" ;
 
 expression          -> assignment ;
-assignment          -> ( call "." )? IDENTIFIER "=" assignment | struct ;
+assignment          -> ( call "." )? IDENTIFIER (
+                                                    "="
+                                                    "&="    |
+                                                    "^="    |
+                                                    "|="    |
+                                                    "<<="   |
+                                                    ">>="   |
+                                                    "+="    |
+                                                    "-="    |
+                                                    "*="    |
+                                                    "/="    |
+                                                    "%="
+                                                    ) assignment | struct ;
 struct              -> ( path "{" IDENTIFIER ":" expr ( "," IDENTIFIER ":" expr )* "}" ) | logical_or ;
 logical_or          -> logical_and  ( "||" logical_and )* ;
 logical_and         -> equality   ( "&&" equality  )* ;
