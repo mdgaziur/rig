@@ -12,12 +12,10 @@ use rig_span::Span;
 pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
     match parser.peek().token_type {
         TokenType::Keyword => {
-            if parser.peek().lexeme == "impl" {
-                struct_impl(parser)
-            } else if parser.peek().lexeme == "extern" {
-                extern_block(parser)
-            } else {
-                visibility(parser)
+            match parser.peek().lexeme.as_str() {
+                "impl" => struct_impl(parser),
+                "extern" => extern_block(parser),
+                _ => visibility(parser),
             }
         }
         _ => Err(RigError {
@@ -50,12 +48,13 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             "use" => use_(parser, is_pub),
             "fn" => fn_(parser, is_pub),
             "struct" => struct_(parser, is_pub),
+            "mod" => mod_(parser, is_pub),
             "let" => let_(parser, is_pub),
             _ => Err(RigError {
                 error_type: ErrorType::Hard,
                 error_code: String::from("E0005"),
                 message: format!(
-                    "Expected `use`/`fn`/`struct`/`let`, found `{}`",
+                    "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
                     &parser.peek().lexeme
                 ),
                 hint: None,
@@ -67,7 +66,7 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             error_type: ErrorType::Hard,
             error_code: String::from("E0005"),
             message: format!(
-                "Expected `use`/`fn`/`struct`/`let`, found `{}`",
+                "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
                 &parser.peek().lexeme
             ),
             hint: None,
@@ -371,6 +370,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         TokenType::Keyword => match parser.peek().lexeme.as_str() {
             "let" => let_(parser, false),
             "use" => use_(parser, false),
+            "mod" => mod_(parser, false),
             "struct" => struct_(parser, false),
             "extern" => extern_block(parser),
             "impl" => struct_impl(parser),
@@ -387,7 +387,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
                 message: format!(
                     "Expected expression, `if`, `for`, `while`, \
                     `struct`, `impl`, `use`, `let`, `print`, `break`, `continue` \
-                     or `extern`. But found: `{}`",
+                     `mod` or `extern`. But found: `{}`",
                     parser.peek().lexeme
                 ),
                 error_type: ErrorType::Hard,
@@ -402,6 +402,37 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         _ => expr_stmt(parser),
     }
+}
+
+fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+
+    let mod_name = parser.consume(TokenType::Identifier, "Expected module name", None)?
+        .lexeme
+        .clone();
+    let body;
+
+    if parser.peek().token_type == TokenType::LeftBrace {
+        parser.advance();
+        let mut stmts = Vec::new();
+        while parser.peek().token_type != TokenType::RightBrace && !parser.is_eof() {
+            stmts.push(program(parser)?);
+        }
+
+        parser.consume(TokenType::RightBrace, "Expected `}`", None)?;
+        body = Some(stmts);
+    } else {
+        parser.consume(TokenType::Semicolon, "Expected `;`", None)?;
+        body = None;
+    }
+
+    Ok(Stmt::ModStmt {
+        name: mod_name,
+        body,
+        visibility: Visibility::from(visibility),
+        span: Span::merge(sp_start, parser.peek().span.clone())
+    })
 }
 
 fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {

@@ -1,7 +1,9 @@
 use std::io;
 
-extern {
-    fn builtin_hello_world();
+mod builtin {
+    extern {
+        fn hello_world();
+    }
 }
 
 struct StringStats {
@@ -49,6 +51,10 @@ impl StringStats {
 }
 
 fn main() {
+    mod x {
+        fn main() {}
+    }
+
     loop {
         let input = io::input("Enter a string: ");
         let string_stats = StringStats::init(input);
@@ -59,6 +65,6 @@ length = {string_stats.length}");
 
     extern {}
 
-    builtin_hello_world();
+    builtin::hello_world();
     print f(g<a,b>(c));
 }

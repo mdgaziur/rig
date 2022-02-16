@@ -78,6 +78,12 @@ pub enum Stmt {
     ContinueStmt {
         span: Span,
     },
+    ModStmt {
+        name: String,
+        body: Option<Vec<Stmt>>,
+        visibility: Visibility,
+        span: Span,
+    },
 }
 
 impl Stmt {
@@ -205,12 +211,33 @@ impl Stmt {
             Stmt::ExternStmt { prototypes, .. } => {
                 let stringified_prototypes = prototypes.iter()
                     .map(|p| p.to_string())
-                    .map(|p| format!("{}{}", "\t".repeat(block_depth + 1), p))
+                    .map(|p| format!("{}{};", "\t".repeat(block_depth + 1), p))
                     .collect::<Vec<String>>()
                     .join(";\n");
 
                 let newline = if !stringified_prototypes.is_empty() { "\n" } else { "" };
                 format!("extern {{{}{}{}{}}}", newline, stringified_prototypes, newline, "\t".repeat(block_depth))
+            }
+            Stmt::ModStmt { name, body, .. } => {
+                let mut res = vec![format!("mod {}", name)];
+
+                if let Some(body) = body {
+                    res[0] += " {";
+
+                    for stmt in body {
+                        res.push(format!(
+                            "{}{}",
+                            "\t".repeat(block_depth + 1),
+                            stmt.to_string(block_depth + 1)
+                        ));
+                    }
+
+                    res.push(format!("{}}}", "\t".repeat(block_depth)));
+                } else {
+                    res.push(";".to_string());
+                }
+
+                res.join("\n")
             }
         };
 

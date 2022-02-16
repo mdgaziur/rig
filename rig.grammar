@@ -11,8 +11,9 @@
 program             -> ( visibility | structImpl | extern )* EOF ;
 
 visibility          -> "pub"? declaration ;
-declaration         -> useDecl | fnDecl | structDecl | varDecl ;
+declaration         -> useDecl | mod | fnDecl | structDecl | varDecl ;
 useDecl             -> "use" path ";" ;
+mod                 -> "mod" IDENTIFIER ("{" program "}")? ;
 extern              -> "extern" "{" ( "pub"? prototype ";" )* "}" ;
 fnDecl              -> prototype blockStmt ;
 prototype           -> "fn" IDENTIFIER "(" name_with_type ( "," name_with_type )* ")" ( "->" path )? ;
