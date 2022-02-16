@@ -250,8 +250,54 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     })
 }
 
-fn extern_block(_parser: &mut Parser) -> Result<Stmt, RigError> {
-    todo!()
+fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+
+    let mut prototypes = Vec::new();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` after `extern`", None)?;
+
+    while parser.peek().token_type != TokenType::RightBrace && !parser.is_eof() {
+        let vis;
+        if parser.peek().lexeme == "pub" {
+            vis = true;
+            parser.advance();
+
+            if parser.peek().lexeme != "fn" {
+                return Err(RigError {
+                    error_type: ErrorType::Hard,
+                    error_code: String::from("E0005"),
+                    message: String::from("Expected keyword `fn` after `pub`"),
+                    span: parser.previous().span.clone(),
+                    hint: None,
+                    file_path: parser.source_path.to_string()
+                })
+            }
+        } else if parser.peek().lexeme != "fn"{
+            return Err(RigError {
+                error_type: ErrorType::Hard,
+                error_code: String::from("E0005"),
+                message: String::from("Expected keyword `fn`"),
+                span: parser.previous().span.clone(),
+                hint: None,
+                file_path: parser.source_path.to_string()
+            })
+        } else {
+            vis = false;
+        }
+        parser.advance();
+
+        prototypes.push(prototype(parser, vis)?);
+        parser.consume(TokenType::Semicolon, "Expected `;` after prototype", None)?;
+    }
+
+    parser.consume(TokenType::RightBrace, "Expected `}` after `extern` body", None)?;
+
+    Ok(Stmt::ExternStmt {
+        prototypes,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
 }
 
 fn use_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
@@ -326,6 +372,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "let" => let_(parser, false),
             "use" => use_(parser, false),
             "struct" => struct_(parser, false),
+            "extern" => extern_block(parser),
             "impl" => struct_impl(parser),
             "while" => while_(parser),
             "if" => conditional_(parser),

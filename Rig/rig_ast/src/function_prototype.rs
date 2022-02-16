@@ -24,13 +24,13 @@ impl ToString for Prototype {
 
         let ty_string;
         if let Some(ty) = &self.return_ty {
-            ty_string = ty.to_string(0);
+            ty_string = format!(" -> {}", ty.to_string(0));
         } else {
             ty_string = String::new();
         }
 
         format!(
-            "{} {}({}) -> {}",
+            "{} {}({}){}",
             self.visibility.to_string(),
             &self.name,
             args_string,

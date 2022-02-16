@@ -22,6 +22,10 @@ pub enum Stmt {
         methods: Vec<Box<Stmt>>,
         span: Span,
     },
+    ExternStmt {
+        prototypes: Vec<Prototype>,
+        span: Span,
+    },
     FnStmt {
         prototype: Prototype,
         body: Box<Stmt>,
@@ -198,6 +202,16 @@ impl Stmt {
             Stmt::BreakStmt { .. } => String::from("break;"),
             Stmt::ContinueStmt { .. } => String::from("continue;"),
             Stmt::ReturnStmt { expr, .. } => format!("return {};", expr.to_string(block_depth)),
+            Stmt::ExternStmt { prototypes, .. } => {
+                let stringified_prototypes = prototypes.iter()
+                    .map(|p| p.to_string())
+                    .map(|p| format!("{}{}", "\t".repeat(block_depth + 1), p))
+                    .collect::<Vec<String>>()
+                    .join(";\n");
+
+                let newline = if !stringified_prototypes.is_empty() { "\n" } else { "" };
+                format!("extern {{{}{}{}{}}}", newline, stringified_prototypes, newline, "\t".repeat(block_depth))
+            }
         };
 
         res
