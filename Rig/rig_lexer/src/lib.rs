@@ -4,7 +4,7 @@ mod escape;
 
 use crate::escape::escape;
 use rig_ast::token::{Token, TokenType, KEYWORDS};
-use rig_error::{ErrorType, RigError};
+use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_span::Span;
 
 pub struct Lexer<'l> {
@@ -252,7 +252,7 @@ impl<'l> Lexer<'l> {
                                             error_type: ErrorType::Hard,
                                             file_path: self.file_path.to_string(),
                                             hint: None,
-                                            error_code: String::from("E0004"),
+                                            error_code: ErrorCode::E0004,
                                             span: Span::for_single_line(
                                                 self.file_path,
                                                 escape_char_line,
@@ -268,7 +268,7 @@ impl<'l> Lexer<'l> {
                                             error_type: ErrorType::Hard,
                                             file_path: self.file_path.to_string(),
                                             hint: None,
-                                            error_code: String::from("E0004"),
+                                            error_code: ErrorCode::E0004,
                                             span: Span::for_single_line(
                                                 self.file_path,
                                                 escape_char_line,
@@ -286,7 +286,7 @@ impl<'l> Lexer<'l> {
                                     error_type: ErrorType::Hard,
                                     file_path: self.file_path.to_string(),
                                     hint: None,
-                                    error_code: String::from("E0004"),
+                                    error_code: ErrorCode::E0004,
                                     span: Span::for_single_char(
                                         self.file_path,
                                         self.line,
@@ -314,7 +314,7 @@ impl<'l> Lexer<'l> {
                             error_type: ErrorType::Hard,
                             file_path: self.file_path.to_string(),
                             hint: Some(String::from("insert '\"' here")),
-                            error_code: String::from("E0002"),
+                            error_code: ErrorCode::E0002,
                             span: Span::for_single_line(
                                 self.file_path,
                                 starting_line,
@@ -380,7 +380,7 @@ impl<'l> Lexer<'l> {
                                             error_type: ErrorType::Hard,
                                             file_path: self.file_path.to_string(),
                                             hint: None,
-                                            error_code: String::from("E0004"),
+                                            error_code: ErrorCode::E0004,
                                             span: Span::for_single_line(
                                                 self.file_path,
                                                 escape_char_line,
@@ -396,7 +396,7 @@ impl<'l> Lexer<'l> {
                                             error_type: ErrorType::Hard,
                                             file_path: self.file_path.to_string(),
                                             hint: None,
-                                            error_code: String::from("E0004"),
+                                            error_code: ErrorCode::E0004,
                                             span: Span::for_single_line(
                                                 self.file_path,
                                                 escape_char_line,
@@ -413,7 +413,7 @@ impl<'l> Lexer<'l> {
                                     error_type: ErrorType::Hard,
                                     file_path: self.file_path.to_string(),
                                     hint: None,
-                                    error_code: String::from("E0004"),
+                                    error_code: ErrorCode::E0005,
                                     span: Span::for_single_char(
                                         self.file_path,
                                         self.line,
@@ -452,7 +452,7 @@ impl<'l> Lexer<'l> {
                             error_type: ErrorType::Hard,
                             file_path: self.file_path.to_string(),
                             hint: Some(String::from("insert '\"' here")),
-                            error_code: String::from("E0002"),
+                            error_code: ErrorCode::E0002,
                             span,
                         });
                         continue;
@@ -528,7 +528,7 @@ impl<'l> Lexer<'l> {
                                 error_type: ErrorType::Hard,
                                 file_path: self.file_path.to_string(),
                                 hint: Some(String::from("remove this dot")),
-                                error_code: String::from("E0003"),
+                                error_code: ErrorCode::E0003,
                                 span: Span::for_single_line(
                                     self.file_path,
                                     line,
@@ -578,7 +578,7 @@ impl<'l> Lexer<'l> {
                     error_type: ErrorType::Hard,
                     file_path: self.file_path.to_string(),
                     hint: None,
-                    error_code: String::from("E0001"),
+                    error_code: ErrorCode::E0001,
                     span: Span::for_single_char(self.file_path, self.line, self.offset),
                 }),
             }

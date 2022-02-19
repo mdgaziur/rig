@@ -1,43 +1,44 @@
 use std::fs::File;
 
 pub struct TestXYZ {
-	x: sometype,
-	pub y: ty,
-	pub anotherfield: x,
+    x: sometype,
+    pub y: ty,
+    pub anotherfield: x,
 }
 
 fn hello(f: File) -> None {
-	struct TestXYZ {
-		x: sometype,
-		pub y: ty,
-		pub anotherfield: x,
-	}
+    struct TestXYZ {
+        x: sometype,
+        pub y: ty,
+        pub anotherfield: x,
+    }
 
-	let x: File = ((((((((2 * 3)) * x) * 2) + (2 / 3)) << 3) & 1) == (2 % (!3)));
+    let x: File = ((((((((2 * 3)) * x) * 2) + (2 / 3)) << 3) & 1) == (2 % (!3)));
 
-	let y: YetAnotherType = ((x + 1) + x.call());
+    let y: YetAnotherType = ((x + 1) + x.call());
 
-	let NoTypeAnnotation = y = (x * 2);
+    let NoTypeAnnotation = y = (x * 2);
 
-	let s = File::open("/dev/urandom");
+    let s = File::open("/dev/urandom");
 
-	x.y = "hello";
+    x.y = "hello";
 
-	break;
+    break;
 
-	x()()().y(y()()());
+    x()()().y(y()()());
 
-	{
-		let z = 1;
+    {
+        let z = 1;
 
-	}
+    }
+    return null;
 
-	let x: y = SomeModule::TestXYZ {
-		x: sometype::new(),
-		y: ty::new(),
-		anotherfield: x {
-			y: x
-		}
-	};
+    let x: y = SomeModule::TestXYZ {
+        x: sometype::new(),
+        y: ty::new(),
+        anotherfield: x {
+            y: x
+        }
+    };
 
 }

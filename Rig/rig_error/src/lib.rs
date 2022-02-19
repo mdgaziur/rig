@@ -6,13 +6,13 @@ use rig_span::Span;
 use std::cmp::max;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RigError {
     /// Describes the type of error
     pub error_type: ErrorType,
 
     /// Error code
-    pub error_code: String,
+    pub error_code: ErrorCode,
 
     /// Describes the erroneous part of the code
     pub span: Span,
@@ -27,8 +27,33 @@ pub struct RigError {
     pub file_path: String,
 }
 
+/// Error code
+#[derive(Debug, Clone)]
+pub enum ErrorCode {
+    /// Unknown character
+    E0001,
+
+    /// Unterminated string literal
+    E0002,
+
+    /// Invalid integer literal
+    E0003,
+
+    /// Invalid escape character
+    E0004,
+
+    /// Unexpected token
+    E0005,
+
+    /// Invalid assignment
+    E0006,
+
+    /// Unreachable/dead code
+    E0007
+}
+
 /// Describes the type of error
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorType {
     /// Error
     Hard,
@@ -89,7 +114,7 @@ impl RigError {
     }
 
     pub fn print(&self, file_content: &str) {
-        eprintln!("{}[{}]: {}", self.error_type, self.error_code, self.message);
+        eprintln!("{}[{:?}]: {}", self.error_type, self.error_code, self.message);
         let starting_line_num_len = number_len(self.span.starting_line);
         let ending_line_num_len = number_len(self.span.ending_line);
         let max_line_num_len = max(starting_line_num_len, ending_line_num_len);
@@ -125,7 +150,7 @@ impl RigError {
         } else {
             self.write_marker(
                 self.span.starting_line_offset,
-                self.span.starting_line_end_offset,
+                self.span.ending_line_end_offset,
                 &blank_line,
                 self.hint.as_ref(),
             );
@@ -149,7 +174,7 @@ impl RigError {
         eprintln!(
             "{}{}{}",
             "note: use `rig explain ".blue().bold(),
-            self.error_code.blue().bold(),
+            format!("{:?}", self.error_code).blue().bold(),
             "` to know more about the error".blue().bold()
         );
     }

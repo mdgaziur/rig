@@ -243,4 +243,47 @@ impl Stmt {
 
         res
     }
+
+    pub fn node_name(&self) -> &str {
+        match self {
+            Stmt::UseStmt { .. } => "use",
+            Stmt::StructStmt { .. } => "struct",
+            Stmt::ImplStmt { .. } => "impl",
+            Stmt::ExternStmt { .. } => "extern",
+            Stmt::FnStmt { .. } => "fn",
+            Stmt::LetStmt { .. } => "let",
+            Stmt::IfStmt { .. } => "if",
+            Stmt::WhileStmt { .. } => "while",
+            Stmt::ForStmt { .. } => "for",
+            Stmt::PrintStmt { .. } => "print",
+            Stmt::ReturnStmt { .. } => "return",
+            Stmt::BlockStmt { .. } => "block",
+            Stmt::ExprStmt { .. } => "expression",
+            Stmt::BreakStmt { .. } => "break",
+            Stmt::ContinueStmt { .. } => "continue",
+            Stmt::ModStmt { .. } => "mod",
+        }
+    }
+
+    pub fn get_span(&self) -> Span {
+        // TODO: not proud of this weird way to get span
+        match self {
+            Stmt::UseStmt { span, .. } => span,
+            Stmt::StructStmt { span, .. } => span,
+            Stmt::ImplStmt { span, .. } => span,
+            Stmt::ExternStmt { span, .. } => span,
+            Stmt::FnStmt { span, .. } => span,
+            Stmt::LetStmt { span, .. } => span,
+            Stmt::IfStmt { span, .. } => span,
+            Stmt::WhileStmt { span, .. } => span,
+            Stmt::ForStmt { span, .. } => span,
+            Stmt::PrintStmt { span, .. } => span,
+            Stmt::ReturnStmt { span, .. } => span,
+            Stmt::BlockStmt { span, .. } => span,
+            Stmt::ExprStmt { span, .. } => span,
+            Stmt::BreakStmt { span, .. } => span,
+            Stmt::ContinueStmt { span, .. } => span,
+            Stmt::ModStmt { span, .. } => span,
+        }.clone()
+    }
 }

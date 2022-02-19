@@ -7,24 +7,23 @@ use rig_ast::expr::Expr;
 use rig_ast::stmt::Stmt;
 use rig_ast::token::{Token, TokenType};
 
-use rig_error::{ErrorType, RigError};
+use rig_error::{ErrorCode, ErrorType, RigError};
 
 pub struct Parser<'p> {
     source_path: &'p str,
-    source: &'p str,
-    pub has_error_inside_block_stmt: bool,
     lexical_tokens: &'p [Token],
     pos: usize,
+    /// Errors inside block statement
+    block_stmt_errs: Vec<RigError>,
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(source_path: &'p str, source: &'p str, lexical_tokens: &'p [Token]) -> Self {
+    pub fn new(source_path: &'p str, lexical_tokens: &'p [Token]) -> Self {
         Self {
             source_path,
-            source,
-            has_error_inside_block_stmt: false,
             lexical_tokens,
             pos: 0,
+            block_stmt_errs: vec![],
         }
     }
 
@@ -73,7 +72,7 @@ impl<'p> Parser<'p> {
         if self.is_eof() {
             return Err(RigError {
                 error_type: ErrorType::Hard,
-                error_code: String::from("E0005"),
+                error_code: ErrorCode::E0005,
                 span: self.peek().span.clone(),
                 message: format!("{}, but found unexpected eof", message),
                 hint,
@@ -82,7 +81,7 @@ impl<'p> Parser<'p> {
         }
         Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             span: self.peek().span.clone(),
             message: format!("{}, but found `{}`", message, self.peek().lexeme),
             hint,
@@ -118,22 +117,30 @@ impl<'p> Parser<'p> {
 }
 
 /// Return: (AST, hadError)
-pub fn parse(parser: &mut Parser, file_content: &str) -> (Vec<Stmt>, bool) {
+pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
     let mut statements = Vec::new();
-    let mut had_error = false;
+    let mut errs = Vec::new();
 
     while !parser.is_eof() {
         match program(parser) {
-            Ok(stmt) => statements.push(stmt),
+            Ok(stmt) => {
+                if !parser.block_stmt_errs.is_empty() {
+                    errs.extend(parser.block_stmt_errs.clone());
+
+                    // clear the block statement errors list for next batch of errors in block statements
+                    parser.block_stmt_errs.clear();
+                }
+
+                statements.push(stmt)
+            },
             Err(e) => {
-                had_error = true;
-                e.print(file_content);
+                errs.push(e);
                 parser.synchronize();
             }
         }
     }
 
-    (statements, had_error)
+    (statements, errs)
 }
 
 fn name_with_type(parser: &mut Parser) -> Result<(Token, Expr), RigError> {

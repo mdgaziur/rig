@@ -3,7 +3,7 @@ use rig_ast::expr::Expr;
 use rig_ast::op::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rig_ast::struct_field::StructExprField;
 use rig_ast::token::TokenType;
-use rig_error::{ErrorType, RigError};
+use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_span::Span;
 use std::str::FromStr;
 
@@ -49,7 +49,7 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                     span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
                 }),
                 _ => Err(RigError {
-                    error_code: String::from("EOOO6"),
+                    error_code: ErrorCode::E0006,
                     message: String::from(
                         "Invalid assignment. Expected property or a variable as lvalue",
                     ),
@@ -81,7 +81,7 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                 span: Span::merge(span, parser.previous().span.clone()),
             }),
             _ => Err(RigError {
-                error_code: String::from("EOOO6"),
+                error_code: ErrorCode::E0006,
                 message: String::from(
                     "Invalid assignment. Expected property or a variable as lvalue",
                 ),
@@ -576,7 +576,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                 }),
                 _ => Err(RigError {
                     error_type: ErrorType::Hard,
-                    error_code: String::from("E0005"),
+                    error_code: ErrorCode::E0005,
                     message: format!(
                         "Expected `true`/`false`/`null`/`self`, found `{}`",
                         &parser.peek().lexeme
@@ -606,7 +606,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
         }
         _ => Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             message: format!(
                 "Expected primary expression, found `{}`",
                 &parser.peek().lexeme

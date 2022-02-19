@@ -12,3 +12,4 @@ rig_error = { path = "../rig_error" }
 rig_span = { path = "../rig_span" }
 rig_lexer = { path = "../rig_lexer" }
 rig_parser = { path = "../rig_parser" }
+rig_analyzer = { path = "../rig_analyzer" }

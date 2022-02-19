@@ -169,6 +169,10 @@ dependencies = [
 [[package]]
 name = "rig_analyzer"
 version = "0.1.0"
+dependencies = [
+ "rig_ast",
+ "rig_error",
+]
 
 [[package]]
 name = "rig_ast"
@@ -187,6 +191,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "colored",
+ "rig_analyzer",
  "rig_error",
  "rig_lexer",
  "rig_parser",

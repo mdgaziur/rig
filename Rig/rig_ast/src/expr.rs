@@ -150,4 +150,49 @@ impl Expr {
             }
         }
     }
+
+    pub fn node_name(&self) -> &str {
+        match self {
+            Expr::AssignmentExpr { .. } => "assignment expression",
+            Expr::BinaryExpr { .. } => "binary expression",
+            Expr::LogicalExpr { .. } => "logical expression",
+            Expr::UnaryExpr { .. } => "unary expression",
+            Expr::GetExpr { .. } => "get expression",
+            Expr::PathExpr { .. } => "path expression",
+            Expr::GroupingExpr { .. } => "grouping expression",
+            Expr::StringLiteralExpr { .. } => "string literal",
+            Expr::IntegerLiteralExpr { .. } => "integer literal",
+            Expr::BooleanLiteralExpr { .. } => "boolean",
+            Expr::NullLiteralExpr { .. } => "null",
+            Expr::FloatLiteralExpr { .. } => "float literal",
+            Expr::SetExpr { .. } => "set expression",
+            Expr::VariableExpr { .. } => "variable name",
+            Expr::SelfExpr { .. } => "self",
+            Expr::CallExpr { .. } => "call expression",
+            Expr::StructExpr { .. } => "struct expression",
+        }
+    }
+
+    pub fn get_span(&self) -> Span {
+        // TODO: not proud of this weird way to get span.
+        match self {
+            Expr::AssignmentExpr { span, .. } => span,
+            Expr::BinaryExpr { span, .. } => span,
+            Expr::LogicalExpr { span, .. } => span,
+            Expr::UnaryExpr { span, .. } => span,
+            Expr::GetExpr { span, .. } => span,
+            Expr::PathExpr { span, .. } => span,
+            Expr::GroupingExpr { span, .. } => span,
+            Expr::StringLiteralExpr { span, .. } => span,
+            Expr::IntegerLiteralExpr { span, .. } => span,
+            Expr::BooleanLiteralExpr { span, .. } => span,
+            Expr::NullLiteralExpr { span, .. } => span,
+            Expr::FloatLiteralExpr { span, .. } => span,
+            Expr::SetExpr { span, .. } => span,
+            Expr::VariableExpr { span, .. } => span,
+            Expr::SelfExpr { span, .. } => span,
+            Expr::CallExpr { span, .. } => span,
+            Expr::StructExpr { span, .. } => span,
+        }.clone()
+    }
 }

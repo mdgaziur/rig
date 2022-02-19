@@ -6,7 +6,7 @@ use rig_ast::stmt::Stmt;
 use rig_ast::struct_field::StructField;
 use rig_ast::token::TokenType;
 use rig_ast::visibility::Visibility;
-use rig_error::{ErrorType, RigError};
+use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_span::Span;
 
 pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
@@ -20,7 +20,7 @@ pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         _ => Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             message: format!(
                 "Expected `pub`/`use`/`fn`/`struct`/`impl`/`let`, found `{}`",
                 &parser.peek().lexeme
@@ -52,7 +52,7 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             "let" => let_(parser, is_pub),
             _ => Err(RigError {
                 error_type: ErrorType::Hard,
-                error_code: String::from("E0005"),
+                error_code: ErrorCode::E0005,
                 message: format!(
                     "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
                     &parser.peek().lexeme
@@ -64,7 +64,7 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
         },
         _ => Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             message: format!(
                 "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
                 &parser.peek().lexeme
@@ -167,7 +167,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         if keyword != "fn" {
             return Err(RigError {
                 error_type: ErrorType::Hard,
-                error_code: String::from("E0005"),
+                error_code: ErrorCode::E0005,
                 message: String::from("Expected keyword `fn` after `pub`"),
                 span: parser.previous().span.clone(),
                 hint: None,
@@ -177,7 +177,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     } else if keyword != "fn" {
         return Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             message: String::from("Expected keyword `fn`"),
             span: parser.previous().span.clone(),
             hint: None,
@@ -266,7 +266,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
             if parser.peek().lexeme != "fn" {
                 return Err(RigError {
                     error_type: ErrorType::Hard,
-                    error_code: String::from("E0005"),
+                    error_code: ErrorCode::E0005,
                     message: String::from("Expected keyword `fn` after `pub`"),
                     span: parser.previous().span.clone(),
                     hint: None,
@@ -276,7 +276,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
         } else if parser.peek().lexeme != "fn"{
             return Err(RigError {
                 error_type: ErrorType::Hard,
-                error_code: String::from("E0005"),
+                error_code: ErrorCode::E0005,
                 message: String::from("Expected keyword `fn`"),
                 span: parser.previous().span.clone(),
                 hint: None,
@@ -310,7 +310,7 @@ fn use_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     Ok(Stmt::UseStmt {
         path: import_path,
         visibility: Visibility::from(visibility),
-        span: Span::merge(sp_start, parser.peek().span.clone()),
+        span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
 
@@ -344,10 +344,8 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
         let stmt = stmt(parser);
         if let Err(e) = stmt {
+            parser.block_stmt_errs.push(e);
             parser.synchronize();
-            e.print(parser.source);
-            parser.has_error_inside_block_stmt = true;
-            continue;
         } else if let Ok(stmt) = stmt {
             stmts.push(Box::new(stmt));
         }
@@ -383,7 +381,7 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "print" => print(parser),
             "return" => return_(parser),
             _ => Err(RigError {
-                error_code: String::from("E0005"),
+                error_code: ErrorCode::E0005,
                 message: format!(
                     "Expected expression, `if`, `for`, `while`, \
                     `struct`, `impl`, `use`, `let`, `print`, `break`, `continue` \
@@ -505,7 +503,7 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     if in_ != "in" {
         return Err(RigError {
             error_type: ErrorType::Hard,
-            error_code: String::from("E0005"),
+            error_code: ErrorCode::E0005,
             message: String::from("Expected keyword `in`"),
             span: parser.previous().span.clone(),
             hint: None,
@@ -652,7 +650,7 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
 }
 
 fn let_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
-    let sp_start = parser.previous().span.clone();
+    let sp_start = parser.peek().span.clone();
     parser.advance();
     let name = parser
         .consume(TokenType::Identifier, "Expected name after `let`", None)?
