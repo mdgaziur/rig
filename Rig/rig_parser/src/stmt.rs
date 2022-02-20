@@ -342,7 +342,60 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         if parser.check(TokenType::RightBrace) || parser.is_eof() {
             break;
         }
-        let stmt = stmt(parser);
+
+        let statement;
+        if parser.peek().lexeme == "continue" || parser.peek().lexeme == "break" {
+            statement = Err(RigError {
+                error_code: ErrorCode::E0005,
+                message: format!(
+                    "`{}` is not supposed to be outside loops",
+                    parser.peek().lexeme
+                ),
+                error_type: ErrorType::Hard,
+                file_path: parser.source_path.to_string(),
+                hint: None,
+                span: parser.peek().span.clone(),
+            })
+        } else {
+            statement = stmt(parser, "");
+        }
+        if let Err(e) = statement {
+            parser.block_stmt_errs.push(e);
+            parser.synchronize();
+        } else if let Ok(stmt) = statement {
+            stmts.push(Box::new(stmt));
+        }
+    }
+    parser.consume(
+        TokenType::RightBrace,
+        "Expected `}` at the end of block statement",
+        None,
+    )?;
+
+    Ok(Stmt::BlockStmt {
+        exprs: stmts,
+        span: Span::merge(start_sp, parser.previous().span.clone()),
+    })
+}
+
+fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let start_sp = parser.previous().span.clone();
+    let mut stmts = Vec::new();
+
+    loop {
+        if parser.check(TokenType::RightBrace) || parser.is_eof() {
+            break;
+        }
+
+        let stmt = match parser.peek().token_type {
+            TokenType::Keyword => match parser.peek().lexeme.as_str() {
+                "continue" => continue_(parser),
+                "break" => break_(parser),
+                _ => stmt(parser, "`continue`, `break`")
+            }
+            _ => expr_stmt(parser),
+        };
+
         if let Err(e) = stmt {
             parser.block_stmt_errs.push(e);
             parser.synchronize();
@@ -363,7 +416,7 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
 }
 
 /// Parses valid statement inside blocks
-fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
+fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError> {
     match parser.peek().token_type {
         TokenType::Keyword => match parser.peek().lexeme.as_str() {
             "let" => let_(parser, false),
@@ -376,15 +429,13 @@ fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             "if" => conditional_(parser),
             "for" => for_(parser),
             "loop" => loop_(parser),
-            "break" => break_(parser),
-            "continue" => continue_(parser),
             "print" => print(parser),
             "return" => return_(parser),
             _ => Err(RigError {
                 error_code: ErrorCode::E0005,
                 message: format!(
                     "Expected expression, `if`, `for`, `while`, \
-                    `struct`, `impl`, `use`, `let`, `print`, `break`, `continue` \
+                    `struct`, `impl`, `use`, `let`, `print`, {extra_expectations}, \
                      `mod` or `extern`. But found: `{}`",
                     parser.peek().lexeme
                 ),
@@ -440,7 +491,7 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let condition = expr(parser)?;
     parser.consume(TokenType::RightParen, "Expected `)`", None)?;
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
-    let body = Box::new(block_stmt(parser)?);
+    let body = Box::new(loop_body(parser)?);
 
     Ok(Stmt::WhileStmt {
         condition,
@@ -516,7 +567,7 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
 
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
 
-    let body = Box::new(block_stmt(parser)?);
+    let body = Box::new(loop_body(parser)?);
 
     Ok(Stmt::ForStmt {
         var,
@@ -531,7 +582,7 @@ fn loop_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.advance();
 
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement", None)?;
-    let body = Box::new(block_stmt(parser)?);
+    let body = Box::new(loop_body(parser)?);
 
     Ok(Stmt::WhileStmt {
         condition: Expr::BooleanLiteralExpr {

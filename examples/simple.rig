@@ -23,7 +23,10 @@ fn hello(f: File) -> None {
 
     x.y = "hello";
 
+    loop { break; }
+
     break;
+    continue;
 
     x()()().y(y()()());
 

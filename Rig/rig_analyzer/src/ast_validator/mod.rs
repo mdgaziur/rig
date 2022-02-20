@@ -29,22 +29,6 @@ fn validate_fn(body: &Box<Stmt>, file_path: &str) -> (Vec<RigError>, Vec<RigErro
             for expr_stmt in exprs {
                 match &**expr_stmt {
                     Stmt::ReturnStmt { .. } => encountered_return = true,
-                    Stmt::ContinueStmt { span } => errors.push(RigError {
-                        error_code: ErrorCode::E0006,
-                        error_type: ErrorType::Hard,
-                        file_path: file_path.to_string(),
-                        message: String::from("Encountered `continue` outside a loop"),
-                        hint: None,
-                        span: span.clone(),
-                    }),
-                    Stmt::BreakStmt { span } => errors.push(RigError {
-                            error_code: ErrorCode::E0006,
-                            error_type: ErrorType::Hard,
-                            file_path: file_path.to_string(),
-                            message: String::from("Encountered `break` outside a loop"),
-                            hint: None,
-                            span: span.clone(),
-                    }),
                     _ => {
                         if encountered_return {
                             warnings.push(RigError {

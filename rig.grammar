@@ -31,6 +31,7 @@ ifStmt              -> "if" expression blockStmt ( "else" statement blockStmt )?
 forStmt             -> "for" IDENTIFIER "in" expression blockStmt ;
 loopStmt            -> "loop" blockStmt ;
 whileStmt           -> "while" expression blockStmt ;
+loopBody            -> "{" ( "break" ";" | "continue" ";" | statement  )* "}";
 blockStmt           -> "{" statement* "}";
 exprStmt            -> expression ";" ;
 printStmt           -> "print" expression ";" ;

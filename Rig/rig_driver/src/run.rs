@@ -38,13 +38,6 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
-    if reconstruct_from_ast {
-        for node in ast.0 {
-            println!("{}", node.to_string(0));
-        }
-        return;
-    }
-
     if !ast.1.is_empty() {
         for err in ast.1 {
             err.print(&file);
@@ -53,14 +46,26 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
+    if reconstruct_from_ast {
+        for node in ast.0 {
+            println!("{}", node.to_string(0));
+        }
+        return;
+    }
+
     let res = validate_ast(&ast.0, &file_name);
 
     // Show warnings first
-    for err in res.1 {
+    for err in &res.1 {
         err.print(&file);
     }
 
-    for err in res.0 {
+    for err in &res.0 {
         err.print(&file);
+    }
+
+    if !res.0.is_empty() {
+        // do not continue after error
+        return;
     }
 }
