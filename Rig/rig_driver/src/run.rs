@@ -39,17 +39,19 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
     }
 
     if !ast.1.is_empty() {
-        for err in ast.1 {
+        for err in &ast.1 {
             err.print(&file);
         }
-
-        return;
     }
 
     if reconstruct_from_ast {
         for node in ast.0 {
             println!("{}", node.to_string(0));
         }
+        return;
+    }
+
+    if !ast.1.is_empty() {
         return;
     }
 
