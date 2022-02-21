@@ -122,8 +122,13 @@ impl Stmt {
                 res += &format!("{}}}", "\t".repeat(block_depth));
                 res
             }
-            Stmt::ImplStmt { struct_name, methods, .. } => {
-                let mut stringified_methods = methods.iter()
+            Stmt::ImplStmt {
+                struct_name,
+                methods,
+                ..
+            } => {
+                let mut stringified_methods = methods
+                    .iter()
                     .map(|m| "\t".repeat(block_depth + 1) + &m.to_string(block_depth + 1))
                     .collect::<Vec<String>>()
                     .join("\n");
@@ -131,8 +136,13 @@ impl Stmt {
                     stringified_methods.push('\n');
                 }
 
-                format!("impl {} {{\n{}{}}}\n", struct_name, stringified_methods, "\t".repeat(block_depth))
-            },
+                format!(
+                    "impl {} {{\n{}{}}}\n",
+                    struct_name,
+                    stringified_methods,
+                    "\t".repeat(block_depth)
+                )
+            }
             Stmt::FnStmt {
                 prototype,
                 body,
@@ -171,24 +181,46 @@ impl Stmt {
                     value.to_string(block_depth)
                 )
             }
-            Stmt::IfStmt { condition, body, else_branch, .. } => {
-                let top = format!("if ({}) {}", condition.to_string(block_depth), body.to_string(block_depth));
+            Stmt::IfStmt {
+                condition,
+                body,
+                else_branch,
+                ..
+            } => {
+                let top = format!(
+                    "if ({}) {}",
+                    condition.to_string(block_depth),
+                    body.to_string(block_depth)
+                );
 
                 if let Some(else_branch) = else_branch {
                     format!("{} else {}", top, else_branch.to_string(block_depth))
                 } else {
                     top
                 }
-            },
-            Stmt::WhileStmt { condition, body, .. } => {
-                format!("while ({}) {}",
-                        condition.to_string(block_depth),
+            }
+            Stmt::WhileStmt {
+                condition, body, ..
+            } => {
+                format!(
+                    "while ({}) {}",
+                    condition.to_string(block_depth),
                     body.to_string(block_depth),
                 )
             }
-            Stmt::ForStmt { var, iterable, body, .. } => {
-                format!("for ({} in {}) {}", var, iterable.to_string(block_depth), body.to_string(block_depth))
-            },
+            Stmt::ForStmt {
+                var,
+                iterable,
+                body,
+                ..
+            } => {
+                format!(
+                    "for ({} in {}) {}",
+                    var,
+                    iterable.to_string(block_depth),
+                    body.to_string(block_depth)
+                )
+            }
             Stmt::PrintStmt { expr, .. } => format!("print {};", expr.to_string(block_depth)),
             Stmt::BlockStmt { exprs, .. } => {
                 let mut res = vec![String::from("{")];
@@ -209,14 +241,25 @@ impl Stmt {
             Stmt::ContinueStmt { .. } => String::from("continue;"),
             Stmt::ReturnStmt { expr, .. } => format!("return {};", expr.to_string(block_depth)),
             Stmt::ExternStmt { prototypes, .. } => {
-                let stringified_prototypes = prototypes.iter()
+                let stringified_prototypes = prototypes
+                    .iter()
                     .map(|p| p.to_string())
                     .map(|p| format!("{}{};", "\t".repeat(block_depth + 1), p))
                     .collect::<Vec<String>>()
                     .join(";\n");
 
-                let newline = if !stringified_prototypes.is_empty() { "\n" } else { "" };
-                format!("extern {{{}{}{}{}}}", newline, stringified_prototypes, newline, "\t".repeat(block_depth))
+                let newline = if !stringified_prototypes.is_empty() {
+                    "\n"
+                } else {
+                    ""
+                };
+                format!(
+                    "extern {{{}{}{}{}}}",
+                    newline,
+                    stringified_prototypes,
+                    newline,
+                    "\t".repeat(block_depth)
+                )
             }
             Stmt::ModStmt { name, body, .. } => {
                 let mut res = vec![format!("mod {}", name)];
@@ -284,6 +327,7 @@ impl Stmt {
             Stmt::BreakStmt { span, .. } => span,
             Stmt::ContinueStmt { span, .. } => span,
             Stmt::ModStmt { span, .. } => span,
-        }.clone()
+        }
+        .clone()
     }
 }

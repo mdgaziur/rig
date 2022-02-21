@@ -58,16 +58,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
     let res = validate_ast(&ast.0, &file_name);
 
     // Show warnings first
-    for err in &res.1 {
+    for err in res {
         err.print(&file);
-    }
-
-    for err in &res.0 {
-        err.print(&file);
-    }
-
-    if !res.0.is_empty() {
-        // do not continue after error
-        return;
     }
 }

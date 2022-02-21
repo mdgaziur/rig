@@ -1,30 +1,27 @@
 use rig_ast::stmt::Stmt;
 use rig_error::{ErrorCode, ErrorType, RigError};
 
-pub fn validate_ast(ast: &Vec<Stmt>, file_path: &str) -> (Vec<RigError>, Vec<RigError>) {
-    let mut errors = Vec::new();
+pub fn validate_ast(ast: &[Stmt], file_path: &str) -> Vec<RigError> {
     let mut warnings = Vec::new();
 
     for node in ast {
         match node {
             Stmt::FnStmt { body, .. } => {
                 let res = validate_fn(body, file_path);
-                errors.extend(res.0);
-                warnings.extend(res.1);
-            },
-            _ => ()
+                warnings.extend(res);
+            }
+            _ => (),
         }
     }
 
-    (errors, warnings)
+    warnings
 }
 
-fn validate_fn(body: &Box<Stmt>, file_path: &str) -> (Vec<RigError>, Vec<RigError>) {
-    let mut errors = Vec::new();
+fn validate_fn(body: &Stmt, file_path: &str) -> Vec<RigError> {
     let mut warnings = Vec::new();
     let mut encountered_return = false;
 
-    match &**body {
+    match body {
         Stmt::BlockStmt { exprs, .. } => {
             for expr_stmt in exprs {
                 match &**expr_stmt {
@@ -47,5 +44,5 @@ fn validate_fn(body: &Box<Stmt>, file_path: &str) -> (Vec<RigError>, Vec<RigErro
         _ => panic!("encountered parser bug: function contains Stmt other than BlockStmt as body"),
     }
 
-    (errors, warnings)
+    warnings
 }

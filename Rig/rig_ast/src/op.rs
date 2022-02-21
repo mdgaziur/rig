@@ -80,7 +80,7 @@ impl FromStr for BinaryOperator {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
+        match s {
             "+" => Ok(Self::Plus),
             "-" => Ok(Self::Minus),
             "*" => Ok(Self::Multiply),
@@ -92,13 +92,14 @@ impl FromStr for BinaryOperator {
             "<<" => Ok(Self::LeftShift),
             ">>" => Ok(Self::RightShift),
             _ => Err(()),
-        }?)
+        }
     }
 }
 
 impl BinaryOperator {
+    #[allow(clippy::result_unit_err)]
     pub fn from_assignequal(s: &str) -> Result<Self, ()> {
-        Ok(match s {
+        match s {
             "+=" => Ok(Self::Plus),
             "-=" => Ok(Self::Minus),
             "*=" => Ok(Self::Multiply),
@@ -110,7 +111,7 @@ impl BinaryOperator {
             "<<=" => Ok(Self::LeftShift),
             ">>=" => Ok(Self::RightShift),
             _ => Err(()),
-        }?)
+        }
     }
 }
 
@@ -133,10 +134,10 @@ impl FromStr for UnaryOperator {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
+        match s {
             "!" => Ok(Self::Not),
             "-" => Ok(Self::Negate),
             _ => Err(()),
-        }?)
+        }
     }
 }

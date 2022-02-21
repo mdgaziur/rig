@@ -16,12 +16,17 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
     let expr = struct_(parser)?;
 
     match parser.peek().token_type {
-        TokenType::PlusEquals | TokenType::LeftShiftEquals | TokenType::RightShiftEquals
-        | TokenType::MinusEquals | TokenType::MultiplyEquals | TokenType::DivideEquals
-        | TokenType::AndOpEquals | TokenType::OrOpEquals | TokenType::XorEquals
+        TokenType::PlusEquals
+        | TokenType::LeftShiftEquals
+        | TokenType::RightShiftEquals
+        | TokenType::MinusEquals
+        | TokenType::MultiplyEquals
+        | TokenType::DivideEquals
+        | TokenType::AndOpEquals
+        | TokenType::OrOpEquals
+        | TokenType::XorEquals
         | TokenType::ModulusEquals => {
-            let op = BinaryOperator::from_assignequal(&parser.peek().lexeme)
-                .unwrap();
+            let op = BinaryOperator::from_assignequal(&parser.peek().lexeme).unwrap();
             parser.advance();
             let eq_span = parser.peek().span.clone();
             let rhs = Box::new(crate::expr::expr(parser)?);
@@ -43,10 +48,10 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                         lhs: Box::new(expr.clone()),
                         op,
                         rhs,
-                        span: Span::merge(sp_start.clone(), parser.previous().span.clone())
+                        span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
                     }),
                     name: name.clone(),
-                    span: Span::merge(sp_start.clone(), parser.previous().span.clone()),
+                    span: Span::merge(sp_start, parser.previous().span.clone()),
                 }),
                 _ => Err(RigError {
                     error_code: ErrorCode::E0006,
@@ -60,7 +65,7 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                 }),
             };
         }
-        _ => ()
+        _ => (),
     }
 
     if parser.check(TokenType::Equal) {
@@ -71,7 +76,7 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
         return match expr {
             Expr::GetExpr { object, name, span } => Ok(Expr::SetExpr {
                 object,
-                name: name.clone(),
+                name,
                 value: Box::from(rhs),
                 span: Span::merge(span, parser.previous().span.clone()),
             }),
@@ -104,8 +109,7 @@ pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
         Expr::PathExpr { .. } | Expr::VariableExpr { .. } => {
             if parser.peek().token_type == TokenType::LeftBrace {
                 parser.advance();
-                let mut vals = Vec::new();
-                vals.push(field_with_val(parser)?);
+                let mut vals = vec![field_with_val(parser)?];
 
                 if parser.peek().token_type == TokenType::RightBrace {
                     parser.advance();
@@ -504,12 +508,12 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
     Ok(expr)
 }
 
-pub fn arguments(parser: &mut Parser) -> Result<Vec<Box<Expr>>, RigError> {
+pub fn arguments(parser: &mut Parser) -> Result<Vec<Expr>, RigError> {
     let mut args = Vec::new();
     if parser.peek().token_type == TokenType::RightParen {
         return Ok(args);
     }
-    args.push(Box::new(expr(parser)?));
+    args.push(expr(parser)?);
 
     loop {
         if parser.peek().token_type != TokenType::Comma {
@@ -517,10 +521,10 @@ pub fn arguments(parser: &mut Parser) -> Result<Vec<Box<Expr>>, RigError> {
         }
 
         parser.advance();
-        args.push(Box::new(expr(parser)?));
+        args.push(expr(parser)?);
     }
 
-    return Ok(args);
+    Ok(args)
 }
 
 pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
@@ -587,7 +591,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                 }),
             };
 
-            if let Ok(_) = ret {
+            if ret.is_ok() {
                 parser.advance();
             }
 
@@ -647,8 +651,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
 
 fn parse_path(parser: &mut Parser) -> Result<Vec<String>, RigError> {
     let name = parser.consume(TokenType::Identifier, "Expected identifier", None)?;
-    let mut path = Vec::new();
-    path.push(name.lexeme.clone());
+    let mut path = vec![name.lexeme.clone()];
 
     if parser.check(TokenType::Scope) {
         parser.advance();

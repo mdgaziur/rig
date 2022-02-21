@@ -73,7 +73,7 @@ pub enum Expr {
     },
     CallExpr {
         name: Box<Expr>,
-        args: Vec<Box<Expr>>,
+        args: Vec<Expr>,
         span: Span,
     },
     StructExpr {
@@ -137,8 +137,7 @@ impl Expr {
             Expr::StructExpr { name, vals, .. } => {
                 let mut string_vals = Vec::new();
                 for val in vals {
-                    string_vals
-                        .push(String::from("\t".repeat(depth + 1)) + &val.to_string(depth + 1));
+                    string_vals.push("\t".repeat(depth + 1) + &val.to_string(depth + 1));
                 }
 
                 format!(
@@ -193,6 +192,7 @@ impl Expr {
             Expr::SelfExpr { span, .. } => span,
             Expr::CallExpr { span, .. } => span,
             Expr::StructExpr { span, .. } => span,
-        }.clone()
+        }
+        .clone()
     }
 }

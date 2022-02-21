@@ -245,40 +245,38 @@ impl<'l> Lexer<'l> {
                                     literal.push(escaped);
                                     starting_line_end_offset += 2;
                                     self.advance();
+                                } else if self.peek() == Some('\n') {
+                                    errors.push(RigError {
+                                        message: String::from("invalid escape character"),
+                                        error_type: ErrorType::Hard,
+                                        file_path: self.file_path.to_string(),
+                                        hint: None,
+                                        error_code: ErrorCode::E0004,
+                                        span: Span::for_single_line(
+                                            self.file_path,
+                                            escape_char_line,
+                                            escape_char_offset,
+                                            escape_char_offset,
+                                        ),
+                                    });
+                                    invalid = true;
+                                    break;
                                 } else {
-                                    if self.peek() == Some('\n') {
-                                        errors.push(RigError {
-                                            message: String::from("invalid escape character"),
-                                            error_type: ErrorType::Hard,
-                                            file_path: self.file_path.to_string(),
-                                            hint: None,
-                                            error_code: ErrorCode::E0004,
-                                            span: Span::for_single_line(
-                                                self.file_path,
-                                                escape_char_line,
-                                                escape_char_offset,
-                                                escape_char_offset,
-                                            ),
-                                        });
-                                        invalid = true;
-                                        break;
-                                    } else {
-                                        errors.push(RigError {
-                                            message: String::from("invalid escape character"),
-                                            error_type: ErrorType::Hard,
-                                            file_path: self.file_path.to_string(),
-                                            hint: None,
-                                            error_code: ErrorCode::E0004,
-                                            span: Span::for_single_line(
-                                                self.file_path,
-                                                escape_char_line,
-                                                escape_char_offset,
-                                                self.offset,
-                                            ),
-                                        });
-                                        invalid = true;
-                                        break;
-                                    }
+                                    errors.push(RigError {
+                                        message: String::from("invalid escape character"),
+                                        error_type: ErrorType::Hard,
+                                        file_path: self.file_path.to_string(),
+                                        hint: None,
+                                        error_code: ErrorCode::E0004,
+                                        span: Span::for_single_line(
+                                            self.file_path,
+                                            escape_char_line,
+                                            escape_char_offset,
+                                            self.offset,
+                                        ),
+                                    });
+                                    invalid = true;
+                                    break;
                                 }
                             } else {
                                 errors.push(RigError {
@@ -373,39 +371,37 @@ impl<'l> Lexer<'l> {
                                     literal.push(escaped);
                                     ending_line_end_offset += 2;
                                     self.advance();
+                                } else if self.peek() == Some('\n') {
+                                    errors.push(RigError {
+                                        message: String::from("invalid escape character"),
+                                        error_type: ErrorType::Hard,
+                                        file_path: self.file_path.to_string(),
+                                        hint: None,
+                                        error_code: ErrorCode::E0004,
+                                        span: Span::for_single_line(
+                                            self.file_path,
+                                            escape_char_line,
+                                            escape_char_offset,
+                                            escape_char_offset,
+                                        ),
+                                    });
+                                    invalid = true;
+                                    break;
                                 } else {
-                                    if self.peek() == Some('\n') {
-                                        errors.push(RigError {
-                                            message: String::from("invalid escape character"),
-                                            error_type: ErrorType::Hard,
-                                            file_path: self.file_path.to_string(),
-                                            hint: None,
-                                            error_code: ErrorCode::E0004,
-                                            span: Span::for_single_line(
-                                                self.file_path,
-                                                escape_char_line,
-                                                escape_char_offset,
-                                                escape_char_offset,
-                                            ),
-                                        });
-                                        invalid = true;
-                                        break;
-                                    } else {
-                                        errors.push(RigError {
-                                            message: String::from("invalid escape character"),
-                                            error_type: ErrorType::Hard,
-                                            file_path: self.file_path.to_string(),
-                                            hint: None,
-                                            error_code: ErrorCode::E0004,
-                                            span: Span::for_single_line(
-                                                self.file_path,
-                                                escape_char_line,
-                                                escape_char_offset,
-                                                self.offset,
-                                            ),
-                                        });
-                                        invalid = true;
-                                    }
+                                    errors.push(RigError {
+                                        message: String::from("invalid escape character"),
+                                        error_type: ErrorType::Hard,
+                                        file_path: self.file_path.to_string(),
+                                        hint: None,
+                                        error_code: ErrorCode::E0004,
+                                        span: Span::for_single_line(
+                                            self.file_path,
+                                            escape_char_line,
+                                            escape_char_offset,
+                                            self.offset,
+                                        ),
+                                    });
+                                    invalid = true;
                                 }
                             } else {
                                 errors.push(RigError {
@@ -604,11 +600,7 @@ impl<'l> Lexer<'l> {
     }
 
     fn eof(&self) -> bool {
-        if self.pos >= self.file_contents.len() {
-            true
-        } else {
-            false
-        }
+        self.pos >= self.file_contents.len()
     }
 
     fn advance(&mut self) {

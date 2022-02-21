@@ -100,15 +100,12 @@ impl<'p> Parser<'p> {
                 return;
             }
 
-            match self.peek().token_type {
-                TokenType::Keyword => {
-                    match self.peek().lexeme.as_str() {
-                        "struct" | "let" | "if" | "while" | "loop" | "for" | "fn" | "pub" | "return" | "use" |
-                        "impl" | "continue" | "break" => break,
-                        _ => ()
-                    }
-                },
-                _ => (),
+            if self.peek().token_type == TokenType::Keyword {
+                match self.peek().lexeme.as_str() {
+                    "struct" | "let" | "if" | "while" | "loop" | "for" | "fn" | "pub"
+                    | "return" | "use" | "impl" | "continue" | "break" => break,
+                    _ => (),
+                }
             }
 
             self.advance();
@@ -132,7 +129,7 @@ pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
                 }
 
                 statements.push(stmt)
-            },
+            }
             Err(e) => {
                 errs.push(e);
                 parser.synchronize();

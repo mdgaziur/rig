@@ -13,21 +13,25 @@ pub struct Prototype {
 
 impl ToString for Prototype {
     fn to_string(&self) -> String {
-        let mut args_string;
-        if self.fn_type == FnType::Method {
-            args_string = String::from("self, ");
+        let mut args_string = if self.fn_type == FnType::Method {
+            String::from("self, ")
         } else {
-            args_string = String::new();
-        }
-        args_string = args_string + &self.args.iter().map(|a| a.to_string()).collect::<Vec<String>>()
-            .join(", ");
+            String::new()
+        };
 
-        let ty_string;
-        if let Some(ty) = &self.return_ty {
-            ty_string = format!(" -> {}", ty.to_string(0));
+        args_string = args_string
+            + &self
+                .args
+                .iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+
+        let ty_string = if let Some(ty) = &self.return_ty {
+            format!(" -> {}", ty.to_string(0))
         } else {
-            ty_string = String::new();
-        }
+            String::new()
+        };
 
         format!(
             "{} {}({}){}",

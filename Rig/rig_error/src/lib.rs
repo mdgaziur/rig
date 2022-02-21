@@ -49,7 +49,7 @@ pub enum ErrorCode {
     E0006,
 
     /// Unreachable/dead code
-    E0007
+    E0007,
 }
 
 /// Describes the type of error
@@ -114,7 +114,10 @@ impl RigError {
     }
 
     pub fn print(&self, file_content: &str) {
-        eprintln!("{}[{:?}]: {}", self.error_type, self.error_code, self.message);
+        eprintln!(
+            "{}[{:?}]: {}",
+            self.error_type, self.error_code, self.message
+        );
         let starting_line_num_len = number_len(self.span.starting_line);
         let ending_line_num_len = number_len(self.span.ending_line);
         let max_line_num_len = max(starting_line_num_len, ending_line_num_len);
