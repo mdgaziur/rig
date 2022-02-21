@@ -2,7 +2,7 @@ use crate::expr::Expr;
 use crate::visibility::Visibility;
 use std::fmt::{Debug, Formatter};
 
-#[derive(Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Prototype {
     pub visibility: Visibility,
     pub name: String,
@@ -34,8 +34,9 @@ impl ToString for Prototype {
         };
 
         format!(
-            "{} {}({}){}",
+            "{}{}fn {}({}){}",
             self.visibility.to_string(),
+            if self.visibility == Visibility::Pub { " " } else { "" },
             &self.name,
             args_string,
             ty_string,
@@ -43,11 +44,6 @@ impl ToString for Prototype {
     }
 }
 
-impl Debug for Prototype {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        f.write_str(&self.to_string())
-    }
-}
 #[derive(Debug, Clone, PartialEq)]
 pub enum FnType {
     Method,

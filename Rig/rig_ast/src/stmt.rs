@@ -146,16 +146,8 @@ impl Stmt {
             Stmt::FnStmt {
                 prototype,
                 body,
-                visibility,
                 ..
-            } => {
-                let mut vis = visibility.to_string();
-                if !vis.is_empty() {
-                    vis.push(' ');
-                }
-
-                format!("{}fn{:?} {}", vis, prototype, body.to_string(block_depth))
-            }
+            } => format!("{} {}", prototype.to_string(), body.to_string(block_depth)),
             Stmt::LetStmt {
                 name,
                 value,
@@ -243,8 +235,7 @@ impl Stmt {
             Stmt::ExternStmt { prototypes, .. } => {
                 let stringified_prototypes = prototypes
                     .iter()
-                    .map(|p| p.to_string())
-                    .map(|p| format!("{}{};", "\t".repeat(block_depth + 1), p))
+                    .map(|p| format!("{}{};", "\t".repeat(block_depth + 1), p.to_string()))
                     .collect::<Vec<String>>()
                     .join(";\n");
 
