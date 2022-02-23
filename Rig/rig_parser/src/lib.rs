@@ -61,14 +61,14 @@ impl<'p> Parser<'p> {
         if self.is_eof() {
             return Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 &format!("{}, but found unexpected eof", message),
                 self.peek().span.clone(),
             ));
         }
         Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             &format!("{}, but found `{}`", message, self.peek().lexeme),
             self.peek().span.clone(),
         ))

@@ -236,7 +236,7 @@ impl<'l> Lexer<'l> {
                                 } else {
                                     errors.push(RigError::with_no_hint_and_notes(
                                         ErrorType::Hard,
-                                        ErrorCode::E0005,
+                                        ErrorCode::E0004,
                                         "Invalid escape character",
                                         Span {
                                             starting_line: self.line,

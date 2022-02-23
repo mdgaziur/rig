@@ -568,7 +568,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                 }),
                 _ => Err(RigError::with_no_hint_and_notes(
                     ErrorType::Hard,
-                    ErrorCode::E0006,
+                    ErrorCode::E0005,
                     "Expected `true`, `false`, `null` or `self`",
                     parser.peek().span.clone(),
                 )),
@@ -593,7 +593,7 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
         }
         _ => Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             "Expected primary expression",
             parser.peek().span.clone(),
         )),

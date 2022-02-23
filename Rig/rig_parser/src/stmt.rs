@@ -18,7 +18,7 @@ pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
         },
         _ => Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             "Expected `pub`, `use`, `fn`, `struct`, `impl` or `let`",
             parser.peek().span.clone(),
         )),
@@ -44,14 +44,14 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             "let" => let_(parser, is_pub),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 "Expected `use`, `fn`, `struct`, `mod` or `let`",
                 parser.peek().span.clone(),
             )),
         },
         _ => Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             "Expected `use`, `fn`, `struct`, `mod` or `let`",
             parser.peek().span.clone(),
         )),
@@ -149,7 +149,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         if keyword != "fn" {
             return Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 "Expected `fn`",
                 parser.previous().span.clone(),
             ));
@@ -157,7 +157,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     } else if keyword != "fn" {
         return Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             "Expected `fn`",
             parser.previous().span.clone(),
         ));
@@ -244,7 +244,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
             if parser.peek().lexeme != "fn" {
                 return Err(RigError::with_no_hint_and_notes(
                     ErrorType::Hard,
-                    ErrorCode::E0006,
+                    ErrorCode::E0005,
                     "Expected `fn`",
                     parser.peek().span.clone(),
                 ));
@@ -252,7 +252,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
         } else if parser.peek().lexeme != "fn" {
             return Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 "Expected `fn` or `pub`",
                 parser.peek().span.clone(),
             ));
@@ -319,7 +319,7 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         let statement = if parser.peek().lexeme == "continue" || parser.peek().lexeme == "break" {
             Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 &format!("Found `{}` outside a loop", parser.peek().lexeme),
                 parser.peek().span.clone(),
             ))
@@ -399,7 +399,7 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
             "return" => return_(parser),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
-                ErrorCode::E0006,
+                ErrorCode::E0005,
                 &format!("Expected `let`, `use`, `mod`, `struct`, `extern`, `impl`, \
                                  `while`, `if`, `for`, `loop`, `print`, `return`, {extra_expectations}"),
                 parser.peek().span.clone(),
@@ -516,7 +516,7 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     if in_ != "in" {
         return Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
-            ErrorCode::E0006,
+            ErrorCode::E0005,
             "Expected `in`",
             parser.previous().span.clone(),
         ));
