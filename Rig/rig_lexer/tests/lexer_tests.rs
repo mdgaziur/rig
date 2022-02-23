@@ -284,9 +284,7 @@ fn test_double_line_string() {
                     file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
-                    starting_line_end_offset: 5,
                     ending_line: 2,
-                    ending_line_offset: 0,
                     ending_line_end_offset: 5,
                 }
             },
@@ -325,9 +323,7 @@ fn test_multi_line_string() {
                     file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
-                    starting_line_end_offset: 5,
                     ending_line: 4,
-                    ending_line_offset: 0,
                     ending_line_end_offset: 4,
                 }
             },
@@ -366,9 +362,7 @@ fn test_multi_line_escaped_string() {
                     file_name: "<test>".to_string(),
                     starting_line: 1,
                     starting_line_offset: 0,
-                    starting_line_end_offset: 14,
                     ending_line: 2,
-                    ending_line_offset: 0,
                     ending_line_end_offset: 32,
                 }
             },

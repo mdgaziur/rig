@@ -25,9 +25,6 @@ fn hello(f: File) -> None {
 
     loop { break; y; }
 
-    break;
-    continue;
-
     x()()().y(y()()());
 
     {

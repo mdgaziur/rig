@@ -30,6 +30,7 @@ impl<'l> Lexer<'l> {
         let mut tokens = Vec::new();
         let mut errors = Vec::new();
 
+        'mainloop:
         while !self.eof() {
             match self.peek().unwrap() {
                 // single character tokens
@@ -218,249 +219,80 @@ impl<'l> Lexer<'l> {
                     )
                 }
                 '"' => {
-                    let mut lexeme = String::new();
-                    lexeme.push(self.peek().unwrap());
+                    let mut lexeme = String::from("\"");
                     let mut literal = String::new();
                     let starting_line = self.line;
-                    let starting_line_offset = self.offset;
-                    let mut starting_line_end_offset = self.offset;
-                    let mut terminated = false;
-                    let mut invalid = false;
+                    let starting_pos = self.offset;
+
                     self.advance();
-
-                    while !self.eof() && self.peek() != Some('\n') {
-                        if self.peek() == Some('"') {
-                            lexeme.push(self.peek().unwrap());
-                            terminated = true;
-                            break;
-                        } else if self.peek() == Some('\\') {
-                            // do escaping stuff
-                            lexeme.push(self.peek().unwrap());
-                            let escape_char_offset = self.offset;
-                            let escape_char_line = self.line;
-                            self.advance();
-                            if let Some(ch) = self.peek() {
-                                lexeme.push(self.peek().unwrap());
-                                if let Ok(escaped) = escape(ch) {
-                                    literal.push(escaped);
-                                    starting_line_end_offset += 2;
-                                    self.advance();
-                                } else if self.peek() == Some('\n') {
-                                    errors.push(RigError {
-                                        message: String::from("invalid escape character"),
-                                        error_type: ErrorType::Hard,
-                                        file_path: self.file_path.to_string(),
-                                        hint: None,
-                                        error_code: ErrorCode::E0004,
-                                        span: Span::for_single_line(
-                                            self.file_path,
-                                            escape_char_line,
-                                            escape_char_offset,
-                                            escape_char_offset,
-                                        ),
-                                    });
-                                    invalid = true;
-                                    break;
-                                } else {
-                                    errors.push(RigError {
-                                        message: String::from("invalid escape character"),
-                                        error_type: ErrorType::Hard,
-                                        file_path: self.file_path.to_string(),
-                                        hint: None,
-                                        error_code: ErrorCode::E0004,
-                                        span: Span::for_single_line(
-                                            self.file_path,
-                                            escape_char_line,
-                                            escape_char_offset,
-                                            self.offset,
-                                        ),
-                                    });
-                                    invalid = true;
-                                    break;
-                                }
-                            } else {
-                                errors.push(RigError {
-                                    message: String::from("unexpected eof"),
-                                    error_type: ErrorType::Hard,
-                                    file_path: self.file_path.to_string(),
-                                    hint: None,
-                                    error_code: ErrorCode::E0004,
-                                    span: Span::for_single_char(
-                                        self.file_path,
-                                        self.line,
-                                        self.offset,
-                                    ),
-                                });
-                                invalid = true;
-                                break;
-                            }
-                        } else {
-                            lexeme.push(self.peek().unwrap());
-                            literal.push(self.peek().unwrap());
-                            starting_line_end_offset += 1;
-                            self.advance();
-                        }
-                    }
-
-                    if invalid {
-                        continue;
-                    }
-
-                    if self.eof() {
-                        errors.push(RigError {
-                            message: String::from("unterminated string literal"),
-                            error_type: ErrorType::Hard,
-                            file_path: self.file_path.to_string(),
-                            hint: Some(String::from("insert '\"' here")),
-                            error_code: ErrorCode::E0002,
-                            span: Span::for_single_line(
-                                self.file_path,
-                                starting_line,
-                                starting_line_offset,
-                                starting_line_end_offset,
-                            ),
-                        });
-                        continue;
-                    } else if terminated {
-                        tokens.push(Token {
-                            token_type: TokenType::StringLiteral,
-                            lexeme,
-                            literal,
-                            span: Span::for_single_line(
-                                self.file_path,
-                                starting_line,
-                                starting_line_offset,
-                                starting_line_end_offset + 1,
-                            ),
-                        });
-                        self.advance();
-                        continue;
-                    }
-
-                    if self.peek() == Some('\n') {
-                        literal.push(self.peek().unwrap());
-                        lexeme.push(self.peek().unwrap());
-                        self.advance();
-                    }
-                    let mut ending_line = self.line;
-                    let mut ending_line_offset = self.offset;
-                    let mut ending_line_end_offset = self.offset;
                     while !self.eof() && self.peek() != Some('"') {
-                        if self.peek() == Some('\n') {
+                        if self.peek() == Some('\\') {
                             lexeme.push(self.peek().unwrap());
-                            literal.push(self.peek().unwrap());
                             self.advance();
-                            if !self.eof() {
-                                ending_line_offset = self.offset;
-                                ending_line = self.line;
-                                ending_line_end_offset = self.offset;
-                            }
-                        } else if self.peek() == Some('"') {
-                            lexeme.push(self.peek().unwrap());
-                            terminated = true;
-                            break;
-                        } else if self.peek() == Some('\\') {
-                            lexeme.push(self.peek().unwrap());
-                            let escape_char_offset = self.offset;
-                            let escape_char_line = self.line;
-                            // do escaping stuff
-                            self.advance();
+
                             if let Some(ch) = self.peek() {
-                                lexeme.push(self.peek().unwrap());
-                                if let Ok(escaped) = escape(ch) {
-                                    literal.push(escaped);
-                                    ending_line_end_offset += 2;
-                                    self.advance();
-                                } else if self.peek() == Some('\n') {
-                                    errors.push(RigError {
-                                        message: String::from("invalid escape character"),
-                                        error_type: ErrorType::Hard,
-                                        file_path: self.file_path.to_string(),
-                                        hint: None,
-                                        error_code: ErrorCode::E0004,
-                                        span: Span::for_single_line(
-                                            self.file_path,
-                                            escape_char_line,
-                                            escape_char_offset,
-                                            escape_char_offset,
-                                        ),
-                                    });
-                                    invalid = true;
-                                    break;
+                                if let Ok(e) = escape(ch) {
+                                    lexeme.push(ch);
+                                    literal.push(e);
                                 } else {
-                                    errors.push(RigError {
-                                        message: String::from("invalid escape character"),
-                                        error_type: ErrorType::Hard,
-                                        file_path: self.file_path.to_string(),
-                                        hint: None,
-                                        error_code: ErrorCode::E0004,
-                                        span: Span::for_single_line(
-                                            self.file_path,
-                                            escape_char_line,
-                                            escape_char_offset,
-                                            self.offset,
-                                        ),
-                                    });
-                                    invalid = true;
+                                    errors.push(RigError::with_no_hint_and_notes(
+                                        ErrorType::Hard,
+                                        ErrorCode::E0005,
+                                        "Invalid escape character",
+                                        Span {
+                                            starting_line: self.line,
+                                            starting_line_offset: self.offset - 1,
+                                            ending_line: self.line,
+                                            ending_line_end_offset: self.offset,
+                                            file_name: self.file_path.to_string(),
+                                        }
+                                    ));
+                                    continue 'mainloop;
                                 }
                             } else {
-                                errors.push(RigError {
-                                    message: String::from("unexpected eof"),
-                                    error_type: ErrorType::Hard,
-                                    file_path: self.file_path.to_string(),
-                                    hint: None,
-                                    error_code: ErrorCode::E0005,
-                                    span: Span::for_single_char(
-                                        self.file_path,
-                                        self.line,
-                                        self.offset,
-                                    ),
-                                });
-                                invalid = true;
-                                break;
+                                errors.push(RigError::with_no_hint_and_notes(
+                                    ErrorType::Hard,
+                                    ErrorCode::E0005,
+                                    "Unexpected eof",
+                                    Span::for_single_char(self.file_path, self.line, self.offset)
+                                ));
+                                continue 'mainloop;
                             }
                         } else {
                             lexeme.push(self.peek().unwrap());
                             literal.push(self.peek().unwrap());
-                            ending_line_end_offset += 1;
-                            self.advance();
                         }
+
+                        self.advance();
                     }
 
-                    if invalid {
-                        continue;
-                    }
-
-                    let mut span = Span {
-                        file_name: self.file_path.to_string(),
+                    let sp = Span {
                         starting_line,
-                        starting_line_offset,
-                        starting_line_end_offset,
-                        ending_line,
-                        ending_line_offset,
-                        ending_line_end_offset,
+                        starting_line_offset: starting_pos,
+                        ending_line: self.line,
+                        ending_line_end_offset: self.offset,
+                        file_name: self.file_path.to_string()
                     };
-
-                    if self.eof() {
-                        span.ending_line_end_offset -= 1;
-                        errors.push(RigError {
-                            message: String::from("unterminated string literal"),
-                            error_type: ErrorType::Hard,
-                            file_path: self.file_path.to_string(),
-                            hint: Some(String::from("insert '\"' here")),
-                            error_code: ErrorCode::E0002,
-                            span,
-                        });
+                    if self.peek() != Some('"') {
+                        errors.push(RigError::with_hint(
+                            ErrorType::Hard,
+                            ErrorCode::E0002,
+                            "Unterminated string literal",
+                            sp.clone(),
+                            "Insert `\"` here",
+                            sp,
+                        ));
                         continue;
                     } else {
-                        lexeme.push(self.peek().unwrap());
-                        tokens.push(Token {
-                            token_type: TokenType::StringLiteral,
-                            lexeme,
-                            literal,
-                            span,
-                        });
+                        lexeme.push('"');
                     }
+
+                    tokens.push(Token {
+                        literal,
+                        lexeme,
+                        token_type: TokenType::StringLiteral,
+                        span: sp,
+                    })
                 }
 
                 ch if ch.is_alphabetic() || ch == '_' => {
@@ -517,21 +349,14 @@ impl<'l> Lexer<'l> {
                             dot_count += 1;
                         }
                         if dot_count > 1 {
-                            errors.push(RigError {
-                                message: String::from(
-                                    "invalid integer literal: too many dots in one literal",
-                                ),
-                                error_type: ErrorType::Hard,
-                                file_path: self.file_path.to_string(),
-                                hint: Some(String::from("remove this dot")),
-                                error_code: ErrorCode::E0003,
-                                span: Span::for_single_line(
-                                    self.file_path,
-                                    line,
-                                    starting_position,
-                                    ending_position,
-                                ),
-                            });
+                            errors.push(RigError::with_hint(
+                                ErrorType::Hard,
+                                ErrorCode::E0003,
+                                "Invalid integer literal",
+                                Span::for_single_char(self.file_path, self.line, self.offset),
+                                "Remove this",
+                                Span::for_single_char(self.file_path, self.line, self.offset)
+                            ));
                             self.advance();
                             invalid_num = true;
                             break;
@@ -569,14 +394,15 @@ impl<'l> Lexer<'l> {
                 ch if ch.is_whitespace() => {}
 
                 // unknown character
-                _ => errors.push(RigError {
-                    message: String::from("unknown character"),
-                    error_type: ErrorType::Hard,
-                    file_path: self.file_path.to_string(),
-                    hint: None,
-                    error_code: ErrorCode::E0001,
-                    span: Span::for_single_char(self.file_path, self.line, self.offset),
-                }),
+                _ => {
+                    dbg!(self.peek());
+                    errors.push(RigError::with_no_hint_and_notes(
+                        ErrorType::Hard,
+                        ErrorCode::E0001,
+                        "Unknown character",
+                        Span::for_single_char(self.file_path, self.line, self.offset),
+                    ))
+                },
             }
             self.advance();
         }

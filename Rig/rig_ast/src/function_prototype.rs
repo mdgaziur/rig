@@ -36,7 +36,11 @@ impl ToString for Prototype {
         format!(
             "{}{}fn {}({}){}",
             self.visibility.to_string(),
-            if self.visibility == Visibility::Pub { " " } else { "" },
+            if self.visibility == Visibility::Pub {
+                " "
+            } else {
+                ""
+            },
             &self.name,
             args_string,
             ty_string,

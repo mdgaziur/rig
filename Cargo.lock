@@ -172,6 +172,7 @@ version = "0.1.0"
 dependencies = [
  "rig_ast",
  "rig_error",
+ "rig_span",
 ]
 
 [[package]]

@@ -53,16 +53,12 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                     name: name.clone(),
                     span: Span::merge(sp_start, parser.previous().span.clone()),
                 }),
-                _ => Err(RigError {
-                    error_code: ErrorCode::E0006,
-                    message: String::from(
-                        "Invalid assignment. Expected property or a variable as lvalue",
-                    ),
-                    hint: None,
-                    error_type: ErrorType::Hard,
-                    file_path: parser.source_path.to_string(),
-                    span: eq_span,
-                }),
+                _ => Err(RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0006,
+                    "Invalid assignment",
+                    eq_span,
+                )),
             };
         }
         _ => (),
@@ -85,16 +81,12 @@ pub fn assignment(parser: &mut Parser) -> Result<Expr, RigError> {
                 value: Box::new(rhs),
                 span: Span::merge(span, parser.previous().span.clone()),
             }),
-            _ => Err(RigError {
-                error_code: ErrorCode::E0006,
-                message: String::from(
-                    "Invalid assignment. Expected property or a variable as lvalue",
-                ),
-                hint: None,
-                error_type: ErrorType::Hard,
-                file_path: parser.source_path.to_string(),
-                span: eq_span,
-            }),
+            _ => Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                "Invalid assignment",
+                eq_span,
+            )),
         };
     }
 
@@ -120,7 +112,7 @@ pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
                     });
                 }
                 loop {
-                    parser.consume(TokenType::Comma, "Expected comma before expression", None)?;
+                    parser.consume(TokenType::Comma, "Expected comma before expression")?;
                     vals.push(field_with_val(parser)?);
 
                     if parser.peek().token_type == TokenType::RightBrace {
@@ -144,10 +136,10 @@ pub fn struct_(parser: &mut Parser) -> Result<Expr, RigError> {
 
 fn field_with_val(parser: &mut Parser) -> Result<StructExprField, RigError> {
     let field = parser
-        .consume(TokenType::Identifier, "Expected field name", None)?
+        .consume(TokenType::Identifier, "Expected field name")?
         .lexeme
         .clone();
-    parser.consume(TokenType::Colon, "Expected `:` after field name", None)?;
+    parser.consume(TokenType::Colon, "Expected `:` after field name")?;
     let val = assignment(parser)?;
 
     Ok(StructExprField { name: field, val })
@@ -485,7 +477,6 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
             parser.consume(
                 TokenType::RightParen,
                 "Expected `)` after argument list",
-                None,
             )?;
             expr = Expr::CallExpr {
                 name: Box::new(expr),
@@ -494,7 +485,7 @@ pub fn call(parser: &mut Parser) -> Result<Expr, RigError> {
             }
         } else if parser.peek().token_type == TokenType::Dot {
             parser.advance();
-            let name = parser.consume(TokenType::Identifier, "Expected identifier", None)?;
+            let name = parser.consume(TokenType::Identifier, "Expected identifier")?;
             expr = Expr::GetExpr {
                 name: name.lexeme.clone(),
                 object: Box::new(expr),
@@ -578,17 +569,12 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
                 "self" => Ok(Expr::SelfExpr {
                     span: parser.peek().span.clone(),
                 }),
-                _ => Err(RigError {
-                    error_type: ErrorType::Hard,
-                    error_code: ErrorCode::E0005,
-                    message: format!(
-                        "Expected `true`/`false`/`null`/`self`, found `{}`",
-                        &parser.peek().lexeme
-                    ),
-                    hint: None,
-                    span: parser.peek().span.clone(),
-                    file_path: parser.source_path.to_string(),
-                }),
+                _ => Err(RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0006,
+                    "Expected `true`, `false`, `null` or `self`",
+                    parser.peek().span.clone(),
+                )),
             };
 
             if ret.is_ok() {
@@ -601,24 +587,19 @@ pub fn primary(parser: &mut Parser) -> Result<Expr, RigError> {
             let _sp_start = parser.peek().span.clone();
             parser.advance();
             let expr = Box::new(expr(parser)?);
-            parser.consume(TokenType::RightParen, "Expected `)` after expression", None)?;
+            parser.consume(TokenType::RightParen, "Expected `)` after expression")?;
 
             Ok(Expr::GroupingExpr {
                 expr,
                 span: parser.previous().span.clone(),
             })
         }
-        _ => Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            message: format!(
-                "Expected primary expression, found `{}`",
-                &parser.peek().lexeme
-            ),
-            hint: None,
-            span: parser.peek().span.clone(),
-            file_path: parser.source_path.to_string(),
-        }),
+        _ => Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            "Expected primary expression",
+            parser.peek().span.clone(),
+        )),
     }
 }
 
@@ -627,7 +608,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
     let start_span = parser.peek().span.clone();
     path.push(
         parser
-            .consume(TokenType::Identifier, "Expected identifier", None)?
+            .consume(TokenType::Identifier, "Expected identifier")?
             .lexeme
             .clone(),
     );
@@ -650,7 +631,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
 }
 
 fn parse_path(parser: &mut Parser) -> Result<Vec<String>, RigError> {
-    let name = parser.consume(TokenType::Identifier, "Expected identifier", None)?;
+    let name = parser.consume(TokenType::Identifier, "Expected identifier")?;
     let mut path = vec![name.lexeme.clone()];
 
     if parser.check(TokenType::Scope) {

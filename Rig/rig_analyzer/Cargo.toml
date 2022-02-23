@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 rig_ast = { path = "../rig_ast" }
 rig_error = { path = "../rig_error" }
+rig_span = { path = "../rig_span" }

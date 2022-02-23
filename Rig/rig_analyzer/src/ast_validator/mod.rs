@@ -1,13 +1,14 @@
 use rig_ast::stmt::Stmt;
-use rig_error::{ErrorCode, ErrorType, RigError};
+use rig_error::{ErrorCode, ErrorType, Note, RigError};
+use rig_span::Span;
 
-pub fn validate_ast(ast: &[Stmt], file_path: &str) -> Vec<RigError> {
+pub fn validate_ast(ast: &[Stmt]) -> Vec<RigError> {
     let mut warnings = Vec::new();
 
     for node in ast {
         match node {
             Stmt::FnStmt { body, .. } => {
-                let res = validate_fn(body, file_path);
+                let res = validate_fn(body);
                 warnings.extend(res);
             }
             _ => (),
@@ -17,25 +18,24 @@ pub fn validate_ast(ast: &[Stmt], file_path: &str) -> Vec<RigError> {
     warnings
 }
 
-fn validate_fn(body: &Stmt, file_path: &str) -> Vec<RigError> {
+fn validate_fn(body: &Stmt) -> Vec<RigError> {
     let mut warnings = Vec::new();
-    let mut encountered_return = false;
+    let mut return_span = None;
+    let mut unreachable_span: Option<Span> = None;
 
     match body {
         Stmt::BlockStmt { exprs, .. } => {
             for expr_stmt in exprs {
                 match &**expr_stmt {
-                    Stmt::ReturnStmt { .. } => encountered_return = true,
+                    Stmt::ReturnStmt { span, .. } => return_span = Some(span),
                     _ => {
-                        if encountered_return {
-                            warnings.push(RigError {
-                                error_code: ErrorCode::E0007,
-                                error_type: ErrorType::Soft,
-                                file_path: file_path.to_string(),
-                                message: String::from("This part will never execute because the function always returns before coming to this part"),
-                                hint: None,
-                                span: expr_stmt.get_span(),
-                            })
+                        if let Some(_) = return_span {
+                            if let Some(prev_span) = &unreachable_span {
+                                unreachable_span =
+                                    Some(Span::merge(prev_span.clone(), expr_stmt.get_span()));
+                            } else {
+                                unreachable_span = Some(expr_stmt.get_span());
+                            }
                         }
                     }
                 }
@@ -44,5 +44,21 @@ fn validate_fn(body: &Stmt, file_path: &str) -> Vec<RigError> {
         _ => panic!("encountered parser bug: function contains Stmt other than BlockStmt as body"),
     }
 
+    if let Some(return_span) = return_span {
+        if let Some(unreachable_span) = unreachable_span {
+            warnings.push(RigError {
+                error_type: ErrorType::Soft,
+                error_code: ErrorCode::E0007,
+                message: String::from("Unreachable code"),
+                span: unreachable_span.clone(),
+                hint: None,
+                hint_span: None,
+                notes: vec![Note {
+                    message: String::from("Function returns here"),
+                    span: return_span.clone(),
+                }],
+            })
+        }
+    }
     warnings
 }

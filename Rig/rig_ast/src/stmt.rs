@@ -144,9 +144,7 @@ impl Stmt {
                 )
             }
             Stmt::FnStmt {
-                prototype,
-                body,
-                ..
+                prototype, body, ..
             } => format!("{} {}", prototype.to_string(), body.to_string(block_depth)),
             Stmt::LetStmt {
                 name,

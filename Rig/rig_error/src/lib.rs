@@ -1,6 +1,3 @@
-mod utils;
-
-use crate::utils::number_len;
 use colored::Colorize;
 use rig_span::Span;
 use std::cmp::max;
@@ -23,8 +20,17 @@ pub struct RigError {
     /// Hint
     pub hint: Option<String>,
 
-    /// File path
-    pub file_path: String,
+    /// Location where hint will be displayed
+    pub hint_span: Option<Span>,
+
+    /// Notes
+    pub notes: Vec<Note>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Note {
+    pub span: Span,
+    pub message: String,
 }
 
 /// Error code
@@ -53,7 +59,7 @@ pub enum ErrorCode {
 }
 
 /// Describes the type of error
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorType {
     /// Error
     Hard,
@@ -65,120 +71,197 @@ pub enum ErrorType {
 impl Display for ErrorType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ErrorType::Hard => write!(f, "{}", "Error".red().bold()),
-            ErrorType::Soft => write!(f, "{}", "Warning".yellow().bold()),
+            ErrorType::Hard => write!(f, "{}", "error".bright_red().bold()),
+            ErrorType::Soft => write!(f, "{}", "warning".bright_yellow().bold()),
         }
     }
 }
 
+trait LiteralSize {
+    fn literal_size(self) -> usize;
+}
+
+impl LiteralSize for usize {
+    fn literal_size(self) -> usize {
+        (0..).take_while(|i| 10usize.pow(*i) <= self).count()
+    }
+}
+
 impl RigError {
-    fn write_marker(
-        &self,
-        starting_offset: usize,
-        ending_offset: usize,
-        blank_line: &str,
-        hint: Option<&String>,
-    ) {
-        let mut hint_string = String::new();
-        let mut marker_count = ending_offset - starting_offset + 1;
-        if hint.is_some() && marker_count == 1 {
-            marker_count = 0;
-        }
-        if let Some(hint) = hint {
-            hint_string = String::from("^ hint: ") + hint;
-        }
-        if marker_count > 0 {
-            eprintln!(
-                "{} {}{}",
-                blank_line.bold().blue(),
-                " ".repeat(starting_offset),
-                "^".repeat(marker_count).yellow().bold(),
-            );
-        }
-        if hint.is_some() {
-            eprintln!(
-                "{} {}{}",
-                blank_line.blue().bold(),
-                " ".repeat(starting_offset + marker_count),
-                hint_string.blue().bold()
-            );
+    pub fn with_no_hint_and_notes(
+        error_type: ErrorType,
+        error_code: ErrorCode,
+        message: &str,
+        span: Span,
+    ) -> Self {
+        RigError {
+            error_type,
+            error_code,
+            message: message.to_string(),
+            span,
+            notes: vec![],
+            hint: None,
+            hint_span: None,
         }
     }
 
-    fn write_line(&self, prefix: &str, line_number: usize, file_content: &str) {
+    pub fn with_hint(
+        error_type: ErrorType,
+        error_code: ErrorCode,
+        message: &str,
+        span: Span,
+        hint: &str,
+        hint_span: Span,
+    ) -> Self {
+        RigError {
+            error_type,
+            error_code,
+            message: message.to_string(),
+            span,
+            notes: vec![],
+            hint: Some(hint.to_string()),
+            hint_span: Some(hint_span),
+        }
+    }
+
+    fn line_number_max_size(&self) -> usize {
+        let mut size = max(
+            self.span.starting_line.literal_size(),
+            self.span.ending_line.literal_size(),
+        );
+
+        if let Some(hint_span) = &self.hint_span {
+            size = max(
+                size,
+                max(
+                    hint_span.starting_line.literal_size(),
+                    hint_span.ending_line.literal_size(),
+                ),
+            );
+        }
+
+        for note in &self.notes {
+            size = max(
+                size,
+                max(
+                    note.span.starting_line.literal_size(),
+                    note.span.ending_line.literal_size(),
+                ),
+            );
+        }
+
+        size
+    }
+
+    fn print_line(line_number: usize, line: &str, max_line_number_size: usize) {
+        if line == "" {
+            return;
+        }
         eprintln!(
             "{} {}",
-            prefix.blue().bold(),
-            file_content.split('\n').nth(line_number - 1).unwrap()
-        )
+            format!("{}{}|", line_number, " ".repeat(max_line_number_size - line_number.literal_size() + 1))
+                .bright_blue()
+                .bold(),
+            line
+        );
+    }
+
+    fn write_marker(blank_line: &str, padding: usize, count: usize) {
+        if count == 0 {
+            return;
+        }
+        eprintln!("{}{}{}", blank_line.bright_blue().bold(), " ".repeat(padding), "^".repeat(count).bright_yellow().bold());
+    }
+
+    fn print_span(span: &Span, file_content: &str, blank_line: &str, line_number_max_size: usize) {
+        let lines = file_content.split("\n").collect::<Vec<&str>>();
+
+        if span.ending_line - span.starting_line >= 3 {
+            // print first two, print three dots, and then the last line :)
+            Self::print_line(
+                span.starting_line,
+                lines[span.starting_line - 1],
+                line_number_max_size,
+            );
+            Self::write_marker(&blank_line,
+                              span.starting_line_offset + 1,
+                              lines[span.starting_line - 1].len() - span.starting_line_offset
+            );
+            Self::print_line(
+                span.starting_line + 1,
+                lines[span.starting_line],
+                line_number_max_size,
+            );
+            Self::write_marker(&blank_line,
+                              1,
+                              lines[span.starting_line].len()
+            );
+            eprintln!("{} {} {}", " ".repeat(line_number_max_size), "|".bright_blue().bold(), "...".bright_blue().bold());
+            Self::print_line(
+                span.ending_line,
+                lines[span.ending_line - 1],
+                line_number_max_size,
+            );
+            Self::write_marker(&blank_line,
+                              1,
+                              lines[span.ending_line - 1].len() - (lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1) + 1
+            );
+        } else if span.starting_line != span.ending_line {
+            Self::print_line(span.starting_line, lines[span.starting_line - 1], line_number_max_size);
+            Self::write_marker(&blank_line,
+                              span.starting_line_offset + 1,
+                              lines[span.starting_line - 1].len() - span.starting_line_offset
+            );
+
+            Self::print_line(span.ending_line, lines[span.ending_line - 1], line_number_max_size);
+            Self::write_marker(&blank_line,
+                              1,
+                              lines[span.ending_line - 1].len()
+            )
+        } else {
+            Self::print_line(span.starting_line, lines[span.starting_line - 1], line_number_max_size);
+            Self::write_marker(&blank_line,
+                              span.starting_line_offset + 1,
+                              span.ending_line_end_offset - span.starting_line_offset + 1
+            );
+        }
     }
 
     pub fn print(&self, file_content: &str) {
-        eprintln!(
-            "{}[{:?}]: {}",
-            self.error_type, self.error_code, self.message
-        );
-        let starting_line_num_len = number_len(self.span.starting_line);
-        let ending_line_num_len = number_len(self.span.ending_line);
-        let max_line_num_len = max(starting_line_num_len, ending_line_num_len);
-        let blank_line = format!("{} |", " ".repeat(max_line_num_len)).blue().bold();
-        let first_line_number = format!(
-            "{}{}|",
-            self.span.starting_line,
-            " ".repeat(max_line_num_len - starting_line_num_len + 1)
-        );
-        let last_line_number = format!(
-            "{}{}|",
-            self.span.ending_line,
-            " ".repeat(max_line_num_len - ending_line_num_len + 1)
-        );
+        let line_number_max_size = self.line_number_max_size();
+        let blank_line = format!("{} |", " ".repeat(line_number_max_size));
 
         eprintln!(
-            "{}{} {}:{}:{}",
-            " ".repeat(max_line_num_len),
-            "-->".blue().bold(),
-            self.file_path,
-            self.span.starting_line,
-            self.span.starting_line_offset + 1
+            "{}: {}",
+            if self.error_type == ErrorType::Hard { format!("{}[{:?}]", self.error_type, self.error_code).bright_red().bold() }
+            else { format!("{}[{:?}]", self.error_type, self.error_code).bright_yellow().bold() },
+            self.message
         );
-        eprintln!("{}", blank_line);
-        self.write_line(&first_line_number, self.span.starting_line, file_content);
-        if self.span.starting_line != self.span.ending_line {
-            self.write_marker(
-                self.span.starting_line_offset,
-                self.span.starting_line_end_offset,
-                &blank_line,
-                None,
-            );
-        } else {
-            self.write_marker(
-                self.span.starting_line_offset,
-                self.span.ending_line_end_offset,
-                &blank_line,
-                self.hint.as_ref(),
-            );
-        }
-
-        if self.span.ending_line - self.span.starting_line > 1 {
-            eprintln!("{} {}", blank_line, "...".blue().bold());
-        }
-        if self.span.ending_line - self.span.starting_line >= 1 {
-            self.write_line(&last_line_number, self.span.ending_line, file_content);
-            self.write_marker(
-                self.span.ending_line_offset,
-                self.span.ending_line_end_offset,
-                &blank_line,
-                self.hint.as_ref(),
-            );
-        }
-        eprintln!("{}", blank_line);
-
-        eprintln!();
         eprintln!(
-            "{}{}{}",
-            "note: use `rig explain ".blue().bold(),
-            format!("{:?}", self.error_code).blue().bold(),
-            "` to know more about the error".blue().bold()
+            "{}{} {}",
+            " ".repeat(line_number_max_size),
+            "-->".bright_blue().bold(),
+            self.span.to_string()
         );
+
+        eprintln!("{}", blank_line.bright_blue().bold());
+        Self::print_span(&self.span, file_content, &blank_line, line_number_max_size);
+        eprintln!("{}", blank_line.bright_blue().bold());
+
+        if let Some(hint) = &self.hint {
+            eprintln!("{}{} {}", " ".repeat(line_number_max_size + 1), "= hint:".bright_blue().bold(), hint.bright_blue().bold());
+
+            eprintln!("{}", blank_line.bright_blue().bold());
+            Self::print_span(&self.hint_span.as_ref().unwrap(), file_content, &blank_line, line_number_max_size);
+            eprintln!("{}", blank_line.bright_blue().bold());
+        }
+
+        for note in &self.notes {
+            eprintln!("{}{} {}", " ".repeat(line_number_max_size + 1), "= note:".bright_blue().bold(), note.message.bright_blue().bold());
+
+            eprintln!("{}", blank_line.bright_blue().bold());
+            Self::print_span(&note.span, file_content, &blank_line, line_number_max_size);
+            eprintln!("{}", blank_line.bright_blue().bold());
+        }
     }
 }

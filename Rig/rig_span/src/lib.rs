@@ -14,9 +14,7 @@
 ///     file_name: String::from("source.rig"),
 ///     starting_line: 1,
 ///     starting_line_offset: 5,
-///     starting_line_end_offset: 24,
 ///     ending_line: 2,
-///     ending_line_offset: 0,
 ///     ending_line_end_offset: 6
 /// };
 /// ```
@@ -32,14 +30,8 @@ pub struct Span {
     /// The offset on the starting line where the part starts
     pub starting_line_offset: usize,
 
-    /// The offset on the starting line where the part ends
-    pub starting_line_end_offset: usize,
-
     /// The line where the part ends
     pub ending_line: usize,
-
-    /// The offset on the ending line where the part ends
-    pub ending_line_offset: usize,
 
     /// The offset on the ending line where the part ends
     pub ending_line_end_offset: usize,
@@ -51,9 +43,7 @@ impl Span {
             file_name: file_name.to_string(),
             starting_line: line,
             starting_line_offset: offset,
-            starting_line_end_offset: offset,
             ending_line: line,
-            ending_line_offset: offset,
             ending_line_end_offset: offset,
         }
     }
@@ -68,9 +58,7 @@ impl Span {
             file_name: file_name.to_string(),
             starting_line: line,
             starting_line_offset: offset_start,
-            starting_line_end_offset: offset_end,
             ending_line: line,
-            ending_line_offset: offset_start,
             ending_line_end_offset: offset_end,
         }
     }
@@ -80,10 +68,17 @@ impl Span {
             file_name: s1.file_name.to_string(),
             starting_line: s1.starting_line,
             starting_line_offset: s1.starting_line_offset,
-            starting_line_end_offset: s1.starting_line_end_offset,
             ending_line: s2.ending_line,
-            ending_line_offset: s2.ending_line_offset,
             ending_line_end_offset: s2.ending_line_end_offset,
         }
+    }
+}
+
+impl ToString for Span {
+    fn to_string(&self) -> String {
+        format!(
+            "{}:{}:{}",
+            self.file_name, self.starting_line, self.starting_line_offset
+        )
     }
 }

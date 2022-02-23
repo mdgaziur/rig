@@ -16,18 +16,12 @@ pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
             "extern" => extern_block(parser),
             _ => visibility(parser),
         },
-        _ => Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            message: format!(
-                "Expected `pub`/`use`/`fn`/`struct`/`impl`/`let`, found `{}`",
-                &parser.peek().lexeme
-            ),
-            hint: None,
-            file_path: parser.source_path.to_string(),
-
-            span: parser.peek().span.clone(),
-        }),
+        _ => Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            "Expected `pub`, `use`, `fn`, `struct`, `impl` or `let`",
+            parser.peek().span.clone(),
+        )),
     }
 }
 
@@ -48,29 +42,19 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             "struct" => struct_(parser, is_pub),
             "mod" => mod_(parser, is_pub),
             "let" => let_(parser, is_pub),
-            _ => Err(RigError {
-                error_type: ErrorType::Hard,
-                error_code: ErrorCode::E0005,
-                message: format!(
-                    "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
-                    &parser.peek().lexeme
-                ),
-                hint: None,
-                span: parser.peek().span.clone(),
-                file_path: parser.source_path.to_string(),
-            }),
+            _ => Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                "Expected `use`, `fn`, `struct`, `mod` or `let`",
+                parser.peek().span.clone(),
+            )),
         },
-        _ => Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            message: format!(
-                "Expected `use`/`fn`/`struct`/`let`/`mod`, found `{}`",
-                &parser.peek().lexeme
-            ),
-            hint: None,
-            span: parser.peek().span.clone(),
-            file_path: parser.source_path.to_string(),
-        }),
+        _ => Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            "Expected `use`, `fn`, `struct`, `mod` or `let`",
+            parser.peek().span.clone(),
+        )),
     }
 }
 
@@ -81,13 +65,12 @@ fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         .consume(
             TokenType::Identifier,
             "Expected struct name after `struct`",
-            None,
         )?
         .lexeme
         .clone();
     let mut fields = Vec::new();
 
-    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name", None)?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name")?;
 
     while parser.peek().token_type != TokenType::RightBrace && !parser.is_eof() {
         let vis = if parser.peek().lexeme == "pub" {
@@ -114,7 +97,6 @@ fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::RightBrace,
         "Expected `}` after struct field list",
-        None,
     )?;
 
     Ok(Stmt::StructStmt {
@@ -132,13 +114,12 @@ fn struct_impl(parser: &mut Parser) -> Result<Stmt, RigError> {
         .consume(
             TokenType::Identifier,
             "Expected struct name after `impl`",
-            None,
         )?
         .lexeme
         .clone();
     let mut methods = Vec::new();
 
-    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name", None)?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` after struct name")?;
 
     while parser.peek().token_type != TokenType::RightBrace || parser.is_eof() {
         methods.push(Box::new(struct_fn(parser)?));
@@ -147,7 +128,6 @@ fn struct_impl(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::RightBrace,
         "Expected `}` after struct methods",
-        None,
     )?;
 
     Ok(Stmt::ImplStmt {
@@ -162,7 +142,6 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         .consume(
             TokenType::Keyword,
             "Expected keyword `fn` or `pub` inside struct impl",
-            None,
         )?
         .lexeme
         .clone();
@@ -175,41 +154,36 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
             .consume(
                 TokenType::Keyword,
                 "Expected keyword `fn` after `pub`",
-                None,
             )?
             .lexeme
             .clone();
 
         if keyword != "fn" {
-            return Err(RigError {
-                error_type: ErrorType::Hard,
-                error_code: ErrorCode::E0005,
-                message: String::from("Expected keyword `fn` after `pub`"),
-                span: parser.previous().span.clone(),
-                hint: None,
-                file_path: parser.source_path.to_string(),
-            });
+            return Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                "Expected `fn`",
+                parser.previous().span.clone(),
+            ));
         }
     } else if keyword != "fn" {
-        return Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            message: String::from("Expected keyword `fn`"),
-            span: parser.previous().span.clone(),
-            hint: None,
-            file_path: parser.source_path.to_string(),
-        });
+        return Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            "Expected `fn`",
+            parser.previous().span.clone(),
+        ));
     } else {
         visibility = Visibility::NotPub;
     }
 
     let method_name = parser
-        .consume(TokenType::Identifier, "Expected name after `fn`", None)?
+        .consume(TokenType::Identifier, "Expected name after `fn`")?
         .lexeme
         .clone();
     let mut args = Vec::new();
 
-    parser.consume(TokenType::LeftParen, "Expected `(` after method name", None)?;
+    parser.consume(TokenType::LeftParen, "Expected `(` after method name")?;
 
     let fn_type;
 
@@ -227,7 +201,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     }
 
     while parser.peek().token_type != TokenType::RightParen && !parser.is_eof() {
-        parser.consume(TokenType::Comma, "Expected `,` before argument", None)?;
+        parser.consume(TokenType::Comma, "Expected `,` before argument")?;
         let arg = name_with_type(parser)?;
 
         args.push(Argument {
@@ -239,7 +213,6 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::RightParen,
         "Expected `)` after argument list",
-        None,
     )?;
 
     let return_ty = if parser.peek().token_type == TokenType::Arrow {
@@ -260,7 +233,6 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::LeftBrace,
         "Expected `{` before block statement",
-        None,
     )?;
 
     let body = Box::new(block_stmt(parser)?);
@@ -279,7 +251,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
 
     let mut prototypes = Vec::new();
 
-    parser.consume(TokenType::LeftBrace, "Expected `{` after `extern`", None)?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` after `extern`")?;
 
     while parser.peek().token_type != TokenType::RightBrace && !parser.is_eof() {
         let vis;
@@ -288,37 +260,32 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
             parser.advance();
 
             if parser.peek().lexeme != "fn" {
-                return Err(RigError {
-                    error_type: ErrorType::Hard,
-                    error_code: ErrorCode::E0005,
-                    message: String::from("Expected keyword `fn` after `pub`"),
-                    span: parser.previous().span.clone(),
-                    hint: None,
-                    file_path: parser.source_path.to_string(),
-                });
+                return Err(RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0006,
+                    "Expected `fn`",
+                    parser.peek().span.clone(),
+                ));
             }
         } else if parser.peek().lexeme != "fn" {
-            return Err(RigError {
-                error_type: ErrorType::Hard,
-                error_code: ErrorCode::E0005,
-                message: String::from("Expected keyword `fn`"),
-                span: parser.previous().span.clone(),
-                hint: None,
-                file_path: parser.source_path.to_string(),
-            });
+            return Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                "Expected `fn` or `pub`",
+                parser.peek().span.clone(),
+            ));
         } else {
             vis = false;
         }
         parser.advance();
 
         prototypes.push(prototype(parser, vis)?);
-        parser.consume(TokenType::Semicolon, "Expected `;` after prototype", None)?;
+        parser.consume(TokenType::Semicolon, "Expected `;` after prototype")?;
     }
 
     parser.consume(
         TokenType::RightBrace,
         "Expected `}` after `extern` body",
-        None,
     )?;
 
     Ok(Stmt::ExternStmt {
@@ -333,7 +300,7 @@ fn use_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.advance();
     let import_path = path(parser)?;
 
-    parser.consume(TokenType::Semicolon, "Expected semicolon after path", None)?;
+    parser.consume(TokenType::Semicolon, "Expected semicolon after path")?;
 
     Ok(Stmt::UseStmt {
         path: import_path,
@@ -350,7 +317,6 @@ fn fn_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::LeftBrace,
         "Expected '{' after function prototype",
-        None,
     )?;
 
     let body = Box::new(block_stmt(parser)?);
@@ -372,17 +338,12 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
         }
 
         let statement = if parser.peek().lexeme == "continue" || parser.peek().lexeme == "break" {
-            Err(RigError {
-                error_code: ErrorCode::E0005,
-                message: format!(
-                    "`{}` is not supposed to be outside loops",
-                    parser.peek().lexeme
-                ),
-                error_type: ErrorType::Hard,
-                file_path: parser.source_path.to_string(),
-                hint: None,
-                span: parser.peek().span.clone(),
-            })
+            Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                &format!("Found `{}` outside a loop", parser.peek().lexeme),
+                parser.peek().span.clone(),
+            ))
         } else {
             stmt(parser, "")
         };
@@ -397,7 +358,6 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::RightBrace,
         "Expected `}` at the end of block statement",
-        None,
     )?;
 
     Ok(Stmt::BlockStmt {
@@ -434,7 +394,6 @@ fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::RightBrace,
         "Expected `}` at the end of block statement",
-        None,
     )?;
 
     Ok(Stmt::BlockStmt {
@@ -459,19 +418,13 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
             "loop" => loop_(parser),
             "print" => print(parser),
             "return" => return_(parser),
-            _ => Err(RigError {
-                error_code: ErrorCode::E0005,
-                message: format!(
-                    "Expected expression, `if`, `for`, `while`, \
-                    `struct`, `impl`, `use`, `let`, `print`, {extra_expectations}, \
-                     `mod` or `extern`. But found: `{}`",
-                    parser.peek().lexeme
-                ),
-                error_type: ErrorType::Hard,
-                file_path: parser.source_path.to_string(),
-                hint: None,
-                span: parser.peek().span.clone(),
-            }),
+            _ => Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                &format!("Expected `let`, `use`, `mod`, `struct`, `extern`, `impl`, \
+                                 `while`, `if`, `for`, `loop`, `print`, `return`, {extra_expectations}"),
+                parser.peek().span.clone(),
+            )),
         },
         TokenType::LeftBrace => {
             parser.advance();
@@ -486,7 +439,7 @@ fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     parser.advance();
 
     let mod_name = parser
-        .consume(TokenType::Identifier, "Expected module name", None)?
+        .consume(TokenType::Identifier, "Expected module name")?
         .lexeme
         .clone();
 
@@ -497,10 +450,10 @@ fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
             stmts.push(program(parser)?);
         }
 
-        parser.consume(TokenType::RightBrace, "Expected `}`", None)?;
+        parser.consume(TokenType::RightBrace, "Expected `}`")?;
         Some(stmts)
     } else {
-        parser.consume(TokenType::Semicolon, "Expected `;`", None)?;
+        parser.consume(TokenType::Semicolon, "Expected `;`")?;
         None
     };
 
@@ -515,13 +468,12 @@ fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
 fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
+    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
+    parser.consume(TokenType::RightParen, "Expected `)`")?;
     parser.consume(
         TokenType::LeftBrace,
         "Expected `{` before block statement",
-        None,
     )?;
     let body = Box::new(loop_body(parser)?);
 
@@ -535,13 +487,12 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
+    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
+    parser.consume(TokenType::RightParen, "Expected `)`")?;
     parser.consume(
         TokenType::LeftBrace,
         "Expected `{` before block statement",
-        None,
     )?;
     let body = Box::new(block_stmt(parser)?);
     let else_branch;
@@ -555,7 +506,6 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
             parser.consume(
                 TokenType::LeftBrace,
                 "Expected `{` before block statement",
-                None,
             )?;
             let body = Box::new(block_stmt(parser)?);
             else_branch = Some(Box::new(Stmt::IfStmt {
@@ -583,12 +533,11 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`", None)?;
+    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let var = parser
         .consume(
             TokenType::Identifier,
             "Expected variable name after `for`",
-            None,
         )?
         .lexeme
         .clone();
@@ -597,28 +546,24 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
         .consume(
             TokenType::Keyword,
             "Expected `in` after variable name",
-            None,
         )?
         .lexeme
         .clone();
     if in_ != "in" {
-        return Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            message: String::from("Expected keyword `in`"),
-            span: parser.previous().span.clone(),
-            hint: None,
-            file_path: parser.source_path.to_string(),
-        });
+        return Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            "Expected `in`",
+            parser.previous().span.clone(),
+        ));
     }
 
     let iterable = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`", None)?;
+    parser.consume(TokenType::RightParen, "Expected `)`")?;
 
     parser.consume(
         TokenType::LeftBrace,
         "Expected `{` before block statement",
-        None,
     )?;
 
     let body = Box::new(loop_body(parser)?);
@@ -638,7 +583,6 @@ fn loop_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(
         TokenType::LeftBrace,
         "Expected `{` before block statement",
-        None,
     )?;
     let body = Box::new(loop_body(parser)?);
 
@@ -656,7 +600,7 @@ fn return_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
     let expr = expr(parser)?;
-    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression")?;
 
     Ok(Stmt::ReturnStmt {
         expr,
@@ -668,7 +612,7 @@ fn print(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
     let expr = expr(parser)?;
-    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression")?;
 
     Ok(Stmt::PrintStmt {
         expr,
@@ -681,7 +625,7 @@ fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
         span: parser.peek().span.clone(),
     });
     parser.advance();
-    parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?;
     brek
 }
 
@@ -690,14 +634,14 @@ fn continue_(parser: &mut Parser) -> Result<Stmt, RigError> {
         span: parser.peek().span.clone(),
     });
     parser.advance();
-    parser.consume(TokenType::Semicolon, "Expected `;` after `break`", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?;
     contnue
 }
 
 fn expr_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let start_sp = parser.peek().span.clone();
     let expr = expr(parser)?;
-    parser.consume(TokenType::Semicolon, "Expected `;` after expression", None)?;
+    parser.consume(TokenType::Semicolon, "Expected `;` after expression")?;
 
     Ok(Stmt::ExprStmt {
         expr,
@@ -710,14 +654,12 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         .consume(
             TokenType::Identifier,
             "Expected identifier after 'fn' keyword",
-            None,
         )?
         .lexeme
         .clone();
     parser.consume(
         TokenType::LeftParen,
         "Expected '(' after function name",
-        None,
     )?;
     let mut args = Vec::new();
 
@@ -739,7 +681,6 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
     parser.consume(
         TokenType::RightParen,
         "Expected ')' after function argument list",
-        None,
     )?;
 
     let mut return_ty = None;
@@ -762,7 +703,7 @@ fn let_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
     let name = parser
-        .consume(TokenType::Identifier, "Expected name after `let`", None)?
+        .consume(TokenType::Identifier, "Expected name after `let`")?
         .lexeme
         .clone();
     let mut ty = None;
@@ -772,12 +713,11 @@ fn let_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         ty = Some(path(parser)?);
     }
 
-    parser.consume(TokenType::Equal, "Expected `=` after name", None)?;
+    parser.consume(TokenType::Equal, "Expected `=` after name")?;
     let value = expr(parser)?;
     parser.consume(
         TokenType::Semicolon,
         "Expected `;` after variable declaration",
-        None,
     )?;
 
     Ok(Stmt::LetStmt {

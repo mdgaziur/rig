@@ -10,7 +10,6 @@ use rig_ast::token::{Token, TokenType};
 use rig_error::{ErrorCode, ErrorType, RigError};
 
 pub struct Parser<'p> {
-    source_path: &'p str,
     lexical_tokens: &'p [Token],
     pos: usize,
     /// Errors inside block statement
@@ -18,9 +17,8 @@ pub struct Parser<'p> {
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(source_path: &'p str, lexical_tokens: &'p [Token]) -> Self {
+    pub fn new(lexical_tokens: &'p [Token]) -> Self {
         Self {
-            source_path,
             lexical_tokens,
             pos: 0,
             block_stmt_errs: vec![],
@@ -38,10 +36,6 @@ impl<'p> Parser<'p> {
     /// 2. The parser doesn`t handle EOF correctly and keeps eating tokens
     fn peek(&self) -> &Token {
         self.lexical_tokens.get(self.pos).unwrap()
-    }
-
-    fn try_peek_next(&self) -> Option<&Token> {
-        self.lexical_tokens.get(self.pos + 1)
     }
 
     /// ## Panics
@@ -62,7 +56,6 @@ impl<'p> Parser<'p> {
         &mut self,
         token_type: TokenType,
         message: &str,
-        hint: Option<String>,
     ) -> Result<&Token, RigError> {
         if self.check(token_type) {
             self.advance();
@@ -70,23 +63,19 @@ impl<'p> Parser<'p> {
         }
 
         if self.is_eof() {
-            return Err(RigError {
-                error_type: ErrorType::Hard,
-                error_code: ErrorCode::E0005,
-                span: self.peek().span.clone(),
-                message: format!("{}, but found unexpected eof", message),
-                hint,
-                file_path: self.source_path.to_string(),
-            });
+            return Err(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0006,
+                &format!("{}, but found unexpected eof", message),
+                self.peek().span.clone(),
+            ));
         }
-        Err(RigError {
-            error_type: ErrorType::Hard,
-            error_code: ErrorCode::E0005,
-            span: self.peek().span.clone(),
-            message: format!("{}, but found `{}`", message, self.peek().lexeme),
-            hint,
-            file_path: self.source_path.to_string(),
-        })
+        Err(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0006,
+            &format!("{}, but found `{}`", message, self.peek().lexeme),
+            self.peek().span.clone(),
+        ))
     }
 
     fn synchronize(&mut self) {
@@ -142,9 +131,9 @@ pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
 
 fn name_with_type(parser: &mut Parser) -> Result<(Token, Expr), RigError> {
     let name = parser
-        .consume(TokenType::Identifier, "Expected name", None)?
+        .consume(TokenType::Identifier, "Expected name")?
         .clone();
-    parser.consume(TokenType::Colon, "Expected colon after name", None)?;
+    parser.consume(TokenType::Colon, "Expected colon after name")?;
     let ty = path(parser)?;
 
     Ok((name, ty))

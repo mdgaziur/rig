@@ -30,7 +30,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
-    let mut parser = Parser::new(&file_name, &tokens.0);
+    let mut parser = Parser::new(&tokens.0);
     let ast = parse(&mut parser);
 
     if unpretty == Some(OutputType::Ast) {
@@ -55,7 +55,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
-    let res = validate_ast(&ast.0, &file_name);
+    let res = validate_ast(&ast.0);
 
     // Show warnings first
     for err in res {
