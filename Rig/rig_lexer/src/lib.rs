@@ -30,8 +30,7 @@ impl<'l> Lexer<'l> {
         let mut tokens = Vec::new();
         let mut errors = Vec::new();
 
-        'mainloop:
-        while !self.eof() {
+        'mainloop: while !self.eof() {
             match self.peek().unwrap() {
                 // single character tokens
                 '(' => tokens.push(single_char_token!(self, '(', TokenType::LeftParen)),
@@ -245,7 +244,7 @@ impl<'l> Lexer<'l> {
                                             ending_line: self.line,
                                             ending_line_end_offset: self.offset,
                                             file_name: self.file_path.to_string(),
-                                        }
+                                        },
                                     ));
                                     continue 'mainloop;
                                 }
@@ -254,7 +253,7 @@ impl<'l> Lexer<'l> {
                                     ErrorType::Hard,
                                     ErrorCode::E0005,
                                     "Unexpected eof",
-                                    Span::for_single_char(self.file_path, self.line, self.offset)
+                                    Span::for_single_char(self.file_path, self.line, self.offset),
                                 ));
                                 continue 'mainloop;
                             }
@@ -271,7 +270,7 @@ impl<'l> Lexer<'l> {
                         starting_line_offset: starting_pos,
                         ending_line: self.line,
                         ending_line_end_offset: self.offset,
-                        file_name: self.file_path.to_string()
+                        file_name: self.file_path.to_string(),
                     };
                     if self.peek() != Some('"') {
                         errors.push(RigError::with_hint(
@@ -355,7 +354,7 @@ impl<'l> Lexer<'l> {
                                 "Invalid integer literal",
                                 Span::for_single_char(self.file_path, self.line, self.offset),
                                 "Remove this",
-                                Span::for_single_char(self.file_path, self.line, self.offset)
+                                Span::for_single_char(self.file_path, self.line, self.offset),
                             ));
                             self.advance();
                             invalid_num = true;
@@ -394,15 +393,12 @@ impl<'l> Lexer<'l> {
                 ch if ch.is_whitespace() => {}
 
                 // unknown character
-                _ => {
-                    dbg!(self.peek());
-                    errors.push(RigError::with_no_hint_and_notes(
-                        ErrorType::Hard,
-                        ErrorCode::E0001,
-                        "Unknown character",
-                        Span::for_single_char(self.file_path, self.line, self.offset),
-                    ))
-                },
+                _ => errors.push(RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0001,
+                    "Unknown character",
+                    Span::for_single_char(self.file_path, self.line, self.offset),
+                )),
             }
             self.advance();
         }

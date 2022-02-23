@@ -62,10 +62,7 @@ fn struct_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
     let name = parser
-        .consume(
-            TokenType::Identifier,
-            "Expected struct name after `struct`",
-        )?
+        .consume(TokenType::Identifier, "Expected struct name after `struct`")?
         .lexeme
         .clone();
     let mut fields = Vec::new();
@@ -111,10 +108,7 @@ fn struct_impl(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
     let struct_name = parser
-        .consume(
-            TokenType::Identifier,
-            "Expected struct name after `impl`",
-        )?
+        .consume(TokenType::Identifier, "Expected struct name after `impl`")?
         .lexeme
         .clone();
     let mut methods = Vec::new();
@@ -125,10 +119,7 @@ fn struct_impl(parser: &mut Parser) -> Result<Stmt, RigError> {
         methods.push(Box::new(struct_fn(parser)?));
     }
 
-    parser.consume(
-        TokenType::RightBrace,
-        "Expected `}` after struct methods",
-    )?;
+    parser.consume(TokenType::RightBrace, "Expected `}` after struct methods")?;
 
     Ok(Stmt::ImplStmt {
         struct_name,
@@ -151,10 +142,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     if keyword == "pub" {
         visibility = Visibility::Pub;
         let keyword = parser
-            .consume(
-                TokenType::Keyword,
-                "Expected keyword `fn` after `pub`",
-            )?
+            .consume(TokenType::Keyword, "Expected keyword `fn` after `pub`")?
             .lexeme
             .clone();
 
@@ -210,10 +198,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         });
     }
 
-    parser.consume(
-        TokenType::RightParen,
-        "Expected `)` after argument list",
-    )?;
+    parser.consume(TokenType::RightParen, "Expected `)` after argument list")?;
 
     let return_ty = if parser.peek().token_type == TokenType::Arrow {
         parser.advance();
@@ -230,10 +215,7 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         fn_type,
     };
 
-    parser.consume(
-        TokenType::LeftBrace,
-        "Expected `{` before block statement",
-    )?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
 
     let body = Box::new(block_stmt(parser)?);
 
@@ -283,10 +265,7 @@ fn extern_block(parser: &mut Parser) -> Result<Stmt, RigError> {
         parser.consume(TokenType::Semicolon, "Expected `;` after prototype")?;
     }
 
-    parser.consume(
-        TokenType::RightBrace,
-        "Expected `}` after `extern` body",
-    )?;
+    parser.consume(TokenType::RightBrace, "Expected `}` after `extern` body")?;
 
     Ok(Stmt::ExternStmt {
         prototypes,
@@ -471,10 +450,7 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
     parser.consume(TokenType::RightParen, "Expected `)`")?;
-    parser.consume(
-        TokenType::LeftBrace,
-        "Expected `{` before block statement",
-    )?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
     let body = Box::new(loop_body(parser)?);
 
     Ok(Stmt::WhileStmt {
@@ -490,10 +466,7 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
     parser.consume(TokenType::RightParen, "Expected `)`")?;
-    parser.consume(
-        TokenType::LeftBrace,
-        "Expected `{` before block statement",
-    )?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
     let body = Box::new(block_stmt(parser)?);
     let else_branch;
 
@@ -503,10 +476,7 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
             else_branch = Some(Box::new(conditional_(parser)?));
         } else {
             let sp_start = parser.previous().span.clone();
-            parser.consume(
-                TokenType::LeftBrace,
-                "Expected `{` before block statement",
-            )?;
+            parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
             let body = Box::new(block_stmt(parser)?);
             else_branch = Some(Box::new(Stmt::IfStmt {
                 condition: Expr::BooleanLiteralExpr {
@@ -535,18 +505,12 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.advance();
     parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let var = parser
-        .consume(
-            TokenType::Identifier,
-            "Expected variable name after `for`",
-        )?
+        .consume(TokenType::Identifier, "Expected variable name after `for`")?
         .lexeme
         .clone();
 
     let in_ = parser
-        .consume(
-            TokenType::Keyword,
-            "Expected `in` after variable name",
-        )?
+        .consume(TokenType::Keyword, "Expected `in` after variable name")?
         .lexeme
         .clone();
     if in_ != "in" {
@@ -561,10 +525,7 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let iterable = expr(parser)?;
     parser.consume(TokenType::RightParen, "Expected `)`")?;
 
-    parser.consume(
-        TokenType::LeftBrace,
-        "Expected `{` before block statement",
-    )?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
 
     let body = Box::new(loop_body(parser)?);
 
@@ -580,10 +541,7 @@ fn loop_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
 
-    parser.consume(
-        TokenType::LeftBrace,
-        "Expected `{` before block statement",
-    )?;
+    parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
     let body = Box::new(loop_body(parser)?);
 
     Ok(Stmt::WhileStmt {
@@ -657,10 +615,7 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
         )?
         .lexeme
         .clone();
-    parser.consume(
-        TokenType::LeftParen,
-        "Expected '(' after function name",
-    )?;
+    parser.consume(TokenType::LeftParen, "Expected '(' after function name")?;
     let mut args = Vec::new();
 
     if !parser.check(TokenType::RightParen) {

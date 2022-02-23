@@ -159,9 +159,13 @@ impl RigError {
         }
         eprintln!(
             "{} {}",
-            format!("{}{}|", line_number, " ".repeat(max_line_number_size - line_number.literal_size() + 1))
-                .bright_blue()
-                .bold(),
+            format!(
+                "{}{}|",
+                line_number,
+                " ".repeat(max_line_number_size - line_number.literal_size() + 1)
+            )
+            .bright_blue()
+            .bold(),
             line
         );
     }
@@ -170,7 +174,12 @@ impl RigError {
         if count == 0 {
             return;
         }
-        eprintln!("{}{}{}", blank_line.bright_blue().bold(), " ".repeat(padding), "^".repeat(count).bright_yellow().bold());
+        eprintln!(
+            "{}{}{}",
+            blank_line.bright_blue().bold(),
+            " ".repeat(padding),
+            "^".repeat(count).bright_yellow().bold()
+        );
     }
 
     fn print_span(span: &Span, file_content: &str, blank_line: &str, line_number_max_size: usize) {
@@ -183,46 +192,63 @@ impl RigError {
                 lines[span.starting_line - 1],
                 line_number_max_size,
             );
-            Self::write_marker(&blank_line,
-                              span.starting_line_offset + 1,
-                              lines[span.starting_line - 1].len() - span.starting_line_offset
+            Self::write_marker(
+                &blank_line,
+                span.starting_line_offset + 1,
+                lines[span.starting_line - 1].len() - span.starting_line_offset,
             );
             Self::print_line(
                 span.starting_line + 1,
                 lines[span.starting_line],
                 line_number_max_size,
             );
-            Self::write_marker(&blank_line,
-                              1,
-                              lines[span.starting_line].len()
+            Self::write_marker(&blank_line, 1, lines[span.starting_line].len());
+            eprintln!(
+                "{} {} {}",
+                " ".repeat(line_number_max_size),
+                "|".bright_blue().bold(),
+                "...".bright_blue().bold()
             );
-            eprintln!("{} {} {}", " ".repeat(line_number_max_size), "|".bright_blue().bold(), "...".bright_blue().bold());
             Self::print_line(
                 span.ending_line,
                 lines[span.ending_line - 1],
                 line_number_max_size,
             );
-            Self::write_marker(&blank_line,
-                              1,
-                              lines[span.ending_line - 1].len() - (lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1) + 1
+            Self::write_marker(
+                &blank_line,
+                1,
+                lines[span.ending_line - 1].len()
+                    - (lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1)
+                    + 1,
             );
         } else if span.starting_line != span.ending_line {
-            Self::print_line(span.starting_line, lines[span.starting_line - 1], line_number_max_size);
-            Self::write_marker(&blank_line,
-                              span.starting_line_offset + 1,
-                              lines[span.starting_line - 1].len() - span.starting_line_offset
+            Self::print_line(
+                span.starting_line,
+                lines[span.starting_line - 1],
+                line_number_max_size,
+            );
+            Self::write_marker(
+                &blank_line,
+                span.starting_line_offset + 1,
+                lines[span.starting_line - 1].len() - span.starting_line_offset,
             );
 
-            Self::print_line(span.ending_line, lines[span.ending_line - 1], line_number_max_size);
-            Self::write_marker(&blank_line,
-                              1,
-                              lines[span.ending_line - 1].len()
-            )
+            Self::print_line(
+                span.ending_line,
+                lines[span.ending_line - 1],
+                line_number_max_size,
+            );
+            Self::write_marker(&blank_line, 1, lines[span.ending_line - 1].len())
         } else {
-            Self::print_line(span.starting_line, lines[span.starting_line - 1], line_number_max_size);
-            Self::write_marker(&blank_line,
-                              span.starting_line_offset + 1,
-                              span.ending_line_end_offset - span.starting_line_offset + 1
+            Self::print_line(
+                span.starting_line,
+                lines[span.starting_line - 1],
+                line_number_max_size,
+            );
+            Self::write_marker(
+                &blank_line,
+                span.starting_line_offset + 1,
+                span.ending_line_end_offset - span.starting_line_offset + 1,
             );
         }
     }
@@ -233,8 +259,15 @@ impl RigError {
 
         eprintln!(
             "{}: {}",
-            if self.error_type == ErrorType::Hard { format!("{}[{:?}]", self.error_type, self.error_code).bright_red().bold() }
-            else { format!("{}[{:?}]", self.error_type, self.error_code).bright_yellow().bold() },
+            if self.error_type == ErrorType::Hard {
+                format!("{}[{:?}]", self.error_type, self.error_code)
+                    .bright_red()
+                    .bold()
+            } else {
+                format!("{}[{:?}]", self.error_type, self.error_code)
+                    .bright_yellow()
+                    .bold()
+            },
             self.message
         );
         eprintln!(
@@ -249,15 +282,30 @@ impl RigError {
         eprintln!("{}", blank_line.bright_blue().bold());
 
         if let Some(hint) = &self.hint {
-            eprintln!("{}{} {}", " ".repeat(line_number_max_size + 1), "= hint:".bright_blue().bold(), hint.bright_blue().bold());
+            eprintln!(
+                "{}{} {}",
+                " ".repeat(line_number_max_size + 1),
+                "= hint:".bright_blue().bold(),
+                hint.bright_blue().bold()
+            );
 
             eprintln!("{}", blank_line.bright_blue().bold());
-            Self::print_span(&self.hint_span.as_ref().unwrap(), file_content, &blank_line, line_number_max_size);
+            Self::print_span(
+                &self.hint_span.as_ref().unwrap(),
+                file_content,
+                &blank_line,
+                line_number_max_size,
+            );
             eprintln!("{}", blank_line.bright_blue().bold());
         }
 
         for note in &self.notes {
-            eprintln!("{}{} {}", " ".repeat(line_number_max_size + 1), "= note:".bright_blue().bold(), note.message.bright_blue().bold());
+            eprintln!(
+                "{}{} {}",
+                " ".repeat(line_number_max_size + 1),
+                "= note:".bright_blue().bold(),
+                note.message.bright_blue().bold()
+            );
 
             eprintln!("{}", blank_line.bright_blue().bold());
             Self::print_span(&note.span, file_content, &blank_line, line_number_max_size);

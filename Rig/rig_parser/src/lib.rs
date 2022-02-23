@@ -52,11 +52,7 @@ impl<'p> Parser<'p> {
         self.peek().token_type == token_type
     }
 
-    fn consume(
-        &mut self,
-        token_type: TokenType,
-        message: &str,
-    ) -> Result<&Token, RigError> {
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<&Token, RigError> {
         if self.check(token_type) {
             self.advance();
             return Ok(self.previous());
