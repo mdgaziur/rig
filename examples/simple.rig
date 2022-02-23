@@ -33,7 +33,7 @@ fn hello(f: File) -> None {
     }
     return null;
 
-    let x: y = SomeModule::TestXYZ {
+    let বাংলা_নাম: y = SomeModule::TestXYZ {
         x: sometype::new(),
         y: ty::new(),
         anotherfield: x {

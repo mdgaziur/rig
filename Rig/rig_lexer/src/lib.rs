@@ -422,7 +422,7 @@ impl<'l> Lexer<'l> {
     }
 
     fn eof(&self) -> bool {
-        self.pos >= self.file_contents.len()
+        self.pos >= self.file_contents.len() || self.peek() == None
     }
 
     fn advance(&mut self) {
