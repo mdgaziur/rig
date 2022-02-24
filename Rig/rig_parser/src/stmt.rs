@@ -178,13 +178,15 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
     if parser.peek().token_type == TokenType::Keyword && parser.peek().lexeme == "self" {
         fn_type = FnType::Method;
         parser.advance();
-    } else {
+    } else if parser.peek().token_type != TokenType::RightParen {
         let arg = name_with_type(parser)?;
 
         args.push(Argument {
             name: arg.0.lexeme.clone(),
             type_: arg.1,
         });
+        fn_type = FnType::Fn;
+    } else {
         fn_type = FnType::Fn;
     }
 
@@ -579,21 +581,25 @@ fn print(parser: &mut Parser) -> Result<Stmt, RigError> {
 }
 
 fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
-    let brek = Ok(Stmt::BreakStmt {
-        span: parser.peek().span.clone(),
-    });
+    let break_span = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?;
-    brek
+
+    Ok(Stmt::BreakStmt {
+        span: Span::merge(break_span,
+                          parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?
+                              .span.clone()),
+    })
 }
 
 fn continue_(parser: &mut Parser) -> Result<Stmt, RigError> {
-    let contnue = Ok(Stmt::ContinueStmt {
-        span: parser.peek().span.clone(),
-    });
+    let continue_span = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?;
-    contnue
+
+    Ok(Stmt::ContinueStmt {
+        span: Span::merge(continue_span,
+                          parser.consume(TokenType::Semicolon, "Expected `;` after `continue`")?
+                              .span.clone()),
+    })
 }
 
 fn expr_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
