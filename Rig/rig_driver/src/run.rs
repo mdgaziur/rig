@@ -1,6 +1,6 @@
 use crate::OutputType;
 use colored::Colorize;
-use rig_analyzer::ast_validator::validate_ast;
+use rig_analyzer::code_analyzer::analyze_code;
 use rig_lexer::Lexer;
 use rig_parser::{parse, Parser};
 
@@ -55,7 +55,7 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         return;
     }
 
-    let res = validate_ast(&ast.0);
+    let res = analyze_code(&ast.0);
 
     // Show warnings first
     for err in res {

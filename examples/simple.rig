@@ -6,6 +6,12 @@ pub struct TestXYZ {
     pub anotherfield: x,
 }
 
+impl TestXYZ {
+    fn early_return() { return null; x; }
+    fn early_break() { loop { break; x; } }
+    fn early_continue() { loop { continue; x; } }
+}
+
 fn hello(f: File) -> None {
     struct TestXYZ {
         x: sometype,
@@ -21,9 +27,12 @@ fn hello(f: File) -> None {
 
     let s = File::open("/dev/urandom");
 
+    if (true) { return null; x; } else { return null; x; }
+
     x.y = "hello";
 
-    loop { break; y; }
+    loop { break; x; }
+    loop { continue; y; }
 
     x()()().y(y()()());
 
@@ -33,7 +42,7 @@ fn hello(f: File) -> None {
     }
     return null;
 
-    let বাংলা_নাম: y = SomeModule::TestXYZ {
+    let x: y = SomeModule::TestXYZ {
         x: sometype::new(),
         y: ty::new(),
         anotherfield: x {

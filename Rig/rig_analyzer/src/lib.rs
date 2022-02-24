@@ -1,1 +1,1 @@
-pub mod ast_validator;
+pub mod code_analyzer;
