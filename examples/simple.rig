@@ -29,6 +29,23 @@ fn hello(f: File) -> None {
         }
     }
 
+    let enum_t = X::Y {
+        x: "hello"
+    };
+
+    match enum_t {
+        Y => {
+            # note that enum's fields are put into scope automatically
+            print x;
+        }
+        Variant2 => {
+            print "X::Variant2";
+        }
+        Variant3 => {
+            print z;
+        }
+    }
+
     let x: File = 2 * 3 * x * 2 + 2 / 3 << 3 & 1 == 2 % !3;
 
     let y: YetAnotherType = ((x + 1) + x.call());

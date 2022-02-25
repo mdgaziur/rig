@@ -167,8 +167,11 @@ impl<'l> Lexer<'l> {
                         tokens,
                         '=',
                         "==",
+                        '>',
+                        "=>",
                         '=',
                         TokenType::EqualEqual,
+                        TokenType::FatArrow,
                         TokenType::Equal
                     )
                 }

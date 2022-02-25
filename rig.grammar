@@ -36,6 +36,8 @@ whileStmt           -> "while" expression blockStmt ;
 loopBody            -> "{" ( "break" ";" | "continue" ";" | statement  )* "}";
 blockStmt           -> "{" statement* "}";
 exprStmt            -> expression ";" ;
+matchStmt           -> "match" path "{" matchArm* "}" ;
+matchArm            -> primary "=>" blockStmt ;
 printStmt           -> "print" expression ";" ;
 returnStmt          -> "return" expression ";" ;
 

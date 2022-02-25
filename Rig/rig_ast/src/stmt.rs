@@ -4,6 +4,7 @@ use crate::struct_field::StructField;
 use crate::visibility::Visibility;
 use rig_span::Span;
 use crate::enum_variant::EnumVariant;
+use crate::match_arms::MatchArm;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -89,6 +90,11 @@ pub enum Stmt {
         name: String,
         variants: Vec<EnumVariant>,
         visibility: Visibility,
+        span: Span,
+    },
+    MatchStmt {
+        matched: Expr,
+        arms: Vec<MatchArm>,
         span: Span,
     },
 }
@@ -291,6 +297,16 @@ impl Stmt {
 
                 res.push("\t".repeat(block_depth) + "}");
                 res.join("\n")
+            },
+            Stmt::MatchStmt { matched, arms, .. } => {
+                let mut res = vec![format!("match {} {{", matched.to_string(0))];
+
+                res.extend(arms.iter()
+                    .map(|arm| arm.to_string(block_depth + 1))
+                    .collect::<Vec<String>>());
+
+                res.push("\t".repeat(block_depth) + "}");
+                res.join("\n")
             }
         };
 
@@ -316,6 +332,7 @@ impl Stmt {
             Stmt::ContinueStmt { .. } => "continue",
             Stmt::ModStmt { .. } => "mod",
             Stmt::EnumStmt { .. } => "enum",
+            Stmt::MatchStmt { .. } => "match",
         }
     }
 
@@ -339,6 +356,7 @@ impl Stmt {
             Stmt::ContinueStmt { span, .. } => span,
             Stmt::ModStmt { span, .. } => span,
             Stmt::EnumStmt { span, .. } => span,
+            Stmt::MatchStmt { span, .. } => span,
         }
         .clone()
     }

@@ -1,8 +1,9 @@
 use rig_ast::enum_variant::{EnumVariant, EnumVariantField};
-use crate::expr::{expr, path};
+use crate::expr::{expr, path, primary};
 use crate::{name_with_type, Parser};
 use rig_ast::expr::Expr;
 use rig_ast::function_prototype::{Argument, FnType, Prototype};
+use rig_ast::match_arms::MatchArm;
 use rig_ast::stmt::Stmt;
 use rig_ast::struct_field::StructField;
 use rig_ast::token::TokenType;
@@ -468,11 +469,12 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
             "print" => print(parser),
             "return" => return_(parser),
             "enum" => enum_(parser, false),
+            "match" => match_(parser),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
                 ErrorCode::E0005,
                 &format!("Expected `let`, `use`, `mod`, `struct`, `extern`, `impl`, \
-                                 `while`, `if`, `for`, `loop`, `print`, `return`, `enum`, {extra_expectations}"),
+                                 `while`, `if`, `for`, `loop`, `print`, `return`, `enum`, `match`, {extra_expectations}"),
                 parser.peek().span.clone(),
             )),
         },
@@ -482,6 +484,42 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
         }
         _ => expr_stmt(parser),
     }
+}
+
+fn match_(parser: &mut Parser) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+
+    let matched = path(parser)?;
+    let mut arms = Vec::new();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{`")?;
+
+    while !parser.check(TokenType::RightBrace) && !parser.is_eof() {
+        arms.push(parse_arm(parser)?);
+    }
+
+    parser.consume(TokenType::RightBrace, "Expected `}`")?;
+
+    Ok(Stmt::MatchStmt {
+        matched,
+        arms,
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
+}
+
+fn parse_arm(parser: &mut Parser) -> Result<MatchArm, RigError> {
+    let match_ = primary(parser)?;
+
+    parser.consume(TokenType::FatArrow, "Expected `=>`")?;
+    parser.consume(TokenType::LeftBrace, "Expected `}`")?;
+
+    let body = block_stmt(parser)?;
+
+    Ok(MatchArm {
+        match_,
+        body,
+    })
 }
 
 fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
