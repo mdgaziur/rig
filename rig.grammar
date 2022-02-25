@@ -11,7 +11,7 @@
 program             -> ( visibility | structImpl | extern )* EOF ;
 
 visibility          -> "pub"? declaration ;
-declaration         -> useDecl | mod | fnDecl | structDecl | varDecl ;
+declaration         -> useDecl | mod | fnDecl | structDecl | varDecl | enumDecl ;
 useDecl             -> "use" path ";" ;
 mod                 -> "mod" IDENTIFIER ("{" program "}")? ;
 extern              -> "extern" "{" ( "pub"? prototype ";" )* "}" ;
@@ -22,11 +22,13 @@ structImpl          -> "impl" IDENTIFIER "{" structFnDecl* "}" ;
 structFnDecl        -> "pub"? "fn" IDENTIFIER "(" (name_with_type | "self")
                                 ( "," name_with_type )* ")" ( "->" path )? blockStmt ;
 varDecl             -> "let"  IDENTIFIER ( ":" path )? "=" expression ";" ;
+enumDecl            -> "enum" IDENTIFIER "{"  "}" ;
+enumVariant         -> IDENTIFIER ( "{" name_with_type ( "," name_with_type )* "}" )? ;
 
 fnDecl              -> "fn" IDENTIFIER "(" name_with_type | "self" ( "," name_with_type )* ")" statement ;
 name_with_type      -> IDENTIFIER ":" path          # x: std::String
 
-statement           -> ifStmt | forStmt | loopStmt | whileStmt | blockStmt | exprStmt | printStmt | returnStmt ;
+statement           -> ifStmt | forStmt | loopStmt | whileStmt | blockStmt | exprStmt | printStmt | returnStmt | enumDecl ;
 ifStmt              -> "if" expression blockStmt ( "else" statement blockStmt )? ;
 forStmt             -> "for" IDENTIFIER "in" expression blockStmt ;
 loopStmt            -> "loop" blockStmt ;

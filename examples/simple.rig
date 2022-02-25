@@ -15,11 +15,21 @@ impl TestXYZ {
 fn hello(f: File) -> None {
     struct TestXYZ {
         x: sometype,
-        pub y: ty,
+        pub y: y,
         pub anotherfield: x,
     }
 
-    let x: File = ((((((((2 * 3)) * x) * 2) + (2 / 3)) << 3) & 1) == (2 % (!3)));
+    enum X {
+        Y {
+            x: y
+        },
+        Variant2,
+        Variant3 {
+            z: x
+        }
+    }
+
+    let x: File = 2 * 3 * x * 2 + 2 / 3 << 3 & 1 == 2 % !3;
 
     let y: YetAnotherType = ((x + 1) + x.call());
 

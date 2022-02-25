@@ -3,6 +3,7 @@ use crate::function_prototype::Prototype;
 use crate::struct_field::StructField;
 use crate::visibility::Visibility;
 use rig_span::Span;
+use crate::enum_variant::EnumVariant;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -81,6 +82,12 @@ pub enum Stmt {
     ModStmt {
         name: String,
         body: Option<Vec<Stmt>>,
+        visibility: Visibility,
+        span: Span,
+    },
+    EnumStmt {
+        name: String,
+        variants: Vec<EnumVariant>,
         visibility: Visibility,
         span: Span,
     },
@@ -271,6 +278,20 @@ impl Stmt {
 
                 res.join("\n")
             }
+            Stmt::EnumStmt { visibility, name, variants, .. } => {
+                let mut res = vec![format!("{}enum {} {{", match visibility {
+                    Visibility::Pub => "pub ",
+                    Visibility::NotPub => "",
+                }, name)];
+
+                res.push(variants.iter()
+                    .map(|v| v.to_string(block_depth + 1))
+                    .collect::<Vec<String>>()
+                    .join(",\n"));
+
+                res.push("\t".repeat(block_depth) + "}");
+                res.join("\n")
+            }
         };
 
         res
@@ -294,6 +315,7 @@ impl Stmt {
             Stmt::BreakStmt { .. } => "break",
             Stmt::ContinueStmt { .. } => "continue",
             Stmt::ModStmt { .. } => "mod",
+            Stmt::EnumStmt { .. } => "enum",
         }
     }
 
@@ -316,6 +338,7 @@ impl Stmt {
             Stmt::BreakStmt { span, .. } => span,
             Stmt::ContinueStmt { span, .. } => span,
             Stmt::ModStmt { span, .. } => span,
+            Stmt::EnumStmt { span, .. } => span,
         }
         .clone()
     }

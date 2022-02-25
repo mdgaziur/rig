@@ -1,3 +1,4 @@
+use rig_ast::enum_variant::{EnumVariant, EnumVariantField};
 use crate::expr::{expr, path};
 use crate::{name_with_type, Parser};
 use rig_ast::expr::Expr;
@@ -19,7 +20,7 @@ pub fn program(parser: &mut Parser) -> Result<Stmt, RigError> {
         _ => Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
             ErrorCode::E0005,
-            "Expected `pub`, `use`, `fn`, `struct`, `impl` or `let`",
+            "Expected `pub`, `use`, `fn`, `struct`, `impl`, `enum` or `let`",
             parser.peek().span.clone(),
         )),
     }
@@ -42,19 +43,86 @@ fn visibility(parser: &mut Parser) -> Result<Stmt, RigError> {
             "struct" => struct_(parser, is_pub),
             "mod" => mod_(parser, is_pub),
             "let" => let_(parser, is_pub),
+            "enum" => enum_(parser, is_pub),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
                 ErrorCode::E0005,
-                "Expected `use`, `fn`, `struct`, `mod` or `let`",
+                "Expected `use`, `fn`, `struct`, `mod`, `enum` or `let`",
                 parser.peek().span.clone(),
             )),
         },
         _ => Err(RigError::with_no_hint_and_notes(
             ErrorType::Hard,
             ErrorCode::E0005,
-            "Expected `use`, `fn`, `struct`, `mod` or `let`",
+            "Expected `use`, `fn`, `struct`, `mod`, `enum` or `let`",
             parser.peek().span.clone(),
         )),
+    }
+}
+
+fn enum_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
+    let sp_start = parser.peek().span.clone();
+    parser.advance();
+
+    let name = parser
+        .consume(TokenType::Identifier, "Expected enum name after `enum`")?
+        .lexeme
+        .clone();
+
+    parser.consume(TokenType::LeftBrace, "Expected `{` after enum name")?;
+
+    let mut variants = Vec::new();
+    variants.push(parse_enum_variant(parser)?);
+
+    while !parser.check(TokenType::RightBrace) && !parser.is_eof() {
+        parser.consume(TokenType::Comma, "Expected comma before enum variant")?;
+        variants.push(parse_enum_variant(parser)?);
+    }
+
+    parser.consume(TokenType::RightBrace, "Expected `}` after enum declaration")?;
+
+    Ok(Stmt::EnumStmt {
+        name,
+        variants,
+        visibility: Visibility::from(visibility),
+        span: Span::merge(sp_start, parser.previous().span.clone())
+    })
+}
+
+fn parse_enum_variant(parser: &mut Parser) -> Result<EnumVariant, RigError> {
+    let name = parser.peek().lexeme.clone();
+    parser.advance();
+
+    if parser.check(TokenType::LeftBrace) {
+        parser.advance();
+        let mut fields = Vec::new();
+        let field = name_with_type(parser)?;
+
+        fields.push(EnumVariantField {
+            name: field.0.lexeme,
+            ty: field.1,
+        });
+
+        while !parser.check(TokenType::RightBrace) && !parser.is_eof() {
+            parser.consume(TokenType::Comma, "Expected comma before enum variant field")?;
+            let field = name_with_type(parser)?;
+
+            fields.push(EnumVariantField {
+                name: field.0.lexeme,
+                ty: field.1,
+            })
+        }
+        parser.consume(TokenType::RightBrace, "Expected `}` after enum variant")?;
+
+        Ok(EnumVariant {
+            name,
+            fields: Some(fields),
+        })
+    } else {
+        Ok(EnumVariant {
+            name,
+            fields: None,
+        })
     }
 }
 
@@ -399,11 +467,12 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
             "loop" => loop_(parser),
             "print" => print(parser),
             "return" => return_(parser),
+            "enum" => enum_(parser, false),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
                 ErrorCode::E0005,
                 &format!("Expected `let`, `use`, `mod`, `struct`, `extern`, `impl`, \
-                                 `while`, `if`, `for`, `loop`, `print`, `return`, {extra_expectations}"),
+                                 `while`, `if`, `for`, `loop`, `print`, `return`, `enum`, {extra_expectations}"),
                 parser.peek().span.clone(),
             )),
         },

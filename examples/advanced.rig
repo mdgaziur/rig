@@ -55,6 +55,10 @@ fn main() {
         fn main() {}
     }
 
+    struct x {
+        y: x,
+    }
+
     loop {
         let input = io::input("Enter a string: ");
         let string_stats = StringStats::init(input);
