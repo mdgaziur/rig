@@ -556,9 +556,7 @@ fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
 fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`")?;
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
     let body = Box::new(loop_body(parser)?);
 
@@ -572,9 +570,7 @@ fn while_(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let condition = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`")?;
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
     let body = Box::new(block_stmt(parser)?);
     let else_branch;
@@ -612,7 +608,6 @@ fn conditional_(parser: &mut Parser) -> Result<Stmt, RigError> {
 fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
     parser.advance();
-    parser.consume(TokenType::LeftParen, "Expected `(`")?;
     let var = parser
         .consume(TokenType::Identifier, "Expected variable name after `for`")?
         .lexeme
@@ -632,7 +627,6 @@ fn for_(parser: &mut Parser) -> Result<Stmt, RigError> {
     }
 
     let iterable = expr(parser)?;
-    parser.consume(TokenType::RightParen, "Expected `)`")?;
 
     parser.consume(TokenType::LeftBrace, "Expected `{` before block statement")?;
 

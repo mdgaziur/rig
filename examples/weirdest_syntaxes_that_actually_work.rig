@@ -1,0 +1,42 @@
+# this files doesn't necessary contain code that will compile
+# code in this file is guaranteed to parse
+
+fn main() {
+    let X = X {
+        x: X {
+            x: null
+        },
+        y: Y {
+            x: Y(X { x: X() })
+        }
+    };
+
+    # to make sure the parser correctly distinguishes between struct literal and `if` body
+    if X {
+        print X;
+    }
+
+    while X {
+        break;
+    }
+
+    for x in X {
+        break;
+    }
+
+    if hello { x: y } {
+        print x;
+    }
+
+    for x in X { y: true } {
+        # do something
+    }
+
+    if y == X { y: true } {
+        # weird, but it works?
+    }
+
+    while X { x: false } {
+        # still works?
+    }
+}

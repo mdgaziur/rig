@@ -191,7 +191,7 @@ impl Stmt {
                 ..
             } => {
                 let top = format!(
-                    "if ({}) {}",
+                    "if {} {}",
                     condition.to_string(block_depth),
                     body.to_string(block_depth)
                 );
@@ -206,7 +206,7 @@ impl Stmt {
                 condition, body, ..
             } => {
                 format!(
-                    "while ({}) {}",
+                    "while {} {}",
                     condition.to_string(block_depth),
                     body.to_string(block_depth),
                 )
@@ -218,7 +218,7 @@ impl Stmt {
                 ..
             } => {
                 format!(
-                    "for ({} in {}) {}",
+                    "for {} in {} {}",
                     var,
                     iterable.to_string(block_depth),
                     body.to_string(block_depth)
