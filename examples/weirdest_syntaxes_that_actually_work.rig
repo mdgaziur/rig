@@ -2,6 +2,10 @@
 # code in this file is guaranteed to parse
 
 fn main() {
+    struct x {
+        x
+    }
+
     let X = X {
         x: X {
             x: null

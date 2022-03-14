@@ -86,9 +86,18 @@ impl<'p> Parser<'p> {
         }
         self.advance();
 
-        while !self.is_eof() {
-            if let TokenType::Semicolon = self.previous().token_type {
-                return;
+        loop {
+            match self.previous().token_type {
+                TokenType::Semicolon => return,
+                TokenType::LeftBrace => {
+                    self.set_position(self.pos - 1);
+                    return;
+                }
+                _ => (),
+            }
+
+            if self.is_eof() {
+                break;
             }
 
             if self.peek().token_type == TokenType::Keyword {
@@ -97,6 +106,8 @@ impl<'p> Parser<'p> {
                     | "return" | "use" | "impl" | "continue" | "break" => break,
                     _ => (),
                 }
+            } else if self.peek().token_type == TokenType::RightBrace {
+                return;
             }
 
             self.advance();

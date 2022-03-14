@@ -78,7 +78,7 @@ impl ToString for Span {
     fn to_string(&self) -> String {
         format!(
             "{}:{}:{}",
-            self.file_name, self.starting_line, self.starting_line_offset
+            self.file_name, self.starting_line, self.starting_line_offset + 1
         )
     }
 }
