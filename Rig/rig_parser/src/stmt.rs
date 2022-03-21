@@ -425,18 +425,16 @@ fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
             break;
         }
 
-        let stmt = match parser.peek().token_type {
-            TokenType::Keyword => match parser.peek().lexeme.as_str() {
-                "continue" => continue_(parser),
-                "break" => break_(parser),
-                _ => stmt(parser, "`continue`, `break`"),
-            },
-            _ => expr_stmt(parser),
+        let stmt = match parser.peek().lexeme.as_str() {
+            "continue" => continue_(parser),
+            "break" => break_(parser),
+            _ => stmt(parser, "`continue`, `break`"),
         };
 
         if let Err(e) = stmt {
             parser.block_stmt_errs.push(e);
             parser.synchronize();
+            std::process::exit(1);
         } else if let Ok(stmt) = stmt {
             stmts.push(Box::new(stmt));
         }
