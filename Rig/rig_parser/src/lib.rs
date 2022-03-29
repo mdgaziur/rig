@@ -134,7 +134,12 @@ pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
             }
             Err(e) => {
                 errs.push(e);
+
+                let before_sync = parser.peek().clone();
                 parser.synchronize();
+                if *parser.peek() == before_sync {
+                    parser.advance();
+                }
             }
         }
     }
