@@ -434,7 +434,6 @@ fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
         if let Err(e) = stmt {
             parser.block_stmt_errs.push(e);
             parser.synchronize();
-            std::process::exit(1);
         } else if let Ok(stmt) = stmt {
             stmts.push(Box::new(stmt));
         }
