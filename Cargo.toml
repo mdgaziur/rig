@@ -2,6 +2,7 @@
 incremental = true
 
 [profile.release]
+debug = true
 lto = true
 debug-assertions = false
 overflow-checks = false
