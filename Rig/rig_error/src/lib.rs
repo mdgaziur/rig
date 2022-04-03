@@ -217,8 +217,8 @@ impl RigError {
             Self::write_marker(
                 &blank_line,
                 1,
-                lines[span.ending_line - 1].len()
-                    - (lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1)
+                lines[span.ending_line - 1].len().checked_sub((lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1))
+                    .unwrap_or_default()
                     + 1,
             );
         } else if span.starting_line != span.ending_line {
