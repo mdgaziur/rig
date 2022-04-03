@@ -1,6 +1,6 @@
-use rig_ast::enum_variant::{EnumVariant, EnumVariantField};
 use crate::expr::{expr, path, primary};
 use crate::{name_with_type, Parser};
+use rig_ast::enum_variant::{EnumVariant, EnumVariantField};
 use rig_ast::expr::Expr;
 use rig_ast::function_prototype::{Argument, FnType, Prototype};
 use rig_ast::match_arms::MatchArm;
@@ -72,8 +72,7 @@ fn enum_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
 
     parser.consume(TokenType::LeftBrace, "Expected `{` after enum name")?;
 
-    let mut variants = Vec::new();
-    variants.push(parse_enum_variant(parser)?);
+    let mut variants = vec![parse_enum_variant(parser)?];
 
     while !parser.check(TokenType::RightBrace) && !parser.is_eof() {
         parser.consume(TokenType::Comma, "Expected comma before enum variant")?;
@@ -86,7 +85,7 @@ fn enum_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
         name,
         variants,
         visibility: Visibility::from(visibility),
-        span: Span::merge(sp_start, parser.previous().span.clone())
+        span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
 
@@ -120,10 +119,7 @@ fn parse_enum_variant(parser: &mut Parser) -> Result<EnumVariant, RigError> {
             fields: Some(fields),
         })
     } else {
-        Ok(EnumVariant {
-            name,
-            fields: None,
-        })
+        Ok(EnumVariant { name, fields: None })
     }
 }
 
@@ -501,7 +497,7 @@ fn match_(parser: &mut Parser) -> Result<Stmt, RigError> {
     Ok(Stmt::MatchStmt {
         matched,
         arms,
-        span: Span::merge(sp_start, parser.previous().span.clone())
+        span: Span::merge(sp_start, parser.previous().span.clone()),
     })
 }
 
@@ -513,10 +509,7 @@ fn parse_arm(parser: &mut Parser) -> Result<MatchArm, RigError> {
 
     let body = block_stmt(parser)?;
 
-    Ok(MatchArm {
-        match_,
-        body,
-    })
+    Ok(MatchArm { match_, body })
 }
 
 fn mod_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
@@ -683,9 +676,13 @@ fn break_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.advance();
 
     Ok(Stmt::BreakStmt {
-        span: Span::merge(break_span,
-                          parser.consume(TokenType::Semicolon, "Expected `;` after `break`")?
-                              .span.clone()),
+        span: Span::merge(
+            break_span,
+            parser
+                .consume(TokenType::Semicolon, "Expected `;` after `break`")?
+                .span
+                .clone(),
+        ),
     })
 }
 
@@ -694,9 +691,13 @@ fn continue_(parser: &mut Parser) -> Result<Stmt, RigError> {
     parser.advance();
 
     Ok(Stmt::ContinueStmt {
-        span: Span::merge(continue_span,
-                          parser.consume(TokenType::Semicolon, "Expected `;` after `continue`")?
-                              .span.clone()),
+        span: Span::merge(
+            continue_span,
+            parser
+                .consume(TokenType::Semicolon, "Expected `;` after `continue`")?
+                .span
+                .clone(),
+        ),
     })
 }
 

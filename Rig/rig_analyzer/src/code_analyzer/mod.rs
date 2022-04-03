@@ -32,14 +32,12 @@ fn analyze_block(body: &Stmt) -> Vec<RigError> {
     match body {
         Stmt::BlockStmt { exprs, .. } => {
             for expr_stmt in exprs {
-                if let Some(_) = note_span {
-                    if let Some(_) = note_span {
-                        if let Some(prev_span) = &unreachable_span {
-                            unreachable_span =
-                                Some(Span::merge(prev_span.clone(), expr_stmt.get_span()));
-                        } else {
-                            unreachable_span = Some(expr_stmt.get_span());
-                        }
+                if note_span.is_some() {
+                    if let Some(prev_span) = &unreachable_span {
+                        unreachable_span =
+                            Some(Span::merge(prev_span.clone(), expr_stmt.get_span()));
+                    } else {
+                        unreachable_span = Some(expr_stmt.get_span());
                     }
                 } else {
                     match &**expr_stmt {
@@ -75,12 +73,12 @@ fn analyze_block(body: &Stmt) -> Vec<RigError> {
                 error_type: ErrorType::Soft,
                 error_code: ErrorCode::E0007,
                 message: String::from("Unreachable code"),
-                span: unreachable_span.clone(),
+                span: unreachable_span,
                 hint: None,
                 hint_span: None,
                 notes: vec![Note {
                     message,
-                    span: return_span.clone(),
+                    span: return_span,
                 }],
             })
         }
@@ -92,7 +90,9 @@ fn analyze_if_stmt(stmt: &Stmt) -> Vec<RigError> {
     let mut warnings = Vec::new();
 
     match stmt {
-        Stmt::IfStmt { body, else_branch, .. } => {
+        Stmt::IfStmt {
+            body, else_branch, ..
+        } => {
             warnings.extend(analyze_block(body));
 
             if let Some(branch) = else_branch {

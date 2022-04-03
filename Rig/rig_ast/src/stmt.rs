@@ -1,10 +1,10 @@
+use crate::enum_variant::EnumVariant;
 use crate::expr::Expr;
 use crate::function_prototype::Prototype;
+use crate::match_arms::MatchArm;
 use crate::struct_field::StructField;
 use crate::visibility::Visibility;
 use rig_span::Span;
-use crate::enum_variant::EnumVariant;
-use crate::match_arms::MatchArm;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
@@ -284,26 +284,40 @@ impl Stmt {
 
                 res.join("\n")
             }
-            Stmt::EnumStmt { visibility, name, variants, .. } => {
-                let mut res = vec![format!("{}enum {} {{", match visibility {
-                    Visibility::Pub => "pub ",
-                    Visibility::NotPub => "",
-                }, name)];
+            Stmt::EnumStmt {
+                visibility,
+                name,
+                variants,
+                ..
+            } => {
+                let mut res = vec![format!(
+                    "{}enum {} {{",
+                    match visibility {
+                        Visibility::Pub => "pub ",
+                        Visibility::NotPub => "",
+                    },
+                    name
+                )];
 
-                res.push(variants.iter()
-                    .map(|v| v.to_string(block_depth + 1))
-                    .collect::<Vec<String>>()
-                    .join(",\n"));
+                res.push(
+                    variants
+                        .iter()
+                        .map(|v| v.to_string(block_depth + 1))
+                        .collect::<Vec<String>>()
+                        .join(",\n"),
+                );
 
                 res.push("\t".repeat(block_depth) + "}");
                 res.join("\n")
-            },
+            }
             Stmt::MatchStmt { matched, arms, .. } => {
                 let mut res = vec![format!("match {} {{", matched.to_string(0))];
 
-                res.extend(arms.iter()
-                    .map(|arm| arm.to_string(block_depth + 1))
-                    .collect::<Vec<String>>());
+                res.extend(
+                    arms.iter()
+                        .map(|arm| arm.to_string(block_depth + 1))
+                        .collect::<Vec<String>>(),
+                );
 
                 res.push("\t".repeat(block_depth) + "}");
                 res.join("\n")

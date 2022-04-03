@@ -154,7 +154,7 @@ impl RigError {
     }
 
     fn print_line(line_number: usize, line: &str, max_line_number_size: usize) {
-        if line == "" {
+        if line.is_empty() {
             return;
         }
         eprintln!(
@@ -183,7 +183,7 @@ impl RigError {
     }
 
     fn print_span(span: &Span, file_content: &str, blank_line: &str, line_number_max_size: usize) {
-        let lines = file_content.split("\n").collect::<Vec<&str>>();
+        let lines = file_content.split('\n').collect::<Vec<&str>>();
 
         if span.ending_line - span.starting_line >= 3 {
             // print first two, print three dots, and then the last line :)
@@ -193,7 +193,7 @@ impl RigError {
                 line_number_max_size,
             );
             Self::write_marker(
-                &blank_line,
+                blank_line,
                 span.starting_line_offset + 1,
                 lines[span.starting_line - 1].len() - span.starting_line_offset,
             );
@@ -202,7 +202,7 @@ impl RigError {
                 lines[span.starting_line],
                 line_number_max_size,
             );
-            Self::write_marker(&blank_line, 1, lines[span.starting_line].len());
+            Self::write_marker(blank_line, 1, lines[span.starting_line].len());
             eprintln!(
                 "{} {} {}",
                 " ".repeat(line_number_max_size),
@@ -215,9 +215,13 @@ impl RigError {
                 line_number_max_size,
             );
             Self::write_marker(
-                &blank_line,
+                blank_line,
                 1,
-                lines[span.ending_line - 1].len().checked_sub((lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1))
+                lines[span.ending_line - 1]
+                    .len()
+                    .checked_sub(
+                        lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1,
+                    )
                     .unwrap_or_default()
                     + 1,
             );
@@ -228,7 +232,7 @@ impl RigError {
                 line_number_max_size,
             );
             Self::write_marker(
-                &blank_line,
+                blank_line,
                 span.starting_line_offset + 1,
                 lines[span.starting_line - 1].len() - span.starting_line_offset,
             );
@@ -238,7 +242,7 @@ impl RigError {
                 lines[span.ending_line - 1],
                 line_number_max_size,
             );
-            Self::write_marker(&blank_line, 1, lines[span.ending_line - 1].len())
+            Self::write_marker(blank_line, 1, lines[span.ending_line - 1].len())
         } else {
             Self::print_line(
                 span.starting_line,
@@ -246,7 +250,7 @@ impl RigError {
                 line_number_max_size,
             );
             Self::write_marker(
-                &blank_line,
+                blank_line,
                 span.starting_line_offset + 1,
                 span.ending_line_end_offset - span.starting_line_offset + 1,
             );
@@ -291,7 +295,7 @@ impl RigError {
 
             eprintln!("{}", blank_line.bright_blue().bold());
             Self::print_span(
-                &self.hint_span.as_ref().unwrap(),
+                self.hint_span.as_ref().unwrap(),
                 file_content,
                 &blank_line,
                 line_number_max_size,

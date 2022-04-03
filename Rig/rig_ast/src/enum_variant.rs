@@ -3,7 +3,7 @@ use crate::expr::Expr;
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariant {
     pub name: String,
-    pub fields: Option<Vec<EnumVariantField>>
+    pub fields: Option<Vec<EnumVariantField>>,
 }
 
 impl EnumVariant {
@@ -11,10 +11,13 @@ impl EnumVariant {
         if let Some(fields) = &self.fields {
             let mut res = vec![format!("{}{} {{", "\t".repeat(depth), self.name)];
 
-            res.push(fields.iter()
-                .map(|f| format!("{}{}", "\t".repeat(depth + 1), f.to_string()))
-                .collect::<Vec<String>>()
-                .join(","));
+            res.push(
+                fields
+                    .iter()
+                    .map(|f| format!("{}{}", "\t".repeat(depth + 1), f.to_string()))
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
 
             res.push("\t".repeat(depth) + "}");
             res.join("\n")

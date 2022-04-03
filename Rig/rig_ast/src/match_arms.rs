@@ -9,6 +9,11 @@ pub struct MatchArm {
 
 impl MatchArm {
     pub fn to_string(&self, depth: usize) -> String {
-        format!("{}{} => {}", "\t".repeat(depth), self.match_.to_string(0), self.body.to_string(depth))
+        format!(
+            "{}{} => {}",
+            "\t".repeat(depth),
+            self.match_.to_string(0),
+            self.body.to_string(depth)
+        )
     }
 }
