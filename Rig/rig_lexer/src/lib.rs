@@ -7,22 +7,30 @@ use rig_ast::token::{Token, TokenType, KEYWORDS};
 use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_span::Span;
 
+use std::str::Chars;
+
 pub struct Lexer<'l> {
-    bytes: &'l [u8],
+    chars: Chars<'l>,
     file_path: &'l str,
     line: usize,
     offset: usize,
+    current: char,
     pos: usize,
+    src_len: usize
 }
 
 impl<'l> Lexer<'l> {
     pub fn new(file_contents: &'l str, file_path: &'l str) -> Self {
+        let mut chars = file_contents.chars();
+
         Lexer {
-            bytes: file_contents.as_bytes(),
             file_path,
             pos: 0,
             line: 1,
             offset: 0,
+            current: chars.next().unwrap_or_default(),
+            chars,
+            src_len: file_contents.len(),
         }
     }
 
@@ -31,7 +39,7 @@ impl<'l> Lexer<'l> {
         let mut errors = Vec::new();
 
         'mainloop: while !self.eof() {
-            match self.peek().unwrap() {
+            match self.peek() {
                 // single character tokens
                 '(' => tokens.push(single_char_token!(self, '(', TokenType::LeftParen)),
                 ')' => tokens.push(single_char_token!(self, ')', TokenType::RightParen)),
@@ -114,7 +122,9 @@ impl<'l> Lexer<'l> {
                     )
                 }
                 '#' => {
-                    while let Some(ch) = self.peek() {
+                    while !self.eof() {
+                        let ch = self.peek();
+
                         if ch == '\n' {
                             break;
                         }
@@ -226,14 +236,16 @@ impl<'l> Lexer<'l> {
                     let starting_pos = self.offset;
 
                     self.advance();
-                    while !self.eof() && self.peek() != Some('"') {
-                        if self.peek() == Some('\\') {
-                            lexeme.push(self.peek().unwrap() as char);
+                    while !self.eof() && self.peek() != '"' {
+                        if self.peek() == '\\' {
+                            lexeme.push(self.peek());
                             self.advance();
 
-                            if let Some(ch) = self.peek() {
-                                if let Ok(e) = escape(ch as char) {
-                                    lexeme.push(ch as char);
+                            if !self.eof() {
+                                let ch = self.peek();
+
+                                if let Ok(e) = escape(ch) {
+                                    lexeme.push(ch);
                                     literal.push(e);
                                 } else {
                                     errors.push(RigError::with_no_hint_and_notes(
@@ -260,8 +272,8 @@ impl<'l> Lexer<'l> {
                                 continue 'mainloop;
                             }
                         } else {
-                            lexeme.push(self.peek().unwrap() as char);
-                            literal.push(self.peek().unwrap() as char);
+                            lexeme.push(self.peek());
+                            literal.push(self.peek());
                         }
 
                         self.advance();
@@ -274,7 +286,7 @@ impl<'l> Lexer<'l> {
                         ending_line_end_offset: self.offset,
                         file_name: self.file_path.to_string(),
                     };
-                    if self.peek() != Some('"') {
+                    if self.peek() != '"' {
                         errors.push(RigError::with_hint(
                             ErrorType::Hard,
                             ErrorCode::E0002,
@@ -303,7 +315,7 @@ impl<'l> Lexer<'l> {
                     let mut ending_position = self.offset;
 
                     while !self.eof() {
-                        ident.push(self.peek().unwrap() as char);
+                        ident.push(self.peek());
                         ending_position = self.offset;
 
                         if let Some(ch) = self.peek_next() {
@@ -345,7 +357,7 @@ impl<'l> Lexer<'l> {
 
                     let mut invalid_num = false;
                     while !self.eof() {
-                        let ch = self.peek().unwrap();
+                        let ch = self.peek();
                         if ch == '.' {
                             dot_count += 1;
                         }
@@ -363,7 +375,7 @@ impl<'l> Lexer<'l> {
                             break;
                         }
 
-                        num.push(ch as char);
+                        num.push(ch);
                         ending_position = self.offset;
 
                         if let Some(ch) = self.peek_next() {
@@ -416,26 +428,30 @@ impl<'l> Lexer<'l> {
     }
 
     fn peek_next(&mut self) -> Option<char> {
-        self.bytes.get(self.pos + 1).map(|ch| *ch as char)
+        let mut iter = self.chars.clone();
+        iter.next()
     }
 
-    fn peek(&mut self) -> Option<char> {
-        self.bytes.get(self.pos).map(|ch| *ch as char)
+    fn peek(&self) -> char {
+        self.current
     }
 
-    fn eof(&mut self) -> bool {
-        self.pos >= self.bytes.len() || self.peek() == None
+    fn eof(&self) -> bool {
+        self.pos >= self.src_len || self.peek() == '\x00'
     }
 
     fn advance(&mut self) {
-        if self.peek() != Some('\n') {
+        if self.peek() != '\n' {
             self.offset += 1;
         }
         self.pos += 1;
-
-        if !self.eof() && self.peek() == Some('\n') {
-            self.line += 1;
-            self.offset = 0;
+        if let Some(ch) = self.chars.next() {
+            self.current = ch;
+        
+            if self.peek() == '\n' {
+                self.line += 1;
+                self.offset = 0;
+            }
         }
     }
 }
