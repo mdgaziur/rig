@@ -63,7 +63,7 @@ impl<'p> Parser<'p> {
             self.advance();
             return Ok(self.previous());
         }
-
+        
         if self.is_eof() {
             return Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
@@ -81,14 +81,14 @@ impl<'p> Parser<'p> {
     }
 
     fn synchronize(&mut self) {
-        if self.is_eof() {
+        if self.is_eof()  || self.peek().token_type == TokenType::RightBrace {
             return;
         }
         self.advance();
 
         loop {
             match self.previous().token_type {
-                TokenType::Semicolon => return,
+                TokenType::Semicolon | TokenType::RightBrace => return,
                 TokenType::LeftBrace => {
                     self.set_position(self.pos - 1);
                     return;
@@ -137,7 +137,7 @@ pub fn parse(parser: &mut Parser) -> (Vec<Stmt>, Vec<RigError>) {
 
                 let before_sync = parser.peek().clone();
                 parser.synchronize();
-                if *parser.peek() == before_sync {
+                if *parser.peek() == before_sync && !parser.is_eof() {
                     parser.advance();
                 }
             }
