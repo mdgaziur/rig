@@ -16,7 +16,7 @@ pub struct Lexer<'l> {
     offset: usize,
     current: char,
     pos: usize,
-    src_len: usize
+    src_len: usize,
 }
 
 impl<'l> Lexer<'l> {
@@ -45,11 +45,11 @@ impl<'l> Lexer<'l> {
                 ')' => tokens.push(single_char_token!(self, ')', TokenType::RightParen)),
                 '{' => tokens.push(single_char_token!(self, '{', TokenType::LeftBrace)),
                 '}' => tokens.push(single_char_token!(self, '}', TokenType::RightBrace)),
-                '[' => tokens.push(single_char_token!(self, '}', TokenType::LeftThirdBracket)),
-                ']' => tokens.push(single_char_token!(self, '}', TokenType::RightThirdBracket)),
+                '[' => tokens.push(single_char_token!(self, '[', TokenType::LeftThirdBracket)),
+                ']' => tokens.push(single_char_token!(self, ']', TokenType::RightThirdBracket)),
                 ',' => tokens.push(single_char_token!(self, ',', TokenType::Comma)),
                 ';' => tokens.push(single_char_token!(self, ';', TokenType::Semicolon)),
-                '.' => tokens.push(single_char_token!(self, ';', TokenType::Dot)),
+                '.' => tokens.push(single_char_token!(self, '.', TokenType::Dot)),
 
                 // double or single character tokens
                 ':' => {
