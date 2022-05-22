@@ -211,7 +211,7 @@ impl RigError {
                     count = 1;
                 } else {
                     let tab_count_until_end =
-                        count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
+                        tab_count - count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
 
                     count = (span.ending_line_end_offset - span.starting_line_offset)
                         + 1
