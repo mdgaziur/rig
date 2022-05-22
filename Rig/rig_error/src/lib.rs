@@ -154,9 +154,6 @@ impl RigError {
     }
 
     fn print_line(line_number: usize, line: &str, max_line_number_size: usize) {
-        if line.is_empty() {
-            return;
-        }
         eprintln!(
             "{} {}",
             format!(
@@ -182,84 +179,67 @@ impl RigError {
         );
     }
 
-    fn print_span(span: &Span, file_content: &str, blank_line: &str, line_number_max_size: usize) {
-        let lines = file_content.split('\n').collect::<Vec<&str>>();
+    pub fn print_span(
+        &self,
+        lines: &[&str],
+        blank_line: &str,
+        span: &Span,
+        max_line_num_size: usize,
+        print_trailing_empty_line: bool,
+    ) {
+        for line_num in span.starting_line..span.ending_line + 1 {
+            let line = lines[line_num - 1].replace('\t', "    ");
 
-        if span.ending_line - span.starting_line >= 3 {
-            // print first two, print three dots, and then the last line :)
-            Self::print_line(
-                span.starting_line,
-                lines[span.starting_line - 1],
-                line_number_max_size,
-            );
-            Self::write_marker(
-                blank_line,
-                span.starting_line_offset + 1,
-                lines[span.starting_line - 1].len() - span.starting_line_offset,
-            );
-            Self::print_line(
-                span.starting_line + 1,
-                lines[span.starting_line],
-                line_number_max_size,
-            );
-            Self::write_marker(blank_line, 1, lines[span.starting_line].len());
-            eprintln!(
-                "{} {} {}",
-                " ".repeat(line_number_max_size),
-                "|".bright_blue().bold(),
-                "...".bright_blue().bold()
-            );
-            Self::print_line(
-                span.ending_line,
-                lines[span.ending_line - 1],
-                line_number_max_size,
-            );
-            Self::write_marker(
-                blank_line,
-                1,
-                lines[span.ending_line - 1]
-                    .len()
-                    .checked_sub(
-                        lines[span.ending_line - 1].len() - span.ending_line_end_offset + 1,
-                    )
+            if !print_trailing_empty_line {
+                if line_num == span.ending_line && line == "" {
+                    break;
+                }
+            }
+
+            let tab_count = count_tab_until(lines[line_num - 1], span.starting_line_offset);
+            let padding = if line_num == self.span.starting_line {
+                (span.starting_line_offset + tab_count * 4)
+                    .checked_sub(tab_count)
                     .unwrap_or_default()
-                    + 1,
-            );
-        } else if span.starting_line != span.ending_line {
-            Self::print_line(
-                span.starting_line,
-                lines[span.starting_line - 1],
-                line_number_max_size,
-            );
-            Self::write_marker(
-                blank_line,
-                span.starting_line_offset + 1,
-                lines[span.starting_line - 1].len() - span.starting_line_offset,
-            );
+            } else {
+                0
+            };
+            let count;
 
-            Self::print_line(
-                span.ending_line,
-                lines[span.ending_line - 1],
-                line_number_max_size,
-            );
-            Self::write_marker(blank_line, 1, lines[span.ending_line - 1].len())
-        } else {
-            Self::print_line(
-                span.starting_line,
-                lines[span.starting_line - 1],
-                line_number_max_size,
-            );
-            Self::write_marker(
-                blank_line,
-                span.starting_line_offset + 1,
-                span.ending_line_end_offset - span.starting_line_offset + 1,
-            );
+            if span.starting_line == span.ending_line {
+                if span.starting_line_offset == span.ending_line_end_offset {
+                    count = 1;
+                } else {
+                    let tab_count_until_end =
+                        count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
+
+                    count = (span.ending_line_end_offset - span.starting_line_offset)
+                        + 1
+                        + 4 * tab_count_until_end
+                        - tab_count_until_end;
+                }
+            } else if line_num == span.starting_line {
+                count = line.len() - padding;
+            } else {
+                if line_num == span.ending_line {
+                    let tab_count_until_end =
+                        count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
+
+                    count = span.ending_line_end_offset + 1 + tab_count_until_end * 4 - tab_count_until_end;
+                } else {
+                    count = line.len() - padding;
+                }
+            }
+
+            Self::print_line(line_num, &line, max_line_num_size);
+            Self::write_marker(&blank_line, padding + 1, count);
         }
     }
 
     pub fn print(&self, file_content: &str) {
-        let line_number_max_size = self.line_number_max_size();
-        let blank_line = format!("{} |", " ".repeat(line_number_max_size));
+        let lines = file_content.split('\n').collect::<Vec<&str>>();
+        let max_line_num_size = self.line_number_max_size();
+        let blank_line = format!("{} |", " ".repeat(max_line_num_size));
 
         eprintln!(
             "{}: {}",
@@ -276,44 +256,51 @@ impl RigError {
         );
         eprintln!(
             "{}{} {}",
-            " ".repeat(line_number_max_size),
+            " ".repeat(max_line_num_size),
             "-->".bright_blue().bold(),
             self.span.to_string()
         );
 
         eprintln!("{}", blank_line.bright_blue().bold());
-        Self::print_span(&self.span, file_content, &blank_line, line_number_max_size);
+
+        self.print_span(&lines, &blank_line, &self.span, max_line_num_size, false);
+
         eprintln!("{}", blank_line.bright_blue().bold());
 
-        if let Some(hint) = &self.hint {
+        if let Some(hint_span) = &self.hint_span {
             eprintln!(
-                "{}{} {}",
-                " ".repeat(line_number_max_size + 1),
-                "= hint:".bright_blue().bold(),
-                hint.bright_blue().bold()
+                "{}",
+                format!("{} {}", "help:".green(), self.hint.as_ref().unwrap()).bold()
             );
-
             eprintln!("{}", blank_line.bright_blue().bold());
-            Self::print_span(
-                self.hint_span.as_ref().unwrap(),
-                file_content,
-                &blank_line,
-                line_number_max_size,
-            );
+
+            self.print_span(&lines, &blank_line, &hint_span, max_line_num_size, true);
+
             eprintln!("{}", blank_line.bright_blue().bold());
         }
+        eprintln!(
+            "{}",
+            format!(
+                "For more information about this error, try `rig explain {:?}`\n",
+                self.error_code
+            )
+            .bold()
+        );
+    }
+}
 
-        for note in &self.notes {
-            eprintln!(
-                "{}{} {}",
-                " ".repeat(line_number_max_size + 1),
-                "= note:".bright_blue().bold(),
-                note.message.bright_blue().bold()
-            );
+fn count_tab_until(line: &str, offset: usize) -> usize {
+    let mut count = 0;
 
-            eprintln!("{}", blank_line.bright_blue().bold());
-            Self::print_span(&note.span, file_content, &blank_line, line_number_max_size);
-            eprintln!("{}", blank_line.bright_blue().bold());
+    for (idx, ch) in line.chars().enumerate() {
+        if ch == '\t' {
+            count += 1;
+        }
+
+        if idx == offset {
+            break;
         }
     }
+
+    count
 }

@@ -234,9 +234,15 @@ impl<'l> Lexer<'l> {
                     let mut literal = String::new();
                     let starting_line = self.line;
                     let starting_pos = self.offset;
+                    let mut terminated = false;
 
                     self.advance();
-                    while !self.eof() && self.peek() != '"' {
+                    while !self.eof() {
+                        if self.peek() == '"' {
+                            terminated = true;
+                            break;
+                        }
+
                         if self.peek() == '\\' {
                             lexeme.push(self.peek());
                             self.advance();
@@ -279,21 +285,24 @@ impl<'l> Lexer<'l> {
                         self.advance();
                     }
 
-                    let sp = Span {
+                    let mut sp = Span {
                         starting_line,
                         starting_line_offset: starting_pos,
                         ending_line: self.line,
                         ending_line_end_offset: self.offset,
                         file_name: self.file_path.to_string(),
                     };
-                    if self.peek() != '"' {
+                    if !terminated {
+                        if self.eof() && sp.starting_line == sp.ending_line {
+                            sp.ending_line_end_offset -= 1;
+                        }
                         errors.push(RigError::with_hint(
                             ErrorType::Hard,
                             ErrorCode::E0002,
                             "Unterminated string literal",
-                            sp.clone(),
-                            "Insert `\"` here",
                             sp,
+                            "Insert `\"` here",
+                            Span::for_single_char(self.file_path, self.line, self.offset),
                         ));
                         continue;
                     } else {
@@ -354,25 +363,17 @@ impl<'l> Lexer<'l> {
                     let starting_position = self.offset;
                     let mut ending_position = self.offset;
                     let mut dot_count = 0;
+                    let mut last_dot_position = None;
 
-                    let mut invalid_num = false;
                     while !self.eof() {
                         let ch = self.peek();
                         if ch == '.' {
                             dot_count += 1;
-                        }
-                        if dot_count > 1 {
-                            errors.push(RigError::with_hint(
-                                ErrorType::Hard,
-                                ErrorCode::E0003,
-                                "Invalid integer literal",
-                                Span::for_single_char(self.file_path, self.line, self.offset),
-                                "Remove this",
-                                Span::for_single_char(self.file_path, self.line, self.offset),
+                            last_dot_position = Some(Span::for_single_char(
+                                self.file_path,
+                                self.line,
+                                self.offset,
                             ));
-                            self.advance();
-                            invalid_num = true;
-                            break;
                         }
 
                         num.push(ch);
@@ -386,8 +387,23 @@ impl<'l> Lexer<'l> {
 
                         self.advance();
                     }
-                    if invalid_num {
-                        continue;
+
+                    if dot_count > 1 {
+                        errors.push(RigError::with_hint(
+                            ErrorType::Hard,
+                            ErrorCode::E0003,
+                            "Invalid integer literal",
+                            Span::for_single_line(
+                                self.file_path,
+                                line,
+                                starting_position,
+                                ending_position,
+                            ),
+                            "Remove this",
+                            last_dot_position.unwrap(), // there's no other way to construct an invalid integer other than more than one dots
+                        ));
+                        self.advance();
+                        continue 'mainloop;
                     }
 
                     tokens.push(Token {
@@ -447,7 +463,7 @@ impl<'l> Lexer<'l> {
         self.pos += 1;
         if let Some(ch) = self.chars.next() {
             self.current = ch;
-        
+
             if self.peek() == '\n' {
                 self.line += 1;
                 self.offset = 0;

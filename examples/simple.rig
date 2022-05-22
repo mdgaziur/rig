@@ -58,7 +58,9 @@ fn hello(f: File) -> None {
 
     x.y = "hello";
 
-    loop { break; x; }
+	# intentionally messed up
+    loop { break; x
+    ; }
     loop { continue; y; }
 
     x()()().y(y()()());
@@ -67,14 +69,14 @@ fn hello(f: File) -> None {
         let z = 1;
 
     }
-    return null;
 
-    let x: y = SomeModule::TestXYZ {
-        x: sometype::new(),
-        y: ty::new(),
-        anotherfield: x {
-            y: x
+    # intentionally messed up
+    return null;    			   let x: y = SomeModule::		TestXYZ {
+    	    x: sometype::new(),
+     	   y: ty::new(),
+					    	 	  	 		    anotherfield:	     	 	 	 	  x {
+					 y: x
         }
-    };
+    			};
 
 }

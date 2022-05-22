@@ -63,7 +63,7 @@ impl<'p> Parser<'p> {
             self.advance();
             return Ok(self.previous());
         }
-        
+
         if self.is_eof() {
             return Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
@@ -81,7 +81,7 @@ impl<'p> Parser<'p> {
     }
 
     fn synchronize(&mut self) {
-        if self.is_eof()  || self.peek().token_type == TokenType::RightBrace {
+        if self.is_eof() || self.peek().token_type == TokenType::RightBrace {
             return;
         }
         self.advance();

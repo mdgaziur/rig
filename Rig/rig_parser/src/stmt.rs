@@ -379,7 +379,7 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     let start_sp = parser.previous().span.clone();
     let mut stmts = Vec::new();
     loop {
-        if parser.check(TokenType::RightBrace) || parser.is_eof() { 
+        if parser.check(TokenType::RightBrace) || parser.is_eof() {
             break;
         }
 
