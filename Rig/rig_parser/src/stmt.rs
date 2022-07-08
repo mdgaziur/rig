@@ -383,16 +383,7 @@ fn block_stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
             break;
         }
 
-        let statement = if parser.peek().lexeme == "continue" || parser.peek().lexeme == "break" {
-            Err(RigError::with_no_hint_and_notes(
-                ErrorType::Hard,
-                ErrorCode::E0005,
-                &format!("Found `{}` outside a loop", parser.peek().lexeme),
-                parser.peek().span.clone(),
-            ))
-        } else {
-            stmt(parser, "")
-        };
+        let statement = stmt(parser);
 
         if let Err(e) = statement {
             parser.block_stmt_errs.push(e);
@@ -421,11 +412,7 @@ fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
             break;
         }
 
-        let stmt = match parser.peek().lexeme.as_str() {
-            "continue" => continue_(parser),
-            "break" => break_(parser),
-            _ => stmt(parser, "`continue`, `break`"),
-        };
+        let stmt = stmt(parser);
 
         if let Err(e) = stmt {
             parser.block_stmt_errs.push(e);
@@ -446,7 +433,7 @@ fn loop_body(parser: &mut Parser) -> Result<Stmt, RigError> {
 }
 
 /// Parses valid statement inside blocks
-fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError> {
+fn stmt(parser: &mut Parser) -> Result<Stmt, RigError> {
     match parser.peek().token_type {
         TokenType::Keyword => match parser.peek().lexeme.as_str() {
             "let" => let_(parser, false),
@@ -463,11 +450,13 @@ fn stmt(parser: &mut Parser, extra_expectations: &str) -> Result<Stmt, RigError>
             "return" => return_(parser),
             "enum" => enum_(parser, false),
             "match" => match_(parser),
+            "continue" => continue_(parser),
+            "break" => break_(parser),
             _ => Err(RigError::with_no_hint_and_notes(
                 ErrorType::Hard,
                 ErrorCode::E0005,
                 &format!("Expected `let`, `use`, `mod`, `struct`, `extern`, `impl`, \
-                                 `while`, `if`, `for`, `loop`, `print`, `return`, `enum`, `match`, {extra_expectations}"),
+                                 `while`, `if`, `for`, `loop`, `print`, `return`, `enum`, `break, `continue` and `match`"),
                 parser.peek().span.clone(),
             )),
         },
