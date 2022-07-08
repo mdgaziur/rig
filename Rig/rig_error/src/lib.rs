@@ -278,6 +278,19 @@ impl RigError {
 
             eprintln!("{}", blank_line.bright_blue().bold());
         }
+
+        for note in &self.notes {
+            eprintln!(
+                "{}",
+                format!("{} {}", "note:".bright_blue(), note.message).bold()
+            );
+            eprintln!("{}", blank_line.bright_blue().bold());
+
+            self.print_span(&lines, &blank_line, &note.span, max_line_num_size, true);
+
+            eprintln!("{}", blank_line.bright_blue().bold());
+        }
+
         eprintln!(
             "{}",
             format!(
