@@ -210,8 +210,8 @@ impl RigError {
                 if span.starting_line_offset == span.ending_line_end_offset {
                     count = 1;
                 } else {
-                    let tab_count_until_end =
-                        tab_count - count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
+                    let tab_count_until_end = tab_count
+                        - count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
 
                     count = (span.ending_line_end_offset - span.starting_line_offset)
                         + 1
@@ -225,7 +225,8 @@ impl RigError {
                     let tab_count_until_end =
                         count_tab_until(lines[line_num - 1], span.ending_line_end_offset);
 
-                    count = span.ending_line_end_offset + 1 + tab_count_until_end * 4 - tab_count_until_end;
+                    count = span.ending_line_end_offset + 1 + tab_count_until_end * 4
+                        - tab_count_until_end;
                 } else {
                     count = line.len() - padding;
                 }
