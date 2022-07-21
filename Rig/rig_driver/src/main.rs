@@ -63,7 +63,7 @@ fn main() {
         eprintln!("Backtrace:\n{:?}", backtrace::Backtrace::new());
 
         if let Some(message) = pi.message() {
-            eprintln!("Panic message:\n{}\n", message);
+            eprintln!("Panic message:\n\n{}\n", message);
         }
         if let Some(location) = pi.location() {
             eprintln!("Location: {}", location);
