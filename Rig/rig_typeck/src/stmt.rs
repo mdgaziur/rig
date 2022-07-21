@@ -1,8 +1,8 @@
-use crate::{import};
+use crate::import;
 
 use rig_ast::stmt::Stmt;
 
-use rig_error::{RigError};
+use rig_error::RigError;
 
 use rig_project::Project;
 use rig_session::Session;

@@ -1,10 +1,10 @@
-mod stmt;
 mod import;
+mod stmt;
 
 use crate::stmt::typecheck_statement;
 
 use rig_error::RigError;
-use rig_project::parsed_module::{ParsedModule};
+use rig_project::parsed_module::ParsedModule;
 use rig_project::Project;
 use rig_session::Session;
 

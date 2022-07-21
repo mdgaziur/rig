@@ -1,15 +1,15 @@
-use rig_project::Project;
-use rig_session::Session;
-use std::collections::HashMap;
+use crate::typeck_module;
 use rig_ast::expr::Expr;
 use rig_ast::visibility::Visibility;
 use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_project::parsed_module::ParsedModule;
+use rig_project::Project;
+use rig_session::Session;
 use rig_span::Span;
-use rig_types::{Import, Module, ModuleId, ScopeId, TypeIdOrModuleId};
 use rig_types::checked_stmt::CheckedStmt;
+use rig_types::{Import, Module, ModuleId, ScopeId, TypeIdOrModuleId};
 use rig_utils::bug;
-use crate::typeck_module;
+use std::collections::HashMap;
 
 // TODO: handle modules inside subdirectories
 pub fn check_use_stmt(
@@ -19,7 +19,7 @@ pub fn check_use_stmt(
     module_id: ModuleId,
     scope_id: ScopeId,
     path: &Expr,
-    _visibility: Visibility,
+    visibility: Visibility,
     _span: &Span,
 ) -> (Option<CheckedStmt>, Vec<(ModuleId, RigError)>) {
     let mut errs = Vec::new();
@@ -40,23 +40,10 @@ pub fn check_use_stmt(
         if path.len() == 1 {
             let module = project.get_module_mut(module_id);
 
-            module.imports.insert(path.last().unwrap().clone(), Import::Module(module_id));
-        } else {
-            let module = project.get_module(module_id);
-
-            if let Some(type_id) = module.resolve(&path[1..path.len()]) {
-                resolved_typeid = Some(type_id);
-            } else {
-                errs.push((
-                    module_id,
-                    RigError::with_no_hint_and_notes(
-                        ErrorType::Hard,
-                        ErrorCode::E0009,
-                        "Failed to import type",
-                        span.clone(),
-                    ),
-                ));
-            }
+            module.imports.insert(
+                path.last().unwrap().clone(),
+                Import::Module(module_id, visibility),
+            );
         }
     } else {
         // search for module in search path
@@ -67,7 +54,9 @@ pub fn check_use_stmt(
                         let file_path = entry.path();
 
                         if file_path.is_file() {
-                            if file_path.file_name().unwrap().to_str().unwrap() == path[0].clone() + ".rig" {
+                            if file_path.file_name().unwrap().to_str().unwrap()
+                                == path[0].clone() + ".rig"
+                            {
                                 if let Ok(file_content) = std::fs::read_to_string(&file_path) {
                                     let parsed_module = ParsedModule::new(file_path, file_content);
 
@@ -106,23 +95,27 @@ pub fn check_use_stmt(
     if let Some(resolved_module) = resolved_module {
         if path.len() > 1 {
             let module = project.get_module(resolved_module);
+            let resolved_ty = module.try_import(&project.modules, &path[1..path.len()]);
 
-            if let Some(type_id) = module.resolve(&path[1..path.len()]) {
+            if let Ok(type_id) = resolved_ty {
                 resolved_typeid = Some(type_id);
-            } else {
+            } else if let Err(error) = resolved_ty {
                 errs.push((
                     module_id,
                     RigError::with_no_hint_and_notes(
                         ErrorType::Hard,
-                        ErrorCode::E0009,
-                        "Failed to import type",
+                        error.to_error_code(),
+                        &error.to_string(),
                         span.clone(),
                     ),
                 ));
             }
         } else {
             let module = project.get_module_mut(module_id);
-            module.imports.insert(path.last().unwrap().clone(), Import::Module(resolved_module));
+            module.imports.insert(
+                path.last().unwrap().clone(),
+                Import::Module(resolved_module, visibility),
+            );
         }
     } else {
         errs.push((
@@ -138,10 +131,14 @@ pub fn check_use_stmt(
 
     if let Some(type_id) = resolved_typeid {
         let module = project.get_module_mut(module_id);
-        module.imports.insert(path.last().unwrap().clone(), match type_id {
-            TypeIdOrModuleId::TypeId(id) => Import::TypeId(id),
-            TypeIdOrModuleId::ModuleId(id) => Import::Module(id),
-        });
+        module.imports.insert(
+            path.last().unwrap().clone(),
+            match type_id {
+                TypeIdOrModuleId::TypeId(id, Visibility::Pub) => Import::TypeId(id, visibility),
+                TypeIdOrModuleId::ModuleId(id, Visibility::Pub) => Import::Module(id, visibility),
+                t => bug!(t, "Resolver should return nothing if module is private"),
+            },
+        );
     }
 
     (None, errs)

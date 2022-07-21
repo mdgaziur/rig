@@ -62,6 +62,15 @@ pub enum ErrorCode {
 
     /// Cannot import module
     E0009,
+
+    /// Attempt to import private type
+    E0010,
+
+    /// Ambiguous import
+    E0011,
+
+    /// Invalid import
+    E0012,
 }
 
 /// Describes the type of error

@@ -1,0 +1,11 @@
+[package]
+name = "rig_types"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rig_ast = { path = "../rig_ast" }
+rig_span = { path = "../rig_span" }
+rig_error = { path = "../rig_error" }
