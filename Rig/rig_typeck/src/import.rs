@@ -136,7 +136,7 @@ pub fn check_use_stmt(
             match type_id {
                 TypeIdOrModuleId::TypeId(id, Visibility::Pub) => Import::TypeId(id, visibility),
                 TypeIdOrModuleId::ModuleId(id, Visibility::Pub) => Import::Module(id, visibility),
-                t => bug!(t, "Resolver should return nothing if module is private"),
+                t => bug!(t, "Imported private module"),
             },
         );
     }
