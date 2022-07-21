@@ -1,5 +1,6 @@
 use crate::expr::Expr;
 use crate::visibility::Visibility;
+use rig_span::Span;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,6 +59,7 @@ pub enum FnType {
 pub struct Argument {
     pub name: String,
     pub type_: Expr,
+    pub span: Span,
 }
 
 impl ToString for Argument {

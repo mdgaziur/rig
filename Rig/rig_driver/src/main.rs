@@ -1,7 +1,9 @@
+#![feature(panic_info_message)]
 mod run;
 
 use crate::run::run;
 use clap::{Parser, Subcommand};
+use std::panic;
 use std::str::FromStr;
 
 #[derive(Parser)]
@@ -55,6 +57,19 @@ impl FromStr for OutputType {
 }
 
 fn main() {
+    std::env::set_var("RUST_BACKTRACE", "full");
+    panic::set_hook(Box::new(|pi| {
+        eprintln!("Internal compiler error: Compiler panicked\n");
+        eprintln!("Backtrace:\n{:?}", backtrace::Backtrace::new());
+
+        if let Some(message) = pi.message() {
+            eprintln!("Panic message:\n{}\n", message);
+        }
+        if let Some(location) = pi.location() {
+            eprintln!("Location: {}", location);
+        }
+    }));
+
     let cli: RigCLI = RigCLI::parse();
 
     match cli.subcommands {

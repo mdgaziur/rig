@@ -244,11 +244,13 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
         fn_type = FnType::Method;
         parser.advance();
     } else if parser.peek().token_type != TokenType::RightParen {
+        let start_span = parser.peek().span.clone();
         let arg = name_with_type(parser)?;
 
         args.push(Argument {
             name: arg.0.lexeme.clone(),
             type_: arg.1,
+            span: Span::merge(start_span, parser.previous().span.clone()),
         });
         fn_type = FnType::Fn;
     } else {
@@ -257,11 +259,13 @@ fn struct_fn(parser: &mut Parser) -> Result<Stmt, RigError> {
 
     while parser.peek().token_type != TokenType::RightParen && !parser.is_eof() {
         parser.consume(TokenType::Comma, "Expected `,` before argument")?;
+        let start_span = parser.peek().span.clone();
         let arg = name_with_type(parser)?;
 
         args.push(Argument {
             name: arg.0.lexeme.clone(),
             type_: arg.1,
+            span: Span::merge(start_span, parser.previous().span.clone()),
         });
     }
 
@@ -344,7 +348,13 @@ fn use_(parser: &mut Parser, visibility: bool) -> Result<Stmt, RigError> {
     let sp_start = parser.peek().span.clone();
 
     parser.advance();
-    let import_path = path(parser)?;
+    let mut import_path = path(parser)?;
+    if let Expr::VariableExpr { name, span } = import_path {
+        import_path = Expr::PathExpr {
+            path: vec![name],
+            span,
+        }
+    }
 
     parser.consume(TokenType::Semicolon, "Expected semicolon after path")?;
 
@@ -714,10 +724,12 @@ fn prototype(parser: &mut Parser, visibility: bool) -> Result<Prototype, RigErro
 
     if !parser.check(TokenType::RightParen) {
         loop {
+            let start_span = parser.peek().span.clone();
             let name_with_ty = name_with_type(parser)?;
             args.push(Argument {
                 name: name_with_ty.0.lexeme,
                 type_: name_with_ty.1,
+                span: Span::merge(start_span, parser.previous().span.clone()),
             });
 
             if !parser.check(TokenType::Comma) {

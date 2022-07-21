@@ -629,7 +629,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
     if parser.check(TokenType::Scope) {
         parser.advance();
         path.extend(parse_path(parser)?);
-        let end_span = parser.peek().span.clone();
+        let end_span = parser.previous().span.clone();
 
         Ok(Expr::PathExpr {
             path,
@@ -638,7 +638,7 @@ pub fn path(parser: &mut Parser) -> Result<Expr, RigError> {
     } else {
         Ok(Expr::VariableExpr {
             name: path[0].clone(),
-            span: parser.peek().span.clone(),
+            span: parser.previous().span.clone(),
         })
     }
 }

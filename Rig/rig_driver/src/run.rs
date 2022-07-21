@@ -1,11 +1,14 @@
 use crate::OutputType;
 use colored::Colorize;
-use rig_analyzer::code_analyzer::analyze_code;
-use rig_lexer::Lexer;
-use rig_parser::{parse, Parser};
+use std::env::current_dir;
 
-pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast: bool) {
-    let file = match std::fs::read_to_string(&file_name) {
+use rig_project::parsed_module::ParsedModule;
+use rig_session::{DebugInfo, Session};
+use rig_typeck::TypeChecker;
+use std::path::PathBuf;
+
+pub fn run(file_name: String, _unpretty: Option<OutputType>, _reconstruct_from_ast: bool) {
+    let file_content = match std::fs::read_to_string(&file_name) {
         Ok(f) => f,
         Err(e) => {
             eprintln!(
@@ -16,49 +19,23 @@ pub fn run(file_name: String, unpretty: Option<OutputType>, reconstruct_from_ast
         }
     };
 
-    let mut lexer = Lexer::new(&file, &file_name);
-    let tokens = lexer.lex();
+    let parsed_module = ParsedModule::new(
+        PathBuf::from(file_name).canonicalize().unwrap(),
+        file_content,
+    );
 
-    if unpretty == Some(OutputType::LexicalTokens) {
-        println!("{:#?}", tokens.0);
+    if parsed_module.has_lexer_errors() {
+        parsed_module.print_lexer_errors();
+        std::process::exit(1);
     }
 
-    if !tokens.1.is_empty() {
-        for err in tokens.1 {
-            err.print(&file);
-        }
-        return;
-    }
+    parsed_module.print_parser_errors();
 
-    let mut parser = Parser::new(&tokens.0);
-    let ast = parse(&mut parser);
-
-    if unpretty == Some(OutputType::Ast) {
-        println!("{:#?}", ast.0);
-        return;
-    }
-
-    if !ast.1.is_empty() {
-        for err in &ast.1 {
-            err.print(&file);
-        }
-    }
-
-    if reconstruct_from_ast {
-        for node in ast.0 {
-            println!("{}", node.to_string(0));
-        }
-        return;
-    }
-
-    if !ast.1.is_empty() {
-        return;
-    }
-
-    let res = analyze_code(&ast.0);
-
-    // Show warnings first
-    for err in res {
-        err.print(&file);
-    }
+    let session = Session {
+        search_paths: vec![current_dir().unwrap()],
+        debug: DebugInfo::None,
+    };
+    let mut type_checker = TypeChecker::new(parsed_module, &session);
+    type_checker.do_typechecking();
+    type_checker.print_errors();
 }

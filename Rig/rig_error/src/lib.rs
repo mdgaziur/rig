@@ -56,6 +56,12 @@ pub enum ErrorCode {
 
     /// Unreachable/dead code
     E0007,
+
+    /// Redefinition of function or struct
+    E0008,
+
+    /// Cannot import module
+    E0009,
 }
 
 /// Describes the type of error

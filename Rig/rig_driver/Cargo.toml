@@ -8,8 +8,9 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.0.10", features = ["color", "suggestions", "derive"] }
 colored = "2.0.0"
+backtrace = "0.3.66"
 rig_error = { path = "../rig_error" }
 rig_span = { path = "../rig_span" }
-rig_lexer = { path = "../rig_lexer" }
-rig_parser = { path = "../rig_parser" }
-rig_analyzer = { path = "../rig_analyzer" }
+rig_project = { path = "../rig_project" }
+rig_session = { path = "../rig_session" }
+rig_typeck = { path = "../rig_typeck" }
