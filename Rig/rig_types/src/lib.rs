@@ -1,10 +1,11 @@
 use crate::checked_stmt::{CheckedBlockStmt, CheckedStmt};
 use rig_ast::stmt::Stmt;
 use rig_ast::visibility::Visibility;
+use rig_error::ErrorCode;
 use rig_span::Span;
+
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
-use rig_error::ErrorCode;
 
 pub mod checked_expr;
 pub mod checked_stmt;
@@ -61,7 +62,11 @@ impl Module {
         &mut self.scopes[scope_id.1]
     }
 
-    pub fn try_import(&self, modules: &[Module], path: &[String]) -> Result<TypeIdOrModuleId, ResolutionError> {
+    pub fn try_import(
+        &self,
+        modules: &[Module],
+        path: &[String],
+    ) -> Result<TypeIdOrModuleId, ResolutionError> {
         if path.len() > 1 {
             // definitely a path referring to a module
             let ty = self.try_import(modules, &path[0..1])?;
@@ -141,14 +146,18 @@ pub enum ResolutionError {
     AttemptToImportPrivateType,
     AmbiguousImport,
     InvalidImport,
-    FailedToImport
+    FailedToImport,
 }
 
 impl Display for ResolutionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ResolutionError::AttemptToImportPrivateType => write!(f, "Attempt to import private type"),
-            ResolutionError::AmbiguousImport => write!(f, "Ambiguous import(different types exist with same name"),
+            ResolutionError::AttemptToImportPrivateType => {
+                write!(f, "Attempt to import private type")
+            }
+            ResolutionError::AmbiguousImport => {
+                write!(f, "Ambiguous import(different types exist with same name")
+            }
             ResolutionError::InvalidImport => write!(f, "Cannot import from type"),
             ResolutionError::FailedToImport => write!(f, "Failed to import type/module"),
         }
@@ -211,6 +220,26 @@ impl Scope {
     pub fn find_enum(&self, name: &str) -> Option<&(Visibility, TypeId)> {
         self.enums.get(name)
     }
+
+    pub fn insert_type(&mut self, name: &str, type_id: TypeId) {
+        match type_id.3 {
+            Type::Function => self
+                .functions
+                .insert(name.to_string(), (Visibility::from(type_id.2), type_id)),
+            Type::Struct => self
+                .structs
+                .insert(name.to_string(), (Visibility::from(type_id.2), type_id)),
+            Type::Enum => self
+                .enums
+                .insert(name.to_string(), (Visibility::from(type_id.2), type_id)),
+            _ => None, // Builtin types don't need to be added manually as they are special case.
+                       // Also, `None` doesn't matter as we aren't returning anything
+        };
+    }
+
+    pub fn insert_import(&mut self, visibility: Visibility, module_id: ModuleId) {
+        self.imports.push((visibility, module_id));
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -234,7 +263,7 @@ pub struct Variable {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct TypeId(pub ScopeId, pub usize, pub bool);
+pub struct TypeId(pub ScopeId, pub usize, pub bool, pub Type);
 
 impl TypeId {
     pub fn get_scope_id(&self) -> ScopeId {
@@ -246,7 +275,7 @@ impl TypeId {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Type {
     Integer,
     Float,
@@ -256,6 +285,8 @@ pub enum Type {
     Function,
     Struct,
     Enum,
+
+    #[default]
     Undefined,
 }
 

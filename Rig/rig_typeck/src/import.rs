@@ -117,6 +117,10 @@ pub fn check_use_stmt(
                 path.last().unwrap().clone(),
                 Import::Module(resolved_module, visibility),
             );
+            module
+                .get_scope_mut(scope_id)
+                .imports
+                .push((visibility, resolved_module));
         }
     } else {
         errs.push((
@@ -140,6 +144,18 @@ pub fn check_use_stmt(
                 t => bug!(t, "Imported private module"),
             },
         );
+
+        match type_id {
+            TypeIdOrModuleId::TypeId(mut id, Visibility::Pub) => {
+                id.2 = visibility == Visibility::Pub;
+
+                module.get_scope_mut(scope_id).insert_type(path.last().unwrap(), id);
+            }
+            TypeIdOrModuleId::ModuleId(id, Visibility::Pub) => {
+                module.get_scope_mut(scope_id).insert_import(visibility, id);
+            }
+            t => bug!(t, "Imported private module"),
+        }
     }
 
     (None, errs)
