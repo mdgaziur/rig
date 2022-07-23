@@ -72,6 +72,7 @@ pub fn check_use_stmt(
                                         parsed_module.file_content.clone(),
                                         parsed_module.ast.clone(),
                                     ));
+                                    let new_scope = project.get_module_mut(module_id).new_scope();
 
                                     typeck_module(
                                         project,
@@ -79,7 +80,7 @@ pub fn check_use_stmt(
                                         typechecker_errors,
                                         &parsed_module,
                                         module_id,
-                                        scope_id,
+                                        new_scope,
                                     );
 
                                     resolved_module = Some(module_id);
