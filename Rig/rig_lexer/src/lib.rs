@@ -111,24 +111,69 @@ impl<'l> Lexer<'l> {
                     )
                 }
                 '/' => {
-                    double_char_token!(
-                        self,
-                        tokens,
-                        '=',
-                        "/=",
-                        '/',
-                        TokenType::DivideEquals,
-                        TokenType::Divide
-                    )
-                }
-                '#' => {
-                    while !self.eof() {
-                        let ch = self.peek();
+                    let is_comment;
+                    if let Some(ch) = self.peek_next() {
+                        if ch == '/' {
+                            is_comment = true;
+                            while !self.eof() {
+                                let ch = self.peek();
 
-                        if ch == '\n' {
-                            break;
+                                if ch == '\n' {
+                                    break;
+                                }
+                                self.advance();
+                            }
+                        } else if ch == '*' {
+                            let starting_offset = self.offset;
+                            let starting_line = self.line;
+
+                            self.advance();
+                            is_comment = true;
+
+                            let mut is_valid_comment = false;
+                            while !self.eof() {
+                                if self.peek() == '*' && self.peek_next() == Some('/') {
+                                    self.advance(); // eat '*'
+                                    self.advance(); // eat '/'
+                                    is_valid_comment = true;
+                                    break;
+                                }
+
+                                self.advance();
+                            }
+
+                            if !is_valid_comment {
+                                errors.push(RigError::with_no_hint_and_notes(
+                                    ErrorType::Hard,
+                                    ErrorCode::E0016,
+                                    "Invalid multi line comment",
+                                    Span {
+                                        starting_line,
+                                        starting_line_offset: starting_offset,
+                                        ending_line: self.line,
+                                        ending_line_end_offset: self.offset,
+                                        file_name: self.file_path.to_string(),
+                                    }
+                                ));
+                                break;
+                            }
+                        } else {
+                            is_comment = false;
                         }
-                        self.advance();
+                    } else {
+                        is_comment = false;
+                    }
+
+                    if !is_comment {
+                        double_char_token!(
+                            self,
+                            tokens,
+                            '=',
+                            "/=",
+                            '/',
+                            TokenType::DivideEquals,
+                            TokenType::Divide
+                        )
                     }
                 }
                 '%' => {

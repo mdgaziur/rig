@@ -1,5 +1,5 @@
-# this files doesn't necessary contain code that will compile
-# code in this file is guaranteed to parse
+// this files doesn't necessary contain code that will compile
+// code in this file is guaranteed to parse
 
 fn main() {
     let X = X {
@@ -11,7 +11,7 @@ fn main() {
         }
     };
 
-    # to make sure the parser correctly distinguishes between struct literal and `if` body
+    // to make sure the parser correctly distinguishes between struct literal and `if` body
     if X {
         print X;
     }
@@ -32,14 +32,14 @@ fn main() {
     }
 
     for x in X { y: true } {
-        # do something
+        // do something
     }
 
     if y == X { y: true } {
-        # weird, but it works?
+        // weird, but it works?
     }
 
     while X { x: false } {
-        # still works?
+        // still works?
     }
 }

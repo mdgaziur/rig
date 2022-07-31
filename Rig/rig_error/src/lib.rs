@@ -80,6 +80,9 @@ pub enum ErrorCode {
 
     /// Leaking private type
     E0015,
+
+    /// Invalid multi line comment
+    E0016,
 }
 
 /// Describes the type of error

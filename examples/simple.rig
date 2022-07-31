@@ -35,7 +35,7 @@ fn hello(f: File) -> None {
 
     match enum_t {
         Y => {
-            # note that enum's fields are put into scope automatically
+            // note that enum's fields are put into scope automatically
             print x;
         }
         Variant2 => {
@@ -58,7 +58,7 @@ fn hello(f: File) -> None {
 
     x.y = "hello";
 
-	# intentionally messed up
+	// intentionally messed up
     loop { break; x
     ; }
     loop { continue; y; }
@@ -70,7 +70,7 @@ fn hello(f: File) -> None {
 
     }
 
-    # intentionally messed up
+    // intentionally messed up
     return null;    			   let x: y = SomeModule::		TestXYZ {
     	    x: sometype::new(),
      	   y: ty::new(),

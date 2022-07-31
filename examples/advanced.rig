@@ -39,7 +39,7 @@ impl StringStats {
     pub fn is_alphanumeric(self, source: String) -> bool {
         let is_alnum = true;
 
-        # iterations
+        // iterations
         for ch in source {
             if (!ch.is_alnum()) {
                 is_alnum = false;
