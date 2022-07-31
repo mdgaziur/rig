@@ -1,6 +1,6 @@
 pub mod parsed_module;
 
-use rig_types::{Module, ModuleId};
+use rig_types::{Module, ModuleId, StructType, TypeId};
 
 #[derive(Debug, Clone)]
 pub struct Project {
@@ -41,5 +41,14 @@ impl Project {
 
     pub fn has_module(&self, id: ModuleId) -> bool {
         self.modules.len() > id.0
+    }
+
+    pub fn resolve_struct(&self, type_id: &TypeId) -> &StructType {
+        let scope_id = type_id.0;
+        let module_id = scope_id.0;
+
+        let module = self.get_module(module_id);
+
+        &module.structs[type_id.1]
     }
 }

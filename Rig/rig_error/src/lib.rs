@@ -71,6 +71,15 @@ pub enum ErrorCode {
 
     /// Invalid import
     E0012,
+
+    /// Failed to resolve type
+    E0013,
+
+    /// Expected type, found module
+    E0014,
+
+    /// Leaking private type
+    E0015,
 }
 
 /// Describes the type of error

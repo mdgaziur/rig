@@ -62,49 +62,49 @@ impl Module {
         &mut self.scopes[scope_id.1]
     }
 
-    pub fn try_import(
+    pub fn try_resolve(
         &self,
         modules: &[Module],
         path: &[String],
     ) -> Result<TypeIdOrModuleId, ResolutionError> {
         if path.len() > 1 {
-            // definitely a path referring to a module
-            let ty = self.try_import(modules, &path[0..1])?;
+            let resolved = self.try_resolve(modules, &path[0..1])?;
 
-            return match ty {
-                TypeIdOrModuleId::TypeId(_, Visibility::Pub) => {
-                    if path.len() >= 2 {
+            return match resolved {
+                TypeIdOrModuleId::TypeId(id, vis) => {
+                    if vis == Visibility::NotPub && id.get_module_id() != self.id {
+                        Err(ResolutionError::AttemptToImportPrivateType)
+                    } else if path.len() > 2 {
                         Err(ResolutionError::InvalidImport)
                     } else {
-                        Ok(ty)
+                        Ok(resolved)
                     }
                 }
-                TypeIdOrModuleId::ModuleId(mod_id, Visibility::Pub) => {
-                    if path.len() >= 2 {
-                        let module = modules.get(mod_id.0).unwrap();
-                        module.try_import(modules, &path[1..path.len()])
+                TypeIdOrModuleId::ModuleId(id, vis) => {
+                    if vis == Visibility::NotPub && id.get_importer() != self.id {
+                        Err(ResolutionError::AttemptToImportPrivateType)
+                    } else if path.len() >= 2 {
+                        let module = &modules[id.get_id().0];
+
+                        module.try_resolve(modules, &path[1..path.len()])
                     } else {
-                        Ok(ty)
+                        Ok(resolved)
                     }
                 }
-                _ => Err(ResolutionError::AttemptToImportPrivateType),
             };
         }
 
         let name = path.first().unwrap();
-        if let Some(id) = self.imports.get(name) {
-            return match id {
-                Import::TypeId(id, Visibility::Pub) => {
-                    Ok(TypeIdOrModuleId::TypeId(id.clone(), Visibility::Pub))
-                }
-                Import::Module(id, Visibility::Pub) => {
-                    Ok(TypeIdOrModuleId::ModuleId(id.clone(), Visibility::Pub))
-                }
-                _ => Err(ResolutionError::AttemptToImportPrivateType),
-            };
+        if let Some(import) = self.imports.get(name) {
+            // it is caller's responsibility to make sure it's not importing private type from outside of module
+            return Ok(match import {
+                Import::Module(id, vis) => TypeIdOrModuleId::ModuleId(*id, *vis),
+                Import::TypeId(id, vis) => TypeIdOrModuleId::TypeId(*id, *vis),
+            });
         }
 
         for scope in self.scopes.iter().rev() {
+            // it is caller's responsibility to make sure it's not importing private type from outside of module
             let function = scope.find_function(name);
             let enum_ = scope.find_enum(name);
             let struct_ = scope.find_struct(name);
@@ -114,39 +114,27 @@ impl Module {
                 _ => (),
             }
 
-            // don't care about visibility for now
             if let Some(function) = function {
-                if function.0 == Visibility::NotPub {
-                    return Err(ResolutionError::AttemptToImportPrivateType);
-                }
-                return Ok(TypeIdOrModuleId::TypeId(function.1, Visibility::Pub));
+                return Ok(TypeIdOrModuleId::TypeId(function.1, function.0));
             }
             if let Some(enum_) = enum_ {
-                if enum_.0 == Visibility::NotPub {
-                    return Err(ResolutionError::AttemptToImportPrivateType);
-                }
-
-                return Ok(TypeIdOrModuleId::TypeId(enum_.1, Visibility::Pub));
+                return Ok(TypeIdOrModuleId::TypeId(enum_.1, enum_.0));
             }
             if let Some(struct_) = struct_ {
-                if struct_.0 == Visibility::NotPub {
-                    return Err(ResolutionError::AttemptToImportPrivateType);
-                }
-
-                return Ok(TypeIdOrModuleId::TypeId(struct_.1, Visibility::Pub));
+                return Ok(TypeIdOrModuleId::TypeId(struct_.1, struct_.0));
             }
         }
 
-        Err(ResolutionError::FailedToImport)
+        Err(ResolutionError::FailedToResolve)
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ResolutionError {
     AttemptToImportPrivateType,
     AmbiguousImport,
     InvalidImport,
-    FailedToImport,
+    FailedToResolve,
 }
 
 impl Display for ResolutionError {
@@ -159,7 +147,7 @@ impl Display for ResolutionError {
                 write!(f, "Ambiguous import(different types exist with same name")
             }
             ResolutionError::InvalidImport => write!(f, "Cannot import from type"),
-            ResolutionError::FailedToImport => write!(f, "Failed to import type/module"),
+            ResolutionError::FailedToResolve => write!(f, "Failed to resolve type"),
         }
     }
 }
@@ -170,7 +158,7 @@ impl ResolutionError {
             ResolutionError::AttemptToImportPrivateType => ErrorCode::E0010,
             ResolutionError::AmbiguousImport => ErrorCode::E0011,
             ResolutionError::InvalidImport => ErrorCode::E0012,
-            ResolutionError::FailedToImport => ErrorCode::E0009,
+            ResolutionError::FailedToResolve => ErrorCode::E0013,
         }
     }
 }
@@ -178,13 +166,28 @@ impl ResolutionError {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TypeIdOrModuleId {
     TypeId(TypeId, Visibility),
-    ModuleId(ModuleId, Visibility),
+    ModuleId(ImportedModuleId, Visibility),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Import {
-    Module(ModuleId, Visibility),
+    Module(ImportedModuleId, Visibility),
     TypeId(TypeId, Visibility),
+}
+
+/// First value: The module that imported this
+/// Second value: Imported module
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ImportedModuleId(pub ModuleId, pub ModuleId);
+
+impl ImportedModuleId {
+    pub fn get_importer(&self) -> ModuleId {
+        self.0
+    }
+
+    pub fn get_id(&self) -> ModuleId {
+        self.1
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -202,7 +205,7 @@ pub struct Scope {
     pub functions: HashMap<String, (Visibility, TypeId)>,
     pub structs: HashMap<String, (Visibility, TypeId)>,
     pub enums: HashMap<String, (Visibility, TypeId)>,
-    pub imports: Vec<(Visibility, ModuleId)>,
+    pub imports: Vec<(Visibility, ImportedModuleId)>,
     pub parent: Option<ScopeId>,
     pub children: Vec<ScopeId>,
     pub module_id: ModuleId,
@@ -237,7 +240,7 @@ impl Scope {
         };
     }
 
-    pub fn insert_import(&mut self, visibility: Visibility, module_id: ModuleId) {
+    pub fn insert_import(&mut self, visibility: Visibility, module_id: ImportedModuleId) {
         self.imports.push((visibility, module_id));
     }
 }
@@ -268,6 +271,10 @@ pub struct TypeId(pub ScopeId, pub usize, pub bool, pub Type);
 impl TypeId {
     pub fn get_scope_id(&self) -> ScopeId {
         self.0
+    }
+
+    pub fn get_module_id(&self) -> ModuleId {
+        self.get_scope_id().get_module_id()
     }
 
     pub fn get_id(&self) -> usize {
