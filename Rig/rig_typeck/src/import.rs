@@ -58,7 +58,7 @@ pub fn check_use_stmt(
                                     let parsed_module = ParsedModule::new(file_path, file_content);
 
                                     if parsed_module.has_lexer_errors() {
-                                        parsed_module.print_parser_errors();
+                                        parsed_module.print_lexer_errors();
                                         std::process::exit(1);
                                     }
 
