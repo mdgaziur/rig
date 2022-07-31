@@ -4,9 +4,13 @@ use rig_ast::visibility::Visibility;
 use rig_error::ErrorCode;
 use rig_span::Span;
 
+use crate::builtins::{
+    BOOL_TYPEID, FLOAT_TYPEID, INT_TYPEID, NULL_TYPEID, STRING_TYPEID, UNDEFINED_TYPEID,
+};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
+mod builtins;
 pub mod checked_expr;
 pub mod checked_stmt;
 
@@ -67,6 +71,23 @@ impl Module {
         modules: &[Module],
         path: &[String],
     ) -> Result<TypeIdOrModuleId, ResolutionError> {
+        if path.len() == 1 {
+            match path.first().unwrap().as_str() {
+                "int" => return Ok(TypeIdOrModuleId::TypeId(INT_TYPEID, Visibility::NotPub)),
+                "float" => return Ok(TypeIdOrModuleId::TypeId(FLOAT_TYPEID, Visibility::NotPub)),
+                "null" => return Ok(TypeIdOrModuleId::TypeId(NULL_TYPEID, Visibility::NotPub)),
+                "string" => return Ok(TypeIdOrModuleId::TypeId(STRING_TYPEID, Visibility::NotPub)),
+                "bool" => return Ok(TypeIdOrModuleId::TypeId(BOOL_TYPEID, Visibility::NotPub)),
+                "undefined" => {
+                    return Ok(TypeIdOrModuleId::TypeId(
+                        UNDEFINED_TYPEID,
+                        Visibility::NotPub,
+                    ))
+                }
+                _ => (),
+            }
+        }
+
         if path.len() > 1 {
             let resolved = self.try_resolve(modules, &path[0..1])?;
 
@@ -269,6 +290,10 @@ pub struct Variable {
 pub struct TypeId(pub ScopeId, pub usize, pub bool, pub Type);
 
 impl TypeId {
+    pub fn is_builtin(&self) -> bool {
+        self.3.is_builtin()
+    }
+
     pub fn get_scope_id(&self) -> ScopeId {
         self.0
     }
@@ -295,6 +320,15 @@ pub enum Type {
 
     #[default]
     Undefined,
+}
+
+impl Type {
+    pub fn is_builtin(&self) -> bool {
+        match self {
+            Type::Integer | Type::Float | Type::Null | Type::String | Type::Boolean | Type::Undefined => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

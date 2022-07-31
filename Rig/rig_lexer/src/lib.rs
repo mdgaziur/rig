@@ -153,7 +153,7 @@ impl<'l> Lexer<'l> {
                                         ending_line: self.line,
                                         ending_line_end_offset: self.offset,
                                         file_name: self.file_path.to_string(),
-                                    }
+                                    },
                                 ));
                                 break;
                             }
