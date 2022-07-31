@@ -106,9 +106,7 @@ pub fn check_use_stmt(
                 .imports
                 .insert(import_path.last().unwrap().clone(), resolved_import);
             current_module
-                .scopes
-                .last_mut()
-                .unwrap()
+                .get_scope_mut(scope_id)
                 .insert_import(module_visibility, imported_module_id);
         } else {
             let imported_module = project.get_module(imported_module_id.get_id());
