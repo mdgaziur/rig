@@ -322,7 +322,8 @@ impl RigError {
         eprintln!(
             "{}",
             format!(
-                "For more information about this error, try `rig explain {:?}`\n",
+                "For more information about this error, try `{} explain {:?}`\n",
+                std::env::args().nth(0).unwrap(),
                 self.error_code
             )
             .bold()
