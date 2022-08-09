@@ -185,11 +185,10 @@ fn check_struct(
     let module = project.get_module_mut(module_id);
     module.structs.push(struct_type);
 
-    let last_scope = module.scopes.last_mut().unwrap();
-    last_scope.insert_type(
+    module.get_scope_mut(scope_id).insert_type(
         name,
         TypeId(
-            last_scope.id,
+            scope_id,
             module.structs.len() - 1,
             visibility == Visibility::Pub,
             Type::Struct,
