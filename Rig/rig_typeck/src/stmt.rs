@@ -129,6 +129,20 @@ fn check_struct(
 
         let ty = match ty {
             TypeIdOrModuleId::TypeId(ty, vis) => {
+                if ty.get_module_id() != module_id && vis != Visibility::Pub {
+                    errors.push((
+                        module_id,
+                        RigError::with_no_hint_and_notes(
+                            ErrorType::Hard,
+                            ErrorCode::E0010,
+                            "Attempt to import private type",
+                            ty_path_span.clone(),
+                        ),
+                    ));
+
+                    return (None, errors);
+                }
+
                 if vis == Visibility::NotPub
                     && field.visibility == Visibility::Pub
                     && visibility == Visibility::Pub
