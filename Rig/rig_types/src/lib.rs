@@ -1,4 +1,4 @@
-use crate::checked_stmt::{CheckedBlockStmt, CheckedStmt};
+use crate::checked_stmt::CheckedStmt;
 use rig_ast::stmt::Stmt;
 use rig_ast::visibility::Visibility;
 use rig_error::ErrorCode;
@@ -10,7 +10,7 @@ use crate::builtins::{
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
-mod builtins;
+pub mod builtins;
 pub mod checked_expr;
 pub mod checked_stmt;
 
@@ -241,6 +241,10 @@ impl Scope {
         self.structs.get(name)
     }
 
+    pub fn find_fn(&self, name: &str) -> Option<&(Visibility, TypeId)> {
+        self.functions.get(name)
+    }
+
     pub fn find_enum(&self, name: &str) -> Option<&(Visibility, TypeId)> {
         self.enums.get(name)
     }
@@ -325,7 +329,12 @@ pub enum Type {
 impl Type {
     pub fn is_builtin(&self) -> bool {
         match self {
-            Type::Integer | Type::Float | Type::Null | Type::String | Type::Boolean | Type::Undefined => true,
+            Type::Integer
+            | Type::Float
+            | Type::Null
+            | Type::String
+            | Type::Boolean
+            | Type::Undefined => true,
             _ => false,
         }
     }
@@ -337,7 +346,6 @@ pub struct FunctionType {
     pub location: Vec<String>,
     pub args: Vec<FunctionArgument>,
     pub return_ty: Option<TypeId>,
-    pub body: CheckedBlockStmt,
     pub visibility: Visibility,
     pub span: Span,
 }

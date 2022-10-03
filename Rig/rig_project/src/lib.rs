@@ -1,6 +1,6 @@
 pub mod parsed_module;
 
-use rig_types::{Module, ModuleId, StructType, TypeId};
+use rig_types::{FunctionType, Module, ModuleId, StructType, TypeId};
 
 #[derive(Debug, Clone)]
 pub struct Project {
@@ -50,5 +50,14 @@ impl Project {
         let module = self.get_module(module_id);
 
         &module.structs[type_id.1]
+    }
+
+    pub fn resovle_fn(&self, type_id: &TypeId) -> &FunctionType {
+        let scope_id = type_id.0;
+        let module_id = scope_id.get_module_id();
+
+        let module = self.get_module(module_id);
+
+        &module.functions[type_id.1]
     }
 }

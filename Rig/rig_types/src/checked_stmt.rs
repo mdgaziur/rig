@@ -4,7 +4,6 @@ use rig_span::Span;
 
 #[derive(Debug, Clone)]
 pub enum CheckedStmt {
-    Fn(CheckedFnStmt),
     Let(CheckedLetStmt),
     If(CheckedIfStmt),
     While(CheckedWhileStmt),
@@ -17,13 +16,6 @@ pub enum CheckedStmt {
     Continue(CheckedContinueStmt),
     Mod,
     Match(CheckedMatchStmt),
-}
-
-#[derive(Debug, Clone)]
-pub struct CheckedFnStmt {
-    pub ty: TypeId,
-    pub body: CheckedBlockStmt,
-    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
