@@ -184,12 +184,13 @@ fn check_struct(
 
     let module = project.get_module_mut(module_id);
     module.structs.push(struct_type);
+    let type_id = module.structs.len();
 
     module.get_scope_mut(scope_id).insert_type(
         name,
         TypeId(
             scope_id,
-            module.structs.len() - 1,
+            type_id - 1,
             visibility == Visibility::Pub,
             Type::Struct,
         ),
