@@ -5,7 +5,8 @@ use rig_error::ErrorCode;
 use rig_span::Span;
 
 use crate::builtins::{
-    BOOL_TYPEID, FLOAT_TYPEID, INT_TYPEID, NULL_TYPEID, STRING_TYPEID, UNDEFINED_TYPEID,
+    builtin_typeid_to_string, BOOL_TYPEID, FLOAT_TYPEID, INT_TYPEID, NULL_TYPEID, STRING_TYPEID,
+    UNDEFINED_TYPEID,
 };
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
@@ -190,6 +191,29 @@ pub enum TypeIdOrModuleId {
     ModuleId(ImportedModuleId, Visibility),
 }
 
+impl TypeIdOrModuleId {
+    pub fn get_typeid(&self) -> Option<TypeId> {
+        match self {
+            TypeIdOrModuleId::TypeId(id, _) => Some(*id),
+            TypeIdOrModuleId::ModuleId(_, _) => None,
+        }
+    }
+
+    pub fn get_visibility(&self) -> Visibility {
+        match self {
+            TypeIdOrModuleId::TypeId(_, vis) => *vis,
+            TypeIdOrModuleId::ModuleId(_, vis) => *vis,
+        }
+    }
+
+    pub fn get_moduleid(&self) -> ModuleId {
+        match self {
+            TypeIdOrModuleId::TypeId(ty, _) => ty.get_module_id(),
+            TypeIdOrModuleId::ModuleId(mod_, _) => mod_.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Import {
     Module(ImportedModuleId, Visibility),
@@ -227,6 +251,7 @@ pub struct Scope {
     pub structs: HashMap<String, (Visibility, TypeId)>,
     pub enums: HashMap<String, (Visibility, TypeId)>,
     pub imports: Vec<(Visibility, ImportedModuleId)>,
+    pub variables: HashMap<String, TypeId>,
     pub parent: Option<ScopeId>,
     pub children: Vec<ScopeId>,
     pub module_id: ModuleId,
@@ -239,10 +264,6 @@ impl Scope {
 
     pub fn find_struct(&self, name: &str) -> Option<&(Visibility, TypeId)> {
         self.structs.get(name)
-    }
-
-    pub fn find_fn(&self, name: &str) -> Option<&(Visibility, TypeId)> {
-        self.functions.get(name)
     }
 
     pub fn find_enum(&self, name: &str) -> Option<&(Visibility, TypeId)> {
@@ -308,6 +329,17 @@ impl TypeId {
 
     pub fn get_id(&self) -> usize {
         self.1
+    }
+
+    pub fn typeid_to_string(&self, modules: &[Module]) -> String {
+        let module = &modules[self.get_module_id().0];
+
+        match self.3 {
+            Type::Function => module.functions[self.1].location.join("::"),
+            Type::Struct => module.structs[self.1].location.join("::"),
+            Type::Enum => module.enums[self.1].location.join("::"),
+            _ => builtin_typeid_to_string(*self),
+        }
     }
 }
 

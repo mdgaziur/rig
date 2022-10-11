@@ -83,6 +83,24 @@ pub enum ErrorCode {
 
     /// Invalid multi line comment
     E0016,
+
+    /// Invalid unary operation
+    E0017,
+
+    /// Provided type isn't a function
+    E0018,
+
+    /// Too many or less function arguments
+    E0019,
+
+    /// Invalid argument type
+    E0020,
+
+    /// Undefined variable
+    E0021,
+
+    /// Type mismatch
+    E0022,
 }
 
 /// Describes the type of error

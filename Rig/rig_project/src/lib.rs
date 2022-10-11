@@ -52,7 +52,7 @@ impl Project {
         &module.structs[type_id.1]
     }
 
-    pub fn resovle_fn(&self, type_id: &TypeId) -> &FunctionType {
+    pub fn resolve_fn(&self, type_id: &TypeId) -> &FunctionType {
         let scope_id = type_id.0;
         let module_id = scope_id.get_module_id();
 

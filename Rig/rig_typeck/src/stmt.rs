@@ -7,14 +7,18 @@ use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_project::Project;
 use rig_session::Session;
 
+use crate::expr::check_expr;
 use rig_ast::expr::Expr;
 use rig_ast::function_prototype::Prototype;
 use rig_ast::struct_field::StructField;
 use rig_ast::visibility::Visibility;
 use rig_span::Span;
 use rig_types::builtins::UNDEFINED_TYPEID;
-use rig_types::checked_stmt::{CheckedBlockStmt, CheckedStmt};
-use rig_types::{FunctionArgument, FunctionType, ModuleId, ScopeId, StructFieldType, StructType, Type, TypeId, TypeIdOrModuleId};
+use rig_types::checked_stmt::{CheckedBlockStmt, CheckedExprStmt, CheckedStmt};
+use rig_types::{
+    FunctionArgument, FunctionType, ModuleId, ScopeId, StructFieldType, StructType, Type, TypeId,
+    TypeIdOrModuleId,
+};
 use rig_utils::bug;
 use std::collections::HashMap;
 
@@ -73,13 +77,25 @@ pub fn typecheck_statement(
             body,
             span,
         ),
-        Stmt::BlockStmt { .. } => check_body(
-            session,
-            stmt,
-            module_id,
-            project,
-            typechecker_errors,
-        ),
+        Stmt::ExprStmt { expr, span } => {
+            let result = check_expr(project, module_id, scope_id, expr);
+
+            if let Some(checked_expr) = result.0 {
+                (
+                    Some(CheckedStmt::Expr(CheckedExprStmt {
+                        expr: checked_expr,
+                        span: span.clone(),
+                    })),
+                    result.1.iter().map(|e| (module_id, e.clone())).collect(),
+                )
+            } else {
+                (
+                    None,
+                    result.1.iter().map(|e| (module_id, e.clone())).collect(),
+                )
+            }
+        }
+        Stmt::BlockStmt { .. } => check_body(session, stmt, module_id, project, typechecker_errors),
         _ => todo!(),
     }
 }
@@ -253,10 +269,10 @@ fn check_fn(
 
     // first check if it's already declared in the module
     let module = project.get_module(module_id);
-    if let Some((_, function_id)) = module.get_scope(scope_id).find_fn(&prototype.name) {
+    if let Some((_, function_id)) = module.get_scope(scope_id).find_function(&prototype.name) {
         // do not allow multiple definition of struct with same name in same module
         if function_id.get_module_id() == module_id {
-            let resolved_struct = project.resovle_fn(function_id);
+            let resolved_struct = project.resolve_fn(function_id);
 
             errors.push((
                 module_id,
@@ -418,13 +434,7 @@ fn check_fn(
         return_type = UNDEFINED_TYPEID;
     }
 
-    let (_, body_errors) = check_body(
-        session,
-        body,
-        module_id,
-        project,
-        typechecker_errors,
-    );
+    let (_, body_errors) = check_body(session, body, module_id, project, typechecker_errors);
 
     errors.extend(body_errors);
 
@@ -447,10 +457,9 @@ fn check_fn(
         Type::Function,
     );
 
-    module.get_scope_mut(scope_id).insert_type(
-        &prototype.name,
-        type_id,
-    );
+    module
+        .get_scope_mut(scope_id)
+        .insert_type(&prototype.name, type_id);
 
     (None, errors)
 }

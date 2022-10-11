@@ -23,6 +23,52 @@ pub enum CheckedExpr {
     Unary(CheckedUnary),
 }
 
+impl CheckedExpr {
+    pub fn ty(&self) -> TypeId {
+        match self {
+            CheckedExpr::Variable(var) => var.ty,
+            CheckedExpr::Int(int) => int.ty,
+            CheckedExpr::Boolean(bool) => bool.ty,
+            CheckedExpr::Float(float) => float.ty,
+            CheckedExpr::String(string) => string.ty,
+            CheckedExpr::Null(null) => null.ty,
+            CheckedExpr::SelfLit(self_lit) => self_lit.ty,
+            CheckedExpr::Grouping(grouping) => grouping.ty,
+            CheckedExpr::Get(get) => get.ty,
+            CheckedExpr::Set(set) => set.ty,
+            CheckedExpr::Path(path) => path.ty,
+            CheckedExpr::Call(call) => call.ty,
+            CheckedExpr::Struct(struct_) => struct_.ty,
+            CheckedExpr::Assignment(assignment) => assignment.ty,
+            CheckedExpr::Binary(binary) => binary.ty,
+            CheckedExpr::Logical(logical) => logical.ty,
+            CheckedExpr::Unary(unary) => unary.ty,
+        }
+    }
+
+    pub fn span(&self) -> Span {
+        match self {
+            CheckedExpr::Variable(var) => var.span.clone(),
+            CheckedExpr::Int(int) => int.span.clone(),
+            CheckedExpr::Boolean(bool) => bool.span.clone(),
+            CheckedExpr::Float(float) => float.span.clone(),
+            CheckedExpr::String(string) => string.span.clone(),
+            CheckedExpr::Null(null) => null.span.clone(),
+            CheckedExpr::SelfLit(self_lit) => self_lit.span.clone(),
+            CheckedExpr::Grouping(grouping) => grouping.span.clone(),
+            CheckedExpr::Get(get) => get.span.clone(),
+            CheckedExpr::Set(set) => set.span.clone(),
+            CheckedExpr::Path(path) => path.span.clone(),
+            CheckedExpr::Call(call) => call.span.clone(),
+            CheckedExpr::Struct(struct_) => struct_.span.clone(),
+            CheckedExpr::Assignment(assignment) => assignment.span.clone(),
+            CheckedExpr::Binary(binary) => binary.span.clone(),
+            CheckedExpr::Logical(logical) => logical.span.clone(),
+            CheckedExpr::Unary(unary) => unary.span.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct CheckedVariable {
     pub name: String,

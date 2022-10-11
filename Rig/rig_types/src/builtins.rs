@@ -13,3 +13,15 @@ pub const NULL_TYPEID: TypeId = TypeId(ScopeId(ModuleId(0), 0), 0, false, Type::
 pub const STRING_TYPEID: TypeId = TypeId(ScopeId(ModuleId(0), 0), 0, false, Type::String);
 pub const BOOL_TYPEID: TypeId = TypeId(ScopeId(ModuleId(0), 0), 0, false, Type::Boolean);
 pub const UNDEFINED_TYPEID: TypeId = TypeId(ScopeId(ModuleId(0), 0), 0, false, Type::Undefined);
+
+pub fn builtin_typeid_to_string(ty: TypeId) -> String {
+    match ty {
+        INT_TYPEID => "int".to_string(),
+        FLOAT_TYPEID => "float".to_string(),
+        NULL_TYPEID => "null".to_string(),
+        STRING_TYPEID => "string".to_string(),
+        BOOL_TYPEID => "bool".to_string(),
+        UNDEFINED_TYPEID => "undefined".to_string(),
+        _ => panic!("Not a builtin type id"),
+    }
+}
