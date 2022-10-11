@@ -45,7 +45,7 @@ impl FromStr for LogicalOperator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -115,7 +115,7 @@ impl BinaryOperator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum UnaryOperator {
     Not,
     Negate,
