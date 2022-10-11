@@ -71,6 +71,7 @@ pub fn check_expr(
         Expr::BinaryExpr { lhs, op, rhs, span } => {
             check_binary(project, module_id, scope_id, lhs, *op, rhs, span)
         }
+        Expr::GroupingExpr { expr, .. } => check_expr(project, module_id, scope_id, expr),
         _ => todo!("{:?}", expr),
     }
 }
@@ -113,19 +114,146 @@ fn check_binary(
                 )],
             );
         }
-        return (
-            Some(CheckedExpr::Binary(CheckedBinary {
-                op,
-                ty: lhs_expr.ty(),
-                lhs: Box::new(lhs_expr),
-                rhs: Box::new(rhs_expr),
-                span: span.clone(),
-            })),
-            vec![],
-        );
+    } else if op == BinaryOperator::Minus {
+        if !can_sub(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot subtract `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::Multiply {
+        if !can_mul(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot multiply `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::Divide {
+        if !can_div(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot divide `{}` by `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::LeftShift || op == BinaryOperator::RightShift {
+        if !can_shift(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot shift `{}` by `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::And {
+        if !can_and(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot apply `and` operation between `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::Or {
+        if !can_or(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot apply `or` operation between `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::Xor {
+        if !can_xor(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot apply `xor` operation between `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
+    } else if op == BinaryOperator::Modulus {
+        if !can_modulus(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "cannot apply `modulus` operation between `{}` and `{}`",
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
+                    span.clone(),
+                )],
+            );
+        }
     }
 
-    todo!()
+    (
+        Some(CheckedExpr::Binary(CheckedBinary {
+            op,
+            ty: lhs_expr.ty(),
+            lhs: Box::new(lhs_expr),
+            rhs: Box::new(rhs_expr),
+            span: span.clone(),
+        })),
+        vec![],
+    )
 }
 
 fn check_path(
@@ -432,6 +560,84 @@ fn can_add(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
         (INT_TYPEID, INT_TYPEID) => true,
         (FLOAT_TYPEID, FLOAT_TYPEID) => true,
         (STRING_TYPEID, STRING_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_sub(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_mul(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_div(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_modulus(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_shift(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_and(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_or(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_xor(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
         (FLOAT_TYPEID, INT_TYPEID) => true,
         (INT_TYPEID, FLOAT_TYPEID) => true,
         _ => false,
