@@ -90,10 +90,10 @@ impl<'l> Lexer<'l> {
                         self,
                         tokens,
                         '=',
-                        "+=",
+                        "-=",
                         '>',
                         "->",
-                        '+',
+                        '-',
                         TokenType::MinusEquals,
                         TokenType::Arrow,
                         TokenType::Minus
