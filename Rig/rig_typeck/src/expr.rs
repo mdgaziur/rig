@@ -72,7 +72,7 @@ pub fn check_expr(
             check_binary(project, module_id, scope_id, lhs, *op, rhs, span)
         }
         Expr::GroupingExpr { expr, .. } => check_expr(project, module_id, scope_id, expr),
-        _ => todo!("{:?}", expr),
+        _ => todo!("{:#?}", expr),
     }
 }
 

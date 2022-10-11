@@ -96,7 +96,7 @@ pub fn typecheck_statement(
             }
         }
         Stmt::BlockStmt { .. } => check_body(session, stmt, module_id, project, typechecker_errors),
-        _ => todo!(),
+        _ => todo!("{:#?}", stmt),
     }
 }
 
