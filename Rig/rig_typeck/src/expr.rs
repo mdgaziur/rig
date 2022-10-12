@@ -1,14 +1,11 @@
 use rig_ast::expr::Expr;
-use rig_ast::op::{BinaryOperator, UnaryOperator};
+use rig_ast::op::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rig_ast::visibility::Visibility;
 use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_project::Project;
 use rig_span::Span;
 use rig_types::builtins::{BOOL_TYPEID, FLOAT_TYPEID, INT_TYPEID, NULL_TYPEID, STRING_TYPEID};
-use rig_types::checked_expr::{
-    CheckedBinary, CheckedBoolean, CheckedCall, CheckedExpr, CheckedFloat, CheckedInteger,
-    CheckedNull, CheckedPath, CheckedString, CheckedUnary, CheckedVariable,
-};
+use rig_types::checked_expr::{CheckedBinary, CheckedBoolean, CheckedCall, CheckedExpr, CheckedFloat, CheckedInteger, CheckedLogical, CheckedNull, CheckedPath, CheckedString, CheckedUnary, CheckedVariable};
 use rig_types::{ModuleId, ScopeId, TypeIdOrModuleId};
 use rig_utils::bug;
 
@@ -68,12 +65,100 @@ pub fn check_expr(
             check_variable(project, module_id, scope_id, name, span)
         }
         Expr::PathExpr { path, span } => check_path(project, module_id, path, span),
+        Expr::LogicalExpr { lhs, op, rhs, span } => {
+            check_logical(project, module_id, scope_id, lhs, *op, rhs, span)
+        },
         Expr::BinaryExpr { lhs, op, rhs, span } => {
             check_binary(project, module_id, scope_id, lhs, *op, rhs, span)
         }
         Expr::GroupingExpr { expr, .. } => check_expr(project, module_id, scope_id, expr),
         _ => todo!("{:#?}", expr),
     }
+}
+
+fn check_logical(
+    project: &Project,
+    module_id: ModuleId,
+    scope_id: ScopeId,
+    lhs: &Expr,
+    op: LogicalOperator,
+    rhs: &Expr,
+    span: &Span,
+) -> (Option<CheckedExpr>, Vec<RigError>)
+{
+    let mut errors = vec![];
+    let (lhs_expr, lhs_errs) = check_expr(project, module_id, scope_id, lhs);
+    let (rhs_expr, rhs_errors) = check_expr(project, module_id, scope_id, rhs);
+    errors.extend(lhs_errs);
+    errors.extend(rhs_errors);
+
+    if !errors.is_empty() {
+        return (None, errors);
+    }
+
+    let lhs_expr = lhs_expr.unwrap();
+    let rhs_expr = rhs_expr.unwrap();
+
+    if op == LogicalOperator::Greater || op == LogicalOperator::GreaterEq
+        || op == LogicalOperator::Less || op == LogicalOperator::LessEq {
+        if !can_apply_logical_comparison(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!("Cannot apply `{}` to types `{}` and `{}`",
+                        op.to_string(),
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)),
+                    span.clone(),
+                )]
+            );
+        }
+    } else if op == LogicalOperator::Equal || op == LogicalOperator::NotEqual {
+        if !can_apply_logical_equality(&lhs_expr, &rhs_expr) {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!("Cannot apply `{}` to types `{}` and `{}`",
+                             op.to_string(),
+                             lhs_expr.ty().typeid_to_string(&project.modules),
+                             rhs_expr.ty().typeid_to_string(&project.modules)),
+                    span.clone(),
+                )]
+            );
+        }
+    } else {
+        if lhs_expr.ty() != BOOL_TYPEID || rhs_expr.ty() != BOOL_TYPEID {
+            return (
+                None,
+                vec![RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!("Cannot apply `{}` to types `{}` and `{}`",
+                             op.to_string(),
+                             lhs_expr.ty().typeid_to_string(&project.modules),
+                             rhs_expr.ty().typeid_to_string(&project.modules)),
+                    span.clone(),
+                )]
+            );
+        }
+    }
+
+    (
+        Some(CheckedExpr::Logical(
+            CheckedLogical {
+                lhs: Box::new(lhs_expr),
+                op,
+                rhs: Box::new(rhs_expr),
+                span: span.clone(),
+                ty: BOOL_TYPEID,
+            }
+        )),
+        errors
+    )
 }
 
 fn check_binary(
@@ -640,6 +725,29 @@ fn can_xor(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
         (FLOAT_TYPEID, FLOAT_TYPEID) => true,
         (FLOAT_TYPEID, INT_TYPEID) => true,
         (INT_TYPEID, FLOAT_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_apply_logical_comparison(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        (STRING_TYPEID, STRING_TYPEID) => true,
+        _ => false,
+    }
+}
+
+fn can_apply_logical_equality(lhs: &CheckedExpr, rhs: &CheckedExpr) -> bool {
+    match (lhs.ty(), rhs.ty()) {
+        (INT_TYPEID, INT_TYPEID) => true,
+        (FLOAT_TYPEID, FLOAT_TYPEID) => true,
+        (FLOAT_TYPEID, INT_TYPEID) => true,
+        (INT_TYPEID, FLOAT_TYPEID) => true,
+        (STRING_TYPEID, STRING_TYPEID) => true,
+        (BOOL_TYPEID, BOOL_TYPEID) => true,
         _ => false,
     }
 }
