@@ -5,7 +5,7 @@ use rig_error::{ErrorCode, ErrorType, RigError};
 use rig_project::Project;
 use rig_span::Span;
 use rig_types::builtins::{BOOL_TYPEID, FLOAT_TYPEID, INT_TYPEID, NULL_TYPEID, STRING_TYPEID};
-use rig_types::checked_expr::{CheckedBinary, CheckedBoolean, CheckedCall, CheckedExpr, CheckedFloat, CheckedInteger, CheckedLogical, CheckedNull, CheckedPath, CheckedString, CheckedUnary, CheckedVariable};
+use rig_types::checked_expr::{CheckedAssignment, CheckedBinary, CheckedBoolean, CheckedCall, CheckedExpr, CheckedFloat, CheckedInteger, CheckedLogical, CheckedNull, CheckedPath, CheckedString, CheckedUnary, CheckedVariable};
 use rig_types::{ModuleId, ScopeId, TypeIdOrModuleId};
 use rig_utils::bug;
 
@@ -67,13 +67,64 @@ pub fn check_expr(
         Expr::PathExpr { path, span } => check_path(project, module_id, path, span),
         Expr::LogicalExpr { lhs, op, rhs, span } => {
             check_logical(project, module_id, scope_id, lhs, *op, rhs, span)
-        },
+        }
         Expr::BinaryExpr { lhs, op, rhs, span } => {
             check_binary(project, module_id, scope_id, lhs, *op, rhs, span)
         }
         Expr::GroupingExpr { expr, .. } => check_expr(project, module_id, scope_id, expr),
+        Expr::AssignmentExpr { name, value, span } => {
+            check_assignment(project, module_id, scope_id, name, value, span)
+        }
         _ => todo!("{:#?}", expr),
     }
+}
+
+fn check_assignment(
+    project: &Project,
+    module_id: ModuleId,
+    scope_id: ScopeId,
+    name: &str,
+    value: &Expr,
+    span: &Span,
+) -> (Option<CheckedExpr>, Vec<RigError>) {
+    let (value, mut errors) = check_expr(project, module_id, scope_id, value);
+    let value = match value {
+        Some(value) => value,
+        None => return (None, errors),
+    };
+
+    let scope = project.get_module(module_id).get_scope(scope_id);
+    let var = *match scope.variables.get(name) {
+        Some(ty) => ty,
+        None => {
+            errors.push(RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0021,
+                &format!("Undefined variable `{name}`"),
+                span.clone(),
+            ));
+            return (None, errors);
+        }
+    };
+
+    if var != value.ty() {
+        errors.push(RigError::with_no_hint_and_notes(
+            ErrorType::Hard,
+            ErrorCode::E0022,
+            &format!("Expected type `{}` but found `{}`", var.typeid_to_string(&project.modules), value.ty().typeid_to_string(&project.modules)),
+            span.clone(),
+        ));
+        return (None, errors);
+    }
+
+    let checked_expr = CheckedExpr::Assignment(CheckedAssignment {
+        name: name.to_string(),
+        ty: value.ty(),
+        span: span.clone(),
+        value: Box::new(value),
+    });
+
+    (Some(checked_expr), errors)
 }
 
 fn check_logical(
@@ -84,8 +135,7 @@ fn check_logical(
     op: LogicalOperator,
     rhs: &Expr,
     span: &Span,
-) -> (Option<CheckedExpr>, Vec<RigError>)
-{
+) -> (Option<CheckedExpr>, Vec<RigError>) {
     let mut errors = vec![];
     let (lhs_expr, lhs_errs) = check_expr(project, module_id, scope_id, lhs);
     let (rhs_expr, rhs_errors) = check_expr(project, module_id, scope_id, rhs);
@@ -99,20 +149,25 @@ fn check_logical(
     let lhs_expr = lhs_expr.unwrap();
     let rhs_expr = rhs_expr.unwrap();
 
-    if op == LogicalOperator::Greater || op == LogicalOperator::GreaterEq
-        || op == LogicalOperator::Less || op == LogicalOperator::LessEq {
+    if op == LogicalOperator::Greater
+        || op == LogicalOperator::GreaterEq
+        || op == LogicalOperator::Less
+        || op == LogicalOperator::LessEq
+    {
         if !can_apply_logical_comparison(&lhs_expr, &rhs_expr) {
             return (
                 None,
                 vec![RigError::with_no_hint_and_notes(
                     ErrorType::Hard,
                     ErrorCode::E0022,
-                    &format!("Cannot apply `{}` to types `{}` and `{}`",
+                    &format!(
+                        "Cannot apply `{}` to types `{}` and `{}`",
                         op.to_string(),
                         lhs_expr.ty().typeid_to_string(&project.modules),
-                        rhs_expr.ty().typeid_to_string(&project.modules)),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
                     span.clone(),
-                )]
+                )],
             );
         }
     } else if op == LogicalOperator::Equal || op == LogicalOperator::NotEqual {
@@ -122,12 +177,14 @@ fn check_logical(
                 vec![RigError::with_no_hint_and_notes(
                     ErrorType::Hard,
                     ErrorCode::E0022,
-                    &format!("Cannot apply `{}` to types `{}` and `{}`",
-                             op.to_string(),
-                             lhs_expr.ty().typeid_to_string(&project.modules),
-                             rhs_expr.ty().typeid_to_string(&project.modules)),
+                    &format!(
+                        "Cannot apply `{}` to types `{}` and `{}`",
+                        op.to_string(),
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
                     span.clone(),
-                )]
+                )],
             );
         }
     } else {
@@ -137,27 +194,27 @@ fn check_logical(
                 vec![RigError::with_no_hint_and_notes(
                     ErrorType::Hard,
                     ErrorCode::E0022,
-                    &format!("Cannot apply `{}` to types `{}` and `{}`",
-                             op.to_string(),
-                             lhs_expr.ty().typeid_to_string(&project.modules),
-                             rhs_expr.ty().typeid_to_string(&project.modules)),
+                    &format!(
+                        "Cannot apply `{}` to types `{}` and `{}`",
+                        op.to_string(),
+                        lhs_expr.ty().typeid_to_string(&project.modules),
+                        rhs_expr.ty().typeid_to_string(&project.modules)
+                    ),
                     span.clone(),
-                )]
+                )],
             );
         }
     }
 
     (
-        Some(CheckedExpr::Logical(
-            CheckedLogical {
-                lhs: Box::new(lhs_expr),
-                op,
-                rhs: Box::new(rhs_expr),
-                span: span.clone(),
-                ty: BOOL_TYPEID,
-            }
-        )),
-        errors
+        Some(CheckedExpr::Logical(CheckedLogical {
+            lhs: Box::new(lhs_expr),
+            op,
+            rhs: Box::new(rhs_expr),
+            span: span.clone(),
+            ty: BOOL_TYPEID,
+        })),
+        errors,
     )
 }
 

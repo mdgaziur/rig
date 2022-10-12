@@ -14,7 +14,7 @@ use rig_ast::struct_field::StructField;
 use rig_ast::visibility::Visibility;
 use rig_span::Span;
 use rig_types::builtins::UNDEFINED_TYPEID;
-use rig_types::checked_stmt::{CheckedBlockStmt, CheckedExprStmt, CheckedLetStmt, CheckedStmt};
+use rig_types::checked_stmt::{CheckedBlockStmt, CheckedExprStmt, CheckedFnStmt, CheckedLetStmt, CheckedStmt};
 use rig_types::{
     FunctionArgument, FunctionType, ModuleId, ScopeId, StructFieldType, StructType, Type, TypeId,
     TypeIdOrModuleId,
@@ -96,7 +96,13 @@ pub fn typecheck_statement(
             }
         }
         Stmt::BlockStmt { .. } => check_body(session, stmt, module_id, project, typechecker_errors),
-        Stmt::LetStmt { name, value, visibility, ty, span } => check_letstmt(
+        Stmt::LetStmt {
+            name,
+            value,
+            visibility,
+            ty,
+            span,
+        } => check_letstmt(
             project,
             module_id,
             scope_id,
@@ -118,7 +124,7 @@ fn check_letstmt(
     name: &str,
     value: &Expr,
     ty: &Option<Expr>,
-    span: Span
+    span: Span,
 ) -> (Option<CheckedStmt>, Vec<(ModuleId, RigError)>) {
     let mut errors = vec![];
 
@@ -128,10 +134,7 @@ fn check_letstmt(
         if !expr_errors.is_empty() {
             return (
                 None,
-                expr_errors
-                    .iter()
-                    .map(|e| (module_id, e.clone()))
-                    .collect()
+                expr_errors.iter().map(|e| (module_id, e.clone())).collect(),
             );
         }
 
@@ -142,28 +145,30 @@ fn check_letstmt(
     if !val_errs.is_empty() {
         return (
             None,
-            val_errs
-                .iter()
-                .map(|e| (module_id, e.clone()))
-                .collect()
+            val_errs.iter().map(|e| (module_id, e.clone())).collect(),
         );
     }
 
     if let Some(checked_ty) = checked_ty {
-        if Some(checked_ty) != match &val_type {
-            Some(expr) => Some(expr.ty()),
-            None => None,
-        } {
-            errors.push((module_id, RigError::with_no_hint_and_notes(
-                ErrorType::Hard,
-                ErrorCode::E0022,
-                &format!(
-                    "Type mismatch: expected `{}`, found `{}`",
-                    checked_ty.typeid_to_string(&project.modules),
-                    val_type.unwrap().ty().typeid_to_string(&project.modules)
+        if Some(checked_ty)
+            != match &val_type {
+                Some(expr) => Some(expr.ty()),
+                None => None,
+            }
+        {
+            errors.push((
+                module_id,
+                RigError::with_no_hint_and_notes(
+                    ErrorType::Hard,
+                    ErrorCode::E0022,
+                    &format!(
+                        "Type mismatch: expected `{}`, found `{}`",
+                        checked_ty.typeid_to_string(&project.modules),
+                        val_type.unwrap().ty().typeid_to_string(&project.modules)
+                    ),
+                    span,
                 ),
-                span,
-            )));
+            ));
             return (None, errors);
         }
     } else {
@@ -171,16 +176,18 @@ fn check_letstmt(
     }
 
     let scope = project.get_module_mut(module_id).get_scope_mut(scope_id);
-    scope.variables.insert(name.to_string(), checked_ty.unwrap());
+    scope
+        .variables
+        .insert(name.to_string(), checked_ty.unwrap());
 
     (
         Some(CheckedStmt::Let(CheckedLetStmt {
             name: name.to_string(),
             expr: val_type.unwrap(),
             var_ty: checked_ty.unwrap(),
-            span
+            span,
         })),
-        errors
+        errors,
     )
 }
 
@@ -518,7 +525,7 @@ fn check_fn(
         return_type = UNDEFINED_TYPEID;
     }
 
-    let (_, body_errors) = check_body(session, body, module_id, project, typechecker_errors);
+    let (body, body_errors) = check_body(session, body, module_id, project, typechecker_errors);
 
     errors.extend(body_errors);
 
@@ -544,6 +551,16 @@ fn check_fn(
     module
         .get_scope_mut(scope_id)
         .insert_type(&prototype.name, type_id);
+    module
+        .checked_ast
+        .push(CheckedStmt::Fn(CheckedFnStmt {
+            ty: return_type,
+            body: match body.unwrap() {
+                CheckedStmt::Block(block) => block,
+                _ => unreachable!(),
+            },
+            span: span.clone()
+        }));
 
     (None, errors)
 }

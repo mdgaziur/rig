@@ -16,6 +16,14 @@ pub enum CheckedStmt {
     Continue(CheckedContinueStmt),
     Mod,
     Match(CheckedMatchStmt),
+    Fn(CheckedFnStmt)
+}
+
+#[derive(Debug, Clone)]
+pub struct CheckedFnStmt {
+    pub ty: TypeId,
+    pub body: CheckedBlockStmt,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
