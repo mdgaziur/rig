@@ -14,7 +14,7 @@ use rig_ast::struct_field::StructField;
 use rig_ast::visibility::Visibility;
 use rig_span::Span;
 use rig_types::builtins::UNDEFINED_TYPEID;
-use rig_types::checked_stmt::{CheckedBlockStmt, CheckedExprStmt, CheckedStmt};
+use rig_types::checked_stmt::{CheckedBlockStmt, CheckedExprStmt, CheckedLetStmt, CheckedStmt};
 use rig_types::{
     FunctionArgument, FunctionType, ModuleId, ScopeId, StructFieldType, StructType, Type, TypeId,
     TypeIdOrModuleId,
@@ -96,8 +96,92 @@ pub fn typecheck_statement(
             }
         }
         Stmt::BlockStmt { .. } => check_body(session, stmt, module_id, project, typechecker_errors),
+        Stmt::LetStmt { name, value, visibility, ty, span } => check_letstmt(
+            project,
+            module_id,
+            scope_id,
+            *visibility,
+            name,
+            value,
+            ty,
+            span.clone(),
+        ),
         _ => todo!("{:#?}", stmt),
     }
+}
+
+fn check_letstmt(
+    project: &mut Project,
+    module_id: ModuleId,
+    scope_id: ScopeId,
+    _visibility: Visibility,
+    name: &str,
+    value: &Expr,
+    ty: &Option<Expr>,
+    span: Span
+) -> (Option<CheckedStmt>, Vec<(ModuleId, RigError)>) {
+    let mut errors = vec![];
+
+    let mut checked_ty = None;
+    if let Some(ty) = ty {
+        let (actual_type, expr_errors) = check_expr(project, module_id, scope_id, ty);
+        if !expr_errors.is_empty() {
+            return (
+                None,
+                expr_errors
+                    .iter()
+                    .map(|e| (module_id, e.clone()))
+                    .collect()
+            );
+        }
+
+        checked_ty = Some(actual_type.unwrap().ty());
+    }
+
+    let (val_type, val_errs) = check_expr(project, module_id, scope_id, value);
+    if !val_errs.is_empty() {
+        return (
+            None,
+            val_errs
+                .iter()
+                .map(|e| (module_id, e.clone()))
+                .collect()
+        );
+    }
+
+    if let Some(checked_ty) = checked_ty {
+        if Some(checked_ty) != match &val_type {
+            Some(expr) => Some(expr.ty()),
+            None => None,
+        } {
+            errors.push((module_id, RigError::with_no_hint_and_notes(
+                ErrorType::Hard,
+                ErrorCode::E0022,
+                &format!(
+                    "Type mismatch: expected `{}`, found `{}`",
+                    checked_ty.typeid_to_string(&project.modules),
+                    val_type.unwrap().ty().typeid_to_string(&project.modules)
+                ),
+                span,
+            )));
+            return (None, errors);
+        }
+    } else {
+        checked_ty = Some(val_type.as_ref().unwrap().ty());
+    }
+
+    let scope = project.get_module_mut(module_id).get_scope_mut(scope_id);
+    scope.variables.insert(name.to_string(), checked_ty.unwrap());
+
+    (
+        Some(CheckedStmt::Let(CheckedLetStmt {
+            name: name.to_string(),
+            expr: val_type.unwrap(),
+            var_ty: checked_ty.unwrap(),
+            span
+        })),
+        errors
+    )
 }
 
 fn check_struct(

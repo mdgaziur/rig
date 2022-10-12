@@ -20,8 +20,9 @@ pub enum CheckedStmt {
 
 #[derive(Debug, Clone)]
 pub struct CheckedLetStmt {
+    pub name: String,
     pub var_ty: TypeId,
-    pub expr: CheckedExprStmt,
+    pub expr: CheckedExpr,
     pub span: Span,
 }
 
