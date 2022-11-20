@@ -18,7 +18,7 @@ RIG is a statically typed programming language that focuses on usability and per
 - Embedding RIG in Rust
 - Embedding RIG in languages other than Rust through FFI
 - Possibly self-host the compiler
-- Metaprogramming(Macros)
+- Metaprogramming (Macros)
 
 ## Syntax
 
