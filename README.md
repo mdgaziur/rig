@@ -73,7 +73,7 @@ extern "Rust" "libtest.so" {
  * static variables and structs can be made available to importers
  * by adding the 'pub' keyword before the name.
  */
-SOME_static variable: 1;
+SOME_STATIC_VARIABLE: 1;
 
 /*
  * static variables are also used to declare functions.
