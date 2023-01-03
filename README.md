@@ -97,10 +97,10 @@ main: fn() -> i32 {
     let res = add(a: 100, b: 200);
     
     // Format strings are supported. They have 'f' prefix.
-    println(f"{res}");
+    println(value: f"{res}");
     
     for x: 1..=10 {
-        println(f"{x}");
+        println(value: f"{x}");
     };
     
     // Infinite loop(can be controlled using break and continue)
@@ -127,10 +127,10 @@ main: fn() -> i32 {
     // These must be exhaustive.
     match x {
         2 => {
-            println("Value is 2 as expected");
+            println(value: "Value is 2 as expected");
         }
         _ => {
-            panic("Something is very wrong and I can sense it.");
+            panic(message: "Something is very wrong and I can sense it.");
         }
     };
     
@@ -194,7 +194,7 @@ impl Rectangle for Square {
     }
     
     debug_rectangle: fn(self) {
-        println(f"Rectangle: Height: {self.height}, \
+        println(value: f"Rectangle: Height: {self.height}, \
                   Width: {self.width}");
     };
 };
@@ -229,7 +229,7 @@ factorial: fn<T: Subtract + From<i32> + Multiply>(T n) -> T {
     // Here, turbofish is used to pass type.
     // This can be done implicitly. This is used here for
     // demonstration.
-    factorial::<T>(n - T::from(1)) * n
+    factorial::<T>(n: n - T::from(1)) * n
 };
 
 // Struct that takes 2 types that can be added together
