@@ -220,4 +220,38 @@ add: fn(i32 a, i32 b) -> i32 {
     // returns 
     a + b
 };
+
+/*
+ * Generics can be used on functions and structs.
+ * The traits can be specified like the following.
+ */
+factorial: fn<T: Subtract + Multiply>(T n) -> T {
+    // Here, turbofish is used to pass type.
+    // This can be done implicitly. This is used here for
+    // demonstration.
+    factorial::<T>(n - 1) * n
+};
+
+// Struct that takes 2 types that can be added together
+struct Add2Numbers<T: Add> {
+    a: T,
+    b: T,
+}
+
+impl<T: Add> Add2Numbers<T> {
+    pub new: fn(T a, T b) -> Self {
+        Self {
+            a,
+            b,
+        }
+    }
+    
+    // Associated types in traits and structs can be declared
+    // like how it's done in rust. Here we used the AdditionResult
+    // associated type from the 'Add' trait implementation for
+    // given types.
+    pub add: fn(self) -> T::AdditionResult {
+        self.a + self.b
+    }
+}
 ```
