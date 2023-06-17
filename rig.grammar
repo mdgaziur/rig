@@ -1,0 +1,72 @@
+/// How to read this:
+/// Each rule starts with a name, then a colon, and contains rules. Each rule ends with a semicolon.
+/// More than one possible rule in one place can be indicated by separating them with "|".
+/// Literals are enclosed in "".
+/// Repeating rules can be indicated with * after them and a separator using [] and a literal inside it.
+/// Optional rules can be indicated with ? after them.
+/// First brackets can be used to pack multiple rules into a single rule without defining a new rule with a name.
+/// <> implies that no space is allowed between two rules.
+/// ! before * implies that rule must repeat at least once.
+/// <~ ~> describes something that can only be described with words :^).
+
+program: (decl | struct_impl | const_stmt | static_stmt)*;
+decl: "pub"? (struct_decl | fn_decl | mod_decl | trait_decl);
+statement: (expression ";") | struct_decl | struct_impl | mod_decl | use | for | loop | while | conditional | fn
+            let_stmt | const_stmt | trait_decl | type_alias;
+
+struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path)*[","] "}";
+struct_impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ident "{" (const_stmt | fn_decl | type_alias)!* "}";
+
+fn_decl: fn_prototype body;
+fn_prototype: "fn" ident generic_params_with_trait_bound "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path)? ")"
+                "where" (ident ":" ty_path)*[","];
+fn_arg: (("anon" | "vararg") ident ":" ("mut" | "*")? ty_path);
+
+trait_decl: "trait" ident ("<" ty_path)? "{" (type_alias | fn_decl)* "}";
+let_stmt: "let" "mut" ident (":" ty_path)? ("=" expression)?;
+const_stmt: "const" ident (":" ty_path)? ("=" expression)?;
+static_stmt: "static" ident (":" ty_path)? ("=" expression)?;
+type_alias: "type" ident generic_params_with_trait_bound ty_path;
+use: "use" ident*["::"] ("{" ident*[","] "}")?;
+mod_decl: "mod" ident ("{" program "}" | ";");
+for: "for" ident "in" expression body;
+while: "while" expression body;
+loop: "loop" body;
+conditional: "if" expression body ("else" (conditional | body)?)?;
+
+body: "{" statement* expression? "}";
+
+generic_params_without_trait_bound: "<" ident*[,] ">";
+generic_params_with_trait_bound: "<" (ident (":" ty_path)?)*[","] ">";
+
+expression: logical_or (("=" | "+=" | "-=" | "*=" | "/=" | ">>=" | "<<=" | "&=" | "|=" | "^=" | "**=" ) expression)?;
+logical_or: logical_and ("||" logical_and)*;
+logical_and: equality ("&&" equality)*;
+equality: comparison (("==" | "!=") comparison)*;
+comparison: bitwise_or ((">" | ">=" | "<" | "<=") bitwise_or)*;
+bitwise_or: bitwise_xor ("|" bitwise_xor)*;
+bitwise_xor: bitwise_and ("^" bitwise_and)*;
+bitwise_and: bitwise_shift ("&" bitwise_shift)*;
+bitwise_shift: term ((">>" | "<<") term)*;
+term: factor (("+" | "-") factor)*;
+factor: unary (("*" | "/") unary)*;
+unary: ("!" | "*" | "-" | "~")? (unary | member_access);
+member_access: index ("." member_access)*;
+index: primary ("[" bin_number | hex_number | oct_number | dec_number "]")*;
+primary: ty_path | fn_call | hex_number | oct_number | bin_number | dec_number | true | false | str | array_literal;
+array_literal: "[" expression*[","] "]";
+fn_call: ty_path "(" ((ident ":")? expression)*[","] ")";
+ty_path: ident*["::"] ("::" generic_params_without_trait_bound);
+ident: UTF8_ALPHABET<>("_" | "$" | UTF8_ALPHANUM)<>*;
+bin_number: "0b"<>("0" | "1")<>!*;
+hex_number: "0x"<>(digit | "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f")<>!*;
+oct_number: "0o"<>("0" | "1" | "2" | "3" | "4" | "5" | "6" | "7")<>!*;
+dec_number: digit<>!*<>("." digit<>*)?;
+digit: "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "_";
+true: "true";
+false: "false";
+str: "\"" <~ anything, literally anything ~> "\"";
+
+UTF8_ALPHABET: <~ valid utf8 alphabets ~> ;
+UTF8_NUM: <~ valid utf8 numbers ~> ;
+UTF8_ALPHANUM: UTF8_ALPHABET | UTF8_NUM;

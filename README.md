@@ -1,246 +1,275 @@
 # The RIG Programming Language
 
-RIG is a type safe and developer friendly language for the web.
+RIG is a programming language for the web that aims to be type safe and
+less error-prone.
 
-## Target
+## Key Features
 
-- Type safe design
-
-- Mutability
-
-- Better sum types
-
+Features that are going to be added in the first release:
+- Interop with JS(functions only)
+- Strict type checking
+- Enums that can hold values
 - Exhaustive pattern matching
+- Simpler borrow checker for fixing issues caused by mutability
+- Rust like syntax for fellow Rustaceans out there :)
+- Compiled to WASM
+- Structs
+- Simplified version of Rust's traits
+- Builtin macros
 
-- No user facing dependency on JS
+Features that may get added later:
+- Metaprogramming using macros
 
-- Safe wrappers for JS in standard library
+## Why?
 
-- No exception in safe RIG
-
-- `unsafe` interop with JS(No packages are supported)
-
-- New packaging system
-
-- Concurrency(?)
-
-- Extensible and customizable compiler(?)
-
-
+Fun and learning.
 
 ## Syntax
 
-Functions:
+The syntax is mostly similar with Rust syntax and it has some extra stuff
+to make things more convenient. It's just a bit simplified.
 
 ```rust
-divide_elements_by_2: fn(Vec<Number> v) -> Vec<Number> {
-    v.iter().map(|v| v / 2).collect()
-} 
+fn println<T: Display>(anon fmt: String, vararg vars: T) {
+    dom::output::alert(format(fmt, vars));
+}
 
-main: fn() {
-    let p1 = "Hello";
-    let p2 = "World!";
+fn add<T: Add<T>>(a: T, b: T) -> T::Add<T>::Result {
+    a + b
+}
+
+struct Vector3 {
+    i_comp: i32,
+    j_comp: i32,
+    k_comp: i32,
+}
+
+fn main() {
+    let input = dom::input::alert_input("Enter your name: ");
+    println!("Hello world, {}!", input);
+    println!("1 + 2 = {}", add(a: 1, b: 2));
     
-    println!("{p1} {p2}");
-    println!("{}", divide_elements_by_2(vec![12, 36, 40]));
-};
-```
-
-`main` is a constant value that contains the function. `fn` keyword is an expression that returns a callable type(aka a function). 
-
-
-
-Constants:
-
-```rust
-DEADBEEF: 0x3735928559;
-
-add_2_numbers: fn(Number a, Number b) -> Number {
-    a + b    
-}
-```
-
-Constants are defined like this. The value must be something that can be evaluated in compile time. Here are some values that can be used as a value for constants:
-
-- Number
-
-- String
-
-- Function
-
-- Arithmetic operations(cannot contain function calls)
-
-
-
-Variables:
-
-```rust
-let var1 = 1234;
-let vec1: Vec<Number> = vec![12, 3, 5];
-let c = vec1.iter().map(|v| v / 2).collect::<Number>();
-```
-
-Variables can be defined like this. Types can be specified by putting a colon and then the type after that. In most cases, RIG compiler can infer the type of the variable by just looking at the value on the right hand side.
-
-
-
-Types:
-
-```rust
-type VecOfNumbers: Vec<Number>;
-type AdderOfValues<T: Add<T>>: struct {
-    a: T,
-    b: T,
-}
-
-
-bind<T: Add<T>> to AdderOfValues<T> {
-    type Output = Add<T>::Output;
-
-    new: fn(T a, T b) -> Self {
-        Self {
-            a,
-            b
+    let str_input = dom::input::alert_input("Enter a string: ");
+    if str_input == str_input.rev() {
+        println!("palindrome");
+    }
+    
+    let mut i = 0;
+    loop {
+        if i > 10 {
+            break;
         }
+        
+        println!("{}", i);
+        i += 1;
     }
     
-    add: #[consumes]fn() -> Self::Output {
-        @a + @b
+    for x in 0..10 {
+        println!("{}", x);
     }
 }
 ```
 
-Types can be declared using the `type` keyword. This can be used to alias other types or create a `struct` or an object `object`. The `bind` keyword can be used to bind functions to a type. Adding `#[consumes]` attribute to a function causes the compiler to no longer allow the user to reuse instance of type after the function is called. This can be useful when handling stuff like sockets. Types can also be binded with other types.
-
-
-
-Generics:
+### Expressions
 
 ```rust
-type Vector<T> = Vec<T>;
-type StringHashMap<V> = HashMap<String, V>;
-
-
-add: fn<T>(T a, T b)
-    ensure T: Add<T> {
-    a + b
-}
-
-
-// or
-
-
-add: fn<T: Add<T>>(T a, T b) {
-    a + b
-}
+1 + 2
+1 + 2 * (3 / 2)
+3 + (1 - 2)
+(1 - 2) * 5
+function() * 123
+.123 * function()
+function::<i32>(123) ** 2 / PI
+1 as f32 / 2.54
 ```
 
-Generics are similar to Rust generics. They can be used to define types or function that take arbitrary types(with conditions if needed).
-
-
-
-Traits:
+### Variables
 
 ```rust
-trait Chordate {
-    fn notochord() -> String;
-}
+// immutble variable
+let x = 1;
 
-trait Species: Chordate {
-    fn species_name() -> String;
-}
-```
-
-Traits can be used to define shared behaviours and they can have associated types inside them. Traits can also be used to simulate inheritence.
-
-
-
-Block statements:
-
-Block statements are enclosed with curly braces. They return the value of trailing expression. If the trailing expression contains a semicolon at the end, the block statement returns an empty value `()`. 
-
-
-
-Nulls:
-
-NO NULLS! Only empty type `()`  (a concrete type that cannot be used as a placeholder for other types) and `Option<T>`.
-
-
-
-Interop:
-
-```rust
-unsafe js {
-    "console.log(\"unsafeeeeeeeeeeeeeeeee\");"
-    "alert(\"We're playing with fire!\");"
-}
-```
-
-That's it.
-
-
-
-Enums:
-
-```rust
-type Option<T>: enum {
-    Some(T),
-    None,
-}
-
-// Must be exhaustive
-match Option::Some(123) {
-    Some(v) => println!("it's 123"),
-    None => println!("What?"),
-}
-```
-
-
-
-Comments:
-
-Single line comments: `//`
-
-Multi line comments: `/**/`
-
-Doc comment: `/!!/`
-
-
-
-Mutability:
-
-```rust
-let mut x = 1;
-x += 1;
-
-
+// mutable variable
 let y = 2;
-y += 2; // compiler complains and whines about it
 
+// eval'd at compile time
+const cx = 1 + 3 * 3.1416 - 6;
+
+// mutable global variable
+static is_cool = true;
 ```
 
+### Functions
 
+```rust
+fn function1() {
+    // body
+}
 
-Branches:
+fn function_with_anon_arg(anon arg: i32) {
+    // body
+}
+
+fn function_with_generic<T>(arg: T) {
+    // body
+}
+
+fn function_with_generic_and_trait<T: As<i32>>(a: T) {
+    // body
+}
+
+fn function_with_generic_and_trait2<T>(a: T)
+    where T: As<i32> {
+    // body
+}
+```
+
+### Conditionals
 
 ```rust
 if X {
-    // do something
+    println()
 } else if Y {
-    // do something
+    
 } else {
-    // do something
+
+}
+```
+
+### Match
+
+```rust
+match true {
+    true => {},
+    false => {},
 }
 
-
-while A {
-    // do something
-    continue;
-    println!("you will never see me!");
+match 123 {
+    x if x > 12 => {},
+    _ => {},
 }
 
+match Y {
+    S { f1, .. } => {},
+    S { f2: 23, .. } => {},
+    _ => {}
+}
+
+match Z {
+    E(123, 456, 789) => {},
+    E(i, j, ..) => {}
+}
+```
+
+### Loops
+
+```rust
 loop {
-    // infinite loop
-    break; // not anymore
+    // body
+}
+
+while CONDITION {
+    if CONDITION2 {
+        continue;
+    }
+    break;
+}
+
+for x in ITERABLE {
+    // body
+}
+```
+
+### Structs
+
+```rust
+struct BasicStruct {
+    a: i32,
+    b: String,
+}
+
+impl BasicStruct {
+    fn new(a: i32, b: String) -> Self {
+        Self {
+            a,
+            b,
+        }
+    }
+}
+
+struct StructWithGeneric<T> {
+    a: T
+}
+
+impl<T: As<i32>> StructWithGeneric<T> {
+    pub fn new(a: T) -> Self {
+        Self {
+            a,
+        }
+    }
+}
+```
+
+### Traits
+
+```rust
+trait Human {
+    fn learn(self, what_to_learn: String) -> Status;
+    fn say(self, what_to_say: String);
+}
+
+trait Asian < Human {
+    fn study_a_lot(self) -> !;
+}
+
+trait American < Human {
+    fn measure_in_american_way<T: AmericanMeasurable>(self, what_to_measure: T);
+}
+
+trait AmericanMeasurable {
+    fn as_school_bus(self) -> i32 {}
+}
+
+impl AmericanMeasurable for i32 {
+    fn as_school_bus(self) -> i32 {
+        // in meters
+        self / 13.7
+    }
+}
+```
+
+### Ownership
+
+```rust
+/// Moving a thing means caller is no longer allowed
+/// to do anything on given argument after calling this
+/// function.
+fn move_thing(s: *String) {}
+
+/// Basically sends a reference to whatever being passed.
+/// Referenced thing is dropped when no one holds any
+/// reference to passed value.
+fn ref_thing(s: String) {}
+```
+
+### Module
+
+```rust
+/// Compiler tries to find file name with
+/// `m1.rig` or directory named `m1` with a
+/// `mod.rig` inside it.
+mod m1;
+
+mod m2 {
+    pub fn m2_fn1() {
+        m2_fn1_priv();
+    }
+    fn m2_fn1_priv() {}
+}
+
+use m2::m2_fn1;
+
+fn main() {
+    m2_fn1();
 }
 ```
