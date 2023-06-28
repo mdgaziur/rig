@@ -70,6 +70,15 @@ fn main() {
 }
 ```
 
+### Comments
+
+```rust
+// Single line comment
+/* Multiline comment
+ * Line2
+ */
+```
+
 ### Expressions
 
 ```rust

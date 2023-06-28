@@ -26,36 +26,36 @@ impl<'l> Lexer<'l> {
     // Does lexical analysis on the next character(s)
     // Caller must ensure that the lexer hasn't reached the end of
     // file
-    pub fn lex_once(&mut self) -> Result<Option<LexicalToken>, CodeError> {
+    pub fn lex_once(&mut self) -> Result<LexicalToken, CodeError> {
         assert!(!self.is_eof());
 
-        Ok(match self.current() {
-            '(' => Some(LexicalToken {
+        match self.current() {
+            '(' => Ok(LexicalToken {
                 kind: TokenKind::LParen,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            ')' => Some(LexicalToken {
+            ')' => Ok(LexicalToken {
                 kind: TokenKind::RParen,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            '{' => Some(LexicalToken {
+            '{' => Ok(LexicalToken {
                 kind: TokenKind::LBrace,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            '}' => Some(LexicalToken {
+            '}' => Ok(LexicalToken {
                 kind: TokenKind::RBrace,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            '[' => Some(LexicalToken {
+            '[' => Ok(LexicalToken {
                 kind: TokenKind::LBracket,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            ']' => Some(LexicalToken {
+            ']' => Ok(LexicalToken {
                 kind: TokenKind::RBracket,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
@@ -63,13 +63,13 @@ impl<'l> Lexer<'l> {
             '=' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::Eq,
                         raw: intern!("=="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Assign,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -81,13 +81,13 @@ impl<'l> Lexer<'l> {
                     match self.try_peek_next() {
                         Some('=') => {
                             self.advance();
-                            Some(LexicalToken {
+                            Ok(LexicalToken {
                                 kind: TokenKind::LShiftEq,
                                 raw: intern!("<<="),
                                 span: Span::new(self.pos - 2, self.pos, self.file_path),
                             })
                         }
-                        _ => Some(LexicalToken {
+                        _ => Ok(LexicalToken {
                             kind: TokenKind::LShift,
                             raw: intern!("<<"),
                             span: Span::new(self.pos - 1, self.pos, self.file_path),
@@ -96,13 +96,13 @@ impl<'l> Lexer<'l> {
                 }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::LessEq,
                         raw: intern!("<="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Less,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -114,13 +114,13 @@ impl<'l> Lexer<'l> {
                     match self.try_peek_next() {
                         Some('=') => {
                             self.advance();
-                            Some(LexicalToken {
+                            Ok(LexicalToken {
                                 kind: TokenKind::RShiftEq,
                                 raw: intern!(">>="),
                                 span: Span::new(self.pos - 2, self.pos, self.file_path),
                             })
                         }
-                        _ => Some(LexicalToken {
+                        _ => Ok(LexicalToken {
                             kind: TokenKind::RShift,
                             raw: intern!(">>"),
                             span: Span::new(self.pos - 1, self.pos, self.file_path),
@@ -129,13 +129,13 @@ impl<'l> Lexer<'l> {
                 }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::GreaterEq,
                         raw: intern!(">="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Greater,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -144,13 +144,13 @@ impl<'l> Lexer<'l> {
             '+' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::PlusEq,
                         raw: intern!("+="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Plus,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -159,13 +159,13 @@ impl<'l> Lexer<'l> {
             '-' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::MinusEq,
                         raw: intern!("-="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Minus,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -177,13 +177,13 @@ impl<'l> Lexer<'l> {
                     match self.try_peek_next() {
                         Some('=') => {
                             self.advance();
-                            Some(LexicalToken {
+                            Ok(LexicalToken {
                                 kind: TokenKind::PowerEq,
                                 raw: intern!("**="),
                                 span: Span::new(self.pos - 2, self.pos, self.file_path),
                             })
                         }
-                        _ => Some(LexicalToken {
+                        _ => Ok(LexicalToken {
                             kind: TokenKind::Power,
                             raw: intern!("**"),
                             span: Span::new(self.pos - 1, self.pos, self.file_path),
@@ -192,28 +192,82 @@ impl<'l> Lexer<'l> {
                 }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::MulEq,
                         raw: intern!("*="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Mul,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
                 }),
             },
             '/' => match self.try_peek_next() {
+                Some('/') => {
+                    self.advance();
+                    while !self.is_eof() && self.current() != '\n' {
+                        self.advance();
+                    }
+
+                    if !self.is_eof() {
+                        self.lex_once()
+                    } else {
+                        Ok(LexicalToken {
+                            kind: TokenKind::Eof,
+                            raw: intern!(""),
+                            span: Span::new(self.pos, self.pos, self.file_path),
+                        })
+                    }
+                }
+                Some('*') => {
+                    // /* comment */
+                    //  ^
+                    self.advance();
+                    // /* comment */
+                    //   ^
+                    self.advance();
+
+                    let mut depth = 1;
+                    while !self.is_eof() && depth != 0 {
+                        if self.current() == '/' && self.try_peek_next() == Some('*') {
+                            depth += 1;
+                            self.advance();
+                        } else if self.current() == '*' && self.try_peek_next() == Some('/') {
+                            depth -= 1;
+                            dbg!(depth);
+                            self.advance();
+                        }
+
+                        self.advance();
+                    }
+
+                    if depth != 0 && self.is_eof() {
+                        Err(CodeError {
+                            error_code: ErrorCode::SyntaxError,
+                            message: intern!("Unterminated multiline comment"),
+                            pos: Span::new(self.pos, self.pos, self.file_path),
+                            hints: vec![],
+                            notes: vec![],
+                        })?
+                    } else {
+                        Ok(LexicalToken {
+                            kind: TokenKind::Eof,
+                            raw: intern!(""),
+                            span: Span::new(self.pos, self.pos, self.file_path)
+                        })
+                    }
+                }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::DivEq,
                         raw: intern!("/="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Div,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -222,7 +276,7 @@ impl<'l> Lexer<'l> {
             '&' => match self.try_peek_next() {
                 Some('&') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::LogicalAnd,
                         raw: intern!("&&"),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
@@ -230,13 +284,13 @@ impl<'l> Lexer<'l> {
                 }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::AndEq,
                         raw: intern!("&="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::And,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -245,7 +299,7 @@ impl<'l> Lexer<'l> {
             '|' => match self.try_peek_next() {
                 Some('|') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::LogicalOr,
                         raw: intern!("||"),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
@@ -253,13 +307,13 @@ impl<'l> Lexer<'l> {
                 }
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::OrEq,
                         raw: intern!("|="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Or,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -268,13 +322,13 @@ impl<'l> Lexer<'l> {
             '^' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::XorEq,
                         raw: intern!("^="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Xor,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
@@ -283,19 +337,19 @@ impl<'l> Lexer<'l> {
             '!' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::NotEq,
                         raw: intern!("!="),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Not,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
                 }),
             },
-            '~' => Some(LexicalToken {
+            '~' => Ok(LexicalToken {
                 kind: TokenKind::BinaryNot,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
@@ -303,29 +357,29 @@ impl<'l> Lexer<'l> {
             ':' => match self.try_peek_next() {
                 Some(':') => {
                     self.advance();
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::PathSep,
                         raw: intern!("::"),
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
-                _ => Some(LexicalToken {
+                _ => Ok(LexicalToken {
                     kind: TokenKind::Colon,
                     raw: intern!(self.current()),
                     span: Span::new(self.pos, self.pos, self.file_path),
                 }),
             },
-            ',' => Some(LexicalToken {
+            ',' => Ok(LexicalToken {
                 kind: TokenKind::Comma,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            ';' => Some(LexicalToken {
+            ';' => Ok(LexicalToken {
                 kind: TokenKind::Semi,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
-            '.' => Some(LexicalToken {
+            '.' => Ok(LexicalToken {
                 kind: TokenKind::Dot,
                 raw: intern!(self.current()),
                 span: Span::new(self.pos, self.pos, self.file_path),
@@ -387,7 +441,7 @@ impl<'l> Lexer<'l> {
                     number = collect_digits(self, 10);
                 }
 
-                Some(LexicalToken {
+                Ok(LexicalToken {
                     kind: TokenKind::Number {
                         number: intern!(number),
                         kind: number_kind,
@@ -433,7 +487,7 @@ impl<'l> Lexer<'l> {
                     _ => TokenKind::Ident(intern!(ident)),
                 };
 
-                Some(LexicalToken {
+                Ok(LexicalToken {
                     kind,
                     span: Span::new(start_pos, self.pos, self.file_path),
                     raw: intern!(ident),
@@ -442,9 +496,13 @@ impl<'l> Lexer<'l> {
             ch if ch.is_whitespace() => {
                 self.advance();
                 if !self.is_eof() {
-                    self.lex_once()?
+                    self.lex_once()
                 } else {
-                    None
+                    Ok(LexicalToken {
+                        kind: TokenKind::Eof,
+                        raw: intern!(""),
+                        span: Span::new(self.pos, self.pos, self.file_path)
+                    })
                 }
             },
             '"' => {
@@ -460,13 +518,13 @@ impl<'l> Lexer<'l> {
                 if self.is_eof() {
                     Err(CodeError {
                         error_code: ErrorCode::SyntaxError,
-                        message: intern!(format!("Unterminated string literal")),
+                        message: intern!("Unterminated string literal"),
                         pos: Span::new(self.pos, self.pos, self.file_path),
                         hints: vec![],
                         notes: vec![],
                     })?
                 } else {
-                    Some(LexicalToken {
+                    Ok(LexicalToken {
                         kind: TokenKind::String(intern!(s.clone())),
                         raw: intern!(format!("\"{s}\"")),
                         span: Span::new(start_pos, self.pos, self.file_path),
@@ -480,7 +538,7 @@ impl<'l> Lexer<'l> {
                 hints: vec![],
                 notes: vec![],
             })?,
-        })
+        }
     }
 
     pub fn is_eof(&self) -> bool {

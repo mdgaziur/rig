@@ -93,4 +93,5 @@ pub enum TokenKind {
     Comma,
     Semi,
     Dot,
+    Eof,
 }
