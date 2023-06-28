@@ -31,6 +31,12 @@ impl Interner {
     }
 }
 
+impl Default for Interner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct InternedString(usize);
 
