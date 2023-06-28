@@ -255,7 +255,7 @@ impl<'l> Lexer<'l> {
                         Ok(LexicalToken {
                             kind: TokenKind::Eof,
                             raw: intern!(""),
-                            span: Span::new(self.pos, self.pos, self.file_path)
+                            span: Span::new(self.pos, self.pos, self.file_path),
                         })
                     }
                 }
@@ -388,7 +388,13 @@ impl<'l> Lexer<'l> {
                 fn collect_digits(lexer: &mut Lexer, radix: u32) -> String {
                     let mut number = String::new();
 
-                    while !lexer.is_eof() && lexer.current().is_digit(radix) {
+                    // NOTE: We keep eating dots in decimal numbers here. Decimal numbers
+                    //       will get validated by the parser. This is done to make sure
+                    //       that codes like "123.method()" don't get rejected.
+                    while !lexer.is_eof()
+                        && (lexer.current().is_digit(radix)
+                            || (lexer.current() == '.' && radix == 10))
+                    {
                         number.push(lexer.current());
                         lexer.advance();
                     }
@@ -501,10 +507,10 @@ impl<'l> Lexer<'l> {
                     Ok(LexicalToken {
                         kind: TokenKind::Eof,
                         raw: intern!(""),
-                        span: Span::new(self.pos, self.pos, self.file_path)
+                        span: Span::new(self.pos, self.pos, self.file_path),
                     })
                 }
-            },
+            }
             '"' => {
                 let start_pos = self.pos;
                 let mut s = String::new();
