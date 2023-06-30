@@ -87,7 +87,7 @@ fn main() {
 3 + (1 - 2)
 (1 - 2) * 5
 function() * 123
-.123 * function()
+0.123 * function()
 function::<i32>(123) ** 2 / PI
 1 as f32 / 2.54
 ```
