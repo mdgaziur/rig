@@ -10,13 +10,13 @@ pub struct Lexer<'l> {
     file_content_iterator: Chars<'l>,
     file_path: InternedString,
     pos: usize,
-    len: usize,
+    current: Option<char>,
 }
 
 impl<'l> Lexer<'l> {
-    pub fn new(file_content_iterator: Chars<'l>, file_path: InternedString) -> Self {
+    pub fn new(mut file_content_iterator: Chars<'l>, file_path: InternedString) -> Self {
         Self {
-            len: file_content_iterator.clone().count(),
+            current: file_content_iterator.nth(0),
             file_content_iterator,
             file_path,
             pos: 0,
@@ -236,7 +236,6 @@ impl<'l> Lexer<'l> {
                             self.advance();
                         } else if self.current() == '*' && self.try_peek_next() == Some('/') {
                             depth -= 1;
-                            dbg!(depth);
                             self.advance();
                         }
 
@@ -252,11 +251,7 @@ impl<'l> Lexer<'l> {
                             notes: vec![],
                         })?
                     } else {
-                        Ok(LexicalToken {
-                            kind: TokenKind::Eof,
-                            raw: intern!(""),
-                            span: Span::new(self.pos, self.pos, self.file_path),
-                        })
+                        self.lex_once()
                     }
                 }
                 Some('=') => {
@@ -385,29 +380,44 @@ impl<'l> Lexer<'l> {
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
             ch if ch.is_ascii_digit() => {
-                fn collect_digits(lexer: &mut Lexer, radix: u32) -> String {
+                fn collect_digits(lexer: &mut Lexer, radix: u32) -> Result<String, CodeError> {
+                    if lexer.is_eof() {
+                        return Err(CodeError {
+                            error_code: ErrorCode::SyntaxError,
+                            message: intern!("Expected a valid digit after this"),
+                            pos: Span::new(lexer.pos - 1, lexer.pos - 1, lexer.file_path),
+                            hints: vec![],
+                            notes: vec![],
+                        })
+                    } else if !lexer.current().is_digit(radix) && !(radix == 10 && lexer.current() != '.') {
+                        return Err(CodeError {
+                            error_code: ErrorCode::SyntaxError,
+                            message: intern!("Expected a valid digit"),
+                            pos: Span::new(lexer.pos, lexer.pos, lexer.file_path),
+                            hints: vec![],
+                            notes: vec![],
+                        })
+                    }
+
                     let mut number = String::new();
 
-                    // NOTE: We keep eating dots in decimal numbers here. Decimal numbers
-                    //       will get validated by the parser. This is done to make sure
-                    //       that codes like "123.method()" don't get rejected.
                     while !lexer.is_eof()
-                        && (lexer.current().is_digit(radix)
-                            || (lexer.current() == '.' && radix == 10))
                     {
                         number.push(lexer.current());
+
+                        if let Some(ch) = lexer.try_peek_next() {
+                            // NOTE: We keep eating dots in decimal numbers here. Decimal numbers
+                            //       will get validated by the parser. This is done to make sure
+                            //       that codes like "1.23.method()" don't get rejected.
+                            if !ch.is_digit(radix) && !(ch == '.' && radix == 10) {
+                                break;
+                            }
+                        }
+
                         lexer.advance();
                     }
 
-                    if !lexer.is_eof() && !number.is_empty() {
-                        lexer.retreat();
-                    }
-
-                    if number.is_empty() {
-                        number = String::from("0");
-                    }
-
-                    number
+                    Ok(number)
                 }
                 let start_pos = self.pos;
                 let number_kind;
@@ -416,26 +426,26 @@ impl<'l> Lexer<'l> {
                 if ch == '0' {
                     number = match self.try_peek_next() {
                         Some('x') => {
+                            self.advance();
+                            self.advance();
                             number_kind = NumberKind::Hex;
-                            self.advance();
-                            self.advance();
-                            collect_digits(self, 16)
+                            collect_digits(self, 16)?
                         }
                         Some('b') => {
+                            self.advance();
+                            self.advance();
                             number_kind = NumberKind::Bin;
-                            self.advance();
-                            self.advance();
-                            collect_digits(self, 2)
+                            collect_digits(self, 2)?
                         }
                         Some('o') => {
+                            self.advance();
+                            self.advance();
                             number_kind = NumberKind::Oct;
-                            self.advance();
-                            self.advance();
-                            collect_digits(self, 8)
+                            collect_digits(self, 8)?
                         }
-                        Some(ch) if ch.is_ascii_digit() => {
+                        Some(ch) if ch.is_ascii_digit() || ch == '.' => {
                             number_kind = NumberKind::Dec;
-                            collect_digits(self, 10)
+                            collect_digits(self, 10)?
                         }
                         _ => {
                             number_kind = NumberKind::Dec;
@@ -444,7 +454,7 @@ impl<'l> Lexer<'l> {
                     };
                 } else {
                     number_kind = NumberKind::Dec;
-                    number = collect_digits(self, 10);
+                    number = collect_digits(self, 10)?;
                 }
 
                 Ok(LexicalToken {
@@ -459,12 +469,17 @@ impl<'l> Lexer<'l> {
             ch if ch.is_alphabetic() || ch == '_' => {
                 let start_pos = self.pos;
                 let mut ident = String::new();
-                while !self.is_eof() && (self.current().is_alphanumeric() || self.current() == '_')
-                {
+                while !self.is_eof() {
                     ident.push(self.current());
+
+                    if let Some(ch) =  self.try_peek_next() {
+                        if !ch.is_alphanumeric() && ch != '_' {
+                            break;
+                        }
+                    }
+
                     self.advance();
                 }
-                self.retreat();
 
                 let kind = match ident.as_str() {
                     "true" => TokenKind::True,
@@ -490,6 +505,7 @@ impl<'l> Lexer<'l> {
                     "impl" => TokenKind::Impl,
                     "in" => TokenKind::In,
                     "mod" => TokenKind::Mod,
+                    "as" => TokenKind::As,
                     _ => TokenKind::Ident(intern!(ident)),
                 };
 
@@ -525,7 +541,7 @@ impl<'l> Lexer<'l> {
                     Err(CodeError {
                         error_code: ErrorCode::SyntaxError,
                         message: intern!("Unterminated string literal"),
-                        pos: Span::new(self.pos, self.pos, self.file_path),
+                        pos: Span::new(start_pos, self.pos - 1, self.file_path),
                         hints: vec![],
                         notes: vec![],
                     })?
@@ -548,22 +564,19 @@ impl<'l> Lexer<'l> {
     }
 
     pub fn is_eof(&self) -> bool {
-        self.len <= self.pos
+        self.current.is_none()
     }
 
     pub fn advance(&mut self) {
         self.pos += 1;
-    }
-
-    fn retreat(&mut self) {
-        self.pos -= 1;
+        self.current = self.file_content_iterator.next();
     }
 
     fn current(&self) -> char {
-        self.file_content_iterator.clone().nth(self.pos).unwrap()
+        self.current.unwrap()
     }
 
     fn try_peek_next(&self) -> Option<char> {
-        self.file_content_iterator.clone().nth(self.pos + 1)
+        self.file_content_iterator.clone().next()
     }
 }

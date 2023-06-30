@@ -3,9 +3,9 @@ use rig_span::Span;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct LexicalToken {
-    pub(crate) kind: TokenKind,
-    pub(crate) raw: InternedString,
-    pub(crate) span: Span,
+    pub kind: TokenKind,
+    pub raw: InternedString,
+    pub span: Span,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -50,6 +50,7 @@ pub enum TokenKind {
     Impl,
     In,
     Mod,
+    As,
 
     LParen,
     RParen,
