@@ -1,21 +1,33 @@
+use parking_lot::lock_api::RwLock;
+
 use rig_intern::{intern, Interner, INTERNER};
+
 use rig_lexer::Lexer;
-use std::io::stdin;
-use std::sync::RwLock;
+use rig_session::Session;
+
+use std::env::args;
+use std::fs;
 
 fn main() {
-    INTERNER.set(RwLock::new(Interner::new())).unwrap();
+    INTERNER.init_once(|| RwLock::new(Interner::new()));
 
-    loop {
-        let mut line = String::new();
-        stdin().read_line(&mut line).unwrap();
+    let file_path = args().nth(1).unwrap();
+    let file_content = fs::read_to_string(&file_path).unwrap();
+    let mut session = Session::new();
+    let mut lexer = Lexer::new(file_content.chars(), intern!(&file_path));
+    let mut lexer_results = vec![];
+    while !lexer.is_eof() {
+        lexer_results.push(lexer.lex_once());
+        lexer.advance();
+    }
 
-        let mut lexer = Lexer::new(line.chars(), intern!("<stdin>"));
-        let mut tokens = vec![];
-        while !lexer.is_eof() {
-            tokens.push(lexer.lex_once());
-            lexer.advance();
+    session.insert_file(&file_path, &file_content);
+    for lexer_result in lexer_results {
+        if let Ok(tok) = lexer_result {
+            dbg!(tok);
         }
-        dbg!(tokens);
+        if let Err(err) = lexer_result {
+            err.display(&session);
+        }
     }
 }

@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 bimap = "0.6.3"
+parking_lot = "0.12.1"
+conquer-once = "0.4.0"
