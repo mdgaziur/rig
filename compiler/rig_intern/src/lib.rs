@@ -1,8 +1,9 @@
 use bimap::BiMap;
-use std::fmt::{Debug, Formatter};
-use std::sync::{OnceLock, RwLock};
+use conquer_once::OnceCell;
+use parking_lot::RwLock;
+use std::fmt::{Debug, Display, Formatter};
 
-pub static INTERNER: OnceLock<RwLock<Interner>> = OnceLock::new();
+pub static INTERNER: OnceCell<RwLock<Interner>> = OnceCell::uninit();
 
 #[derive(Debug)]
 pub struct Interner {
@@ -26,7 +27,7 @@ impl Interner {
         }
     }
 
-    fn get_interned_string(&self, is: InternedString) -> &str {
+    pub fn get_interned_string(&self, is: InternedString) -> &str {
         self.interned_strings.get_by_left(&is.0).unwrap()
     }
 }
@@ -37,7 +38,7 @@ impl Default for Interner {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct InternedString(usize);
 
 impl InternedString {
@@ -46,13 +47,12 @@ impl InternedString {
             .get()
             .unwrap()
             .read()
-            .unwrap()
             .get_interned_string(*self)
             .to_string()
     }
 }
 
-impl Debug for InternedString {
+impl Display for InternedString {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -61,10 +61,15 @@ impl Debug for InternedString {
                 .get()
                 .unwrap()
                 .read()
-                .unwrap()
                 .get_interned_string(*self)
-                .to_string(),
+                .to_string()
         )
+    }
+}
+
+impl Debug for InternedString {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        <Self as Display>::fmt(self, f)
     }
 }
 
@@ -77,7 +82,6 @@ macro_rules! intern {
                 .get()
                 .unwrap()
                 .write()
-                .unwrap()
                 .intern($s.to_string());
             interned
         }
