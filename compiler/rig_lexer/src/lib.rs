@@ -1,10 +1,8 @@
-use crate::token::{LexicalToken, NumberKind, TokenKind};
+use rig_ast::token::{LexicalToken, NumberKind, TokenKind};
 use rig_errors::{CodeError, ErrorCode};
 use rig_intern::{intern, InternedString, INTERNER};
 use rig_span::Span;
 use std::str::Chars;
-
-pub mod token;
 
 pub struct Lexer<'l> {
     file_content_iterator: Chars<'l>,

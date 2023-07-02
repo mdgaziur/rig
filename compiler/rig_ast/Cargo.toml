@@ -1,5 +1,5 @@
 [package]
-name = "rig_lexer"
+name = "rig_ast"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,5 +8,3 @@ edition = "2021"
 [dependencies]
 rig_span = { path = "../rig_span" }
 rig_intern = { path = "../rig_intern" }
-rig_errors = { path = "../rig_errors" }
-rig_ast = { path = "../rig_ast" }

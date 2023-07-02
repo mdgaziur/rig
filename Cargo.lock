@@ -96,6 +96,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rig_ast"
+version = "0.1.0"
+dependencies = [
+ "rig_intern",
+ "rig_span",
+]
+
+[[package]]
 name = "rig_driver"
 version = "0.1.0"
 dependencies = [
@@ -130,6 +138,7 @@ dependencies = [
 name = "rig_lexer"
 version = "0.1.0"
 dependencies = [
+ "rig_ast",
  "rig_errors",
  "rig_intern",
  "rig_span",
