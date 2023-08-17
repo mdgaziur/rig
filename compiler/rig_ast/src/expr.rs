@@ -119,7 +119,7 @@ pub struct StructExpr {
     /// Checked by compiler in semantic analysis step for whether
     /// the path points to a struct type or not. Generic types are passed
     /// in the path.
-    pub path: Expr,
+    pub path: Box<Expr>,
     pub values: Vec<StructExprProperty>,
 }
 
