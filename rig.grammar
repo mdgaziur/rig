@@ -9,29 +9,48 @@
 /// ! before * implies that rule must repeat at least once.
 /// <~ ~> describes something that can only be described with words :^).
 
-program: (decl | struct_impl | const_stmt | static_stmt)*;
-decl: "pub"? (struct_decl | fn_decl | mod_decl | trait_decl);
-statement: (expression ";") | struct_decl | struct_impl | mod_decl | use | for | loop | while | conditional | fn
+program: (decl | impl)*;
+decl: "pub"? (struct_decl | const_stmt | let_stmt | static_stmt | fn_decl | mod_decl | trait_decl);
+statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | conditional | fn_decl |
             let_stmt | const_stmt | trait_decl | type_alias;
 
+enum_decl: "enum" ident generic_params_without_trait_bound? "{"
+                (
+                    (ident("(" ty_path ")")?)
+                    | ident "{" ident ":" ty_path "}")
+                    | ident
+                )*[","]!
+            "}" ;
 struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path)*[","] "}";
-struct_impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ident "{" (const_stmt | fn_decl | type_alias)!* "}";
+impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ident "{" (const_stmt | fn_decl | type_alias)!* "}";
 
 fn_decl: fn_prototype body;
-fn_prototype: "fn" ident generic_params_with_trait_bound "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path)? ")"
+fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path)? ")"
                 "where" (ident ":" ty_path)*[","];
 fn_arg: (("anon" | "vararg") ident ":" ("mut" | "*")? ty_path);
 
-trait_decl: "trait" ident ("<" ty_path)? "{" (type_alias | fn_decl)* "}";
-let_stmt: "let" "mut" ident (":" ty_path)? ("=" expression)?;
-const_stmt: "const" ident (":" ty_path)? ("=" expression)?;
-static_stmt: "static" ident (":" ty_path)? ("=" expression)?;
+trait_decl: "trait" ident ("<" ty_path)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";
+let_stmt: "let" "mut"? ident (":" ty_path)? ("=" expression)?;
+const_stmt: "const" ident (":" ty_path) ("=" expression)?;
+static_stmt: "static" ident (":" ty_path) ("=" expression)?;
 type_alias: "type" ident generic_params_with_trait_bound ty_path;
 use: "use" ident*["::"] ("{" ident*[","] "}")?;
 mod_decl: "mod" ident ("{" program "}" | ";");
 for: "for" ident "in" expression body;
 while: "while" expression body;
 loop: "loop" body;
+/// FIXME: using a body shouldn't actually require a comma separator,
+///        but currently grammar says so due to the limitation of the
+///        imaginary grammar format I've come up with :^)
+match: "match" expression "{" (match_cond_and_fat_arrow (expression | body)*[,]! "}"
+match_cond_and_fat_arrow: match_cond "=>" ;
+match_cond: "_"
+            | true
+            | false
+            | (bin_number | oct_number | hex_number | dec_number)*["|"]!
+            | str*["|"]!
+            | ty_path "(" ident ")"
+            | ident "if" expression ;
 conditional: "if" expression body ("else" (conditional | body)?)?;
 
 body: "{" statement* expression? "}";
