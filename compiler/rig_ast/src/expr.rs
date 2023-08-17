@@ -22,6 +22,7 @@ pub enum ExprKind {
     MemberAccess(MemberAccessExpr),
     Index(IndexExpr),
     Assign(AssignExpr),
+    Struct(StructExpr),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -81,6 +82,8 @@ pub enum UnaryOp {
     BitwiseNot,
 }
 
+// FIXME: should type path be called PathExpr and be located inside
+//        expr.rs?
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathExpr {
     pub segments: Vec<PathSegment>,
@@ -90,7 +93,6 @@ pub struct PathExpr {
 pub enum PathSegment {
     Ident(PathIdentSegment),
     Generic(PathGenericSegment),
-    Enum(PathEnumSegment),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -112,21 +114,39 @@ pub struct GenericSegmentType {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct PathEnumSegment {
-    pub items: Vec<EnumSegmentItems>,
+pub struct StructExpr {
+    /// Guaranteed to be a PathExpr.
+    /// Checked by compiler in semantic analysis step for whether
+    /// the path points to a struct type or not. Generic types are passed
+    /// in the path.
+    pub path: Expr,
+    pub values: Vec<StructExprProperty>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct EnumSegmentItems {
-    pub ident: InternedString,
+pub struct StructExprProperty {
+    pub name: InternedString,
+    pub value: Expr,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnCallExpr {
     pub path: Box<Expr>,
-    pub args: Vec<Expr>,
+    pub args: Vec<FnCallArg>,
     pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FnCallArg {
+    pub ty: FnCallArgKind,
+    pub expr: Box<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum FnCallArgKind {
+    NotAnon(InternedString, Span),
+    Anon,
 }
 
 #[derive(Debug, Clone, PartialEq)]
