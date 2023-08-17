@@ -12,7 +12,7 @@ fn main() {
     INTERNER.init_once(|| RwLock::new(Interner::new()));
 
     let file_path = args().nth(1).unwrap();
-    let file_content = fs::read_to_string(&file_path).unwrap().replace("\t", "   ");
+    let file_content = fs::read_to_string(&file_path).unwrap().replace('\t', "   ");
     let mut session = Session::new();
     let mut lexer = Lexer::new(file_content.chars(), intern!(&file_path));
     let mut lexer_results = vec![];

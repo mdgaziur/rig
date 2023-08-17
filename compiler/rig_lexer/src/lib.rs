@@ -14,7 +14,7 @@ pub struct Lexer<'l> {
 impl<'l> Lexer<'l> {
     pub fn new(mut file_content_iterator: Chars<'l>, file_path: InternedString) -> Self {
         Self {
-            current: file_content_iterator.nth(0),
+            current: file_content_iterator.next(),
             file_content_iterator,
             file_path,
             pos: 0,
@@ -387,8 +387,8 @@ impl<'l> Lexer<'l> {
                             hints: vec![],
                             notes: vec![],
                         });
-                    } else if !lexer.current().is_digit(radix)
-                        && !(radix == 10 && lexer.current() != '.')
+                    } else if !(lexer.current().is_digit(radix)
+                        || radix == 10 && lexer.current() != '.')
                     {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
@@ -408,7 +408,7 @@ impl<'l> Lexer<'l> {
                             // NOTE: We keep eating dots in decimal numbers here. Decimal numbers
                             //       will get validated by the parser. This is done to make sure
                             //       that codes like "1.23.method()" don't get rejected.
-                            if !ch.is_digit(radix) && !(ch == '.' && radix == 10) {
+                            if !(ch.is_digit(radix) || ch == '.' && radix == 10) {
                                 break;
                             }
                         }
