@@ -46,12 +46,12 @@ struct Vector3 {
 
 fn main() {
     let input = dom::input::alert_input("Enter your name: ");
-    println!("Hello world, {}!", input);
-    println!("1 + 2 = {}", add(a: 1, b: 2));
+    println("Hello world, {}!", input);
+    println("1 + 2 = {}", add(a: 1, b: 2));
     
     let str_input = dom::input::alert_input("Enter a string: ");
     if str_input == str_input.rev() {
-        println!("palindrome");
+        println("palindrome");
     }
     
     let mut i = 0;
@@ -60,12 +60,12 @@ fn main() {
             break;
         }
         
-        println!("{}", i);
+        println("{}", i);
         i += 1;
     }
     
     for x in 0..10 {
-        println!("{}", x);
+        println("{}", x);
     }
 }
 ```
