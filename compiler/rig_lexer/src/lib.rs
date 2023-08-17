@@ -386,21 +386,22 @@ impl<'l> Lexer<'l> {
                             pos: Span::new(lexer.pos - 1, lexer.pos - 1, lexer.file_path),
                             hints: vec![],
                             notes: vec![],
-                        })
-                    } else if !lexer.current().is_digit(radix) && !(radix == 10 && lexer.current() != '.') {
+                        });
+                    } else if !lexer.current().is_digit(radix)
+                        && !(radix == 10 && lexer.current() != '.')
+                    {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
                             message: intern!("Expected a valid digit"),
                             pos: Span::new(lexer.pos, lexer.pos, lexer.file_path),
                             hints: vec![],
                             notes: vec![],
-                        })
+                        });
                     }
 
                     let mut number = String::new();
 
-                    while !lexer.is_eof()
-                    {
+                    while !lexer.is_eof() {
                         number.push(lexer.current());
 
                         if let Some(ch) = lexer.try_peek_next() {
@@ -470,7 +471,7 @@ impl<'l> Lexer<'l> {
                 while !self.is_eof() {
                     ident.push(self.current());
 
-                    if let Some(ch) =  self.try_peek_next() {
+                    if let Some(ch) = self.try_peek_next() {
                         if !ch.is_alphanumeric() && ch != '_' {
                             break;
                         }

@@ -93,7 +93,11 @@ fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
 
         let markers = format!(
             "{}{}",
-            " ".repeat(if line_num == starting_line { starting_line_offset } else { 0 }),
+            " ".repeat(if line_num == starting_line {
+                starting_line_offset
+            } else {
+                0
+            }),
             "^".repeat(marker_count)
         );
         eprintln!("{} {}", empty_bar.blue().bold(), markers.yellow().bold());

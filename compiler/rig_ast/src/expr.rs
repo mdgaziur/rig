@@ -1,6 +1,6 @@
+use crate::token::NumberKind;
 use rig_intern::InternedString;
 use rig_span::Span;
-use crate::token::NumberKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr {

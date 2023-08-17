@@ -2,14 +2,14 @@
 //       be seen here as type path. This is the way for now. might
 //       add another more specific way to represent type path for
 //       statements in future.
+use crate::expr::{Expr, PathExpr};
 use rig_intern::InternedString;
 use rig_span::Span;
-use crate::expr::{Expr, PathExpr};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stmt {
     kind: Box<StmtKind>,
-    span: Span
+    span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]

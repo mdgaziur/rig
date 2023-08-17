@@ -38,15 +38,15 @@ impl Span {
                     line_pos_offset = pos - line_start;
                     break_on_newline = true;
                 }
-                 if ch == '\n' {
-                     if break_on_newline {
-                         line_end = pos;
-                         break;
-                     } else {
-                         line_start = pos + 1;
-                         line += 1;
-                     }
-                 }
+                if ch == '\n' {
+                    if break_on_newline {
+                        line_end = pos;
+                        break;
+                    } else {
+                        line_start = pos + 1;
+                        line += 1;
+                    }
+                }
             }
 
             (line, line_pos_offset, line_start, line_end)
@@ -98,7 +98,8 @@ mod test {
             hi,
             lo,
             file_path: intern!(file_path),
-        }.get_snippet(&session)
+        }
+        .get_snippet(&session)
     }
 
     #[test]
