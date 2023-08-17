@@ -129,6 +129,8 @@ pub struct FnRet {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnArg {
     pub kind: FnArgKind,
+    pub mutable: Mutable,
+    pub moves: bool,
     pub name: InternedString,
     pub ty: PathExpr,
     pub span: Span,

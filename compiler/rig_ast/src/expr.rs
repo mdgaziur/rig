@@ -80,6 +80,7 @@ pub enum UnaryOp {
     Not,
     Neg,
     BitwiseNot,
+    Move,
 }
 
 // FIXME: should type path be called PathExpr and be located inside

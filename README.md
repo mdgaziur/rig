@@ -259,6 +259,10 @@ fn move_thing(s: *String) {}
 /// Referenced thing is dropped when no one holds any
 /// reference to passed value.
 fn ref_thing(s: String) {}
+
+let x = "somestuff";
+ref_thing(x);
+move_thing(*x);
 ```
 
 ### Module

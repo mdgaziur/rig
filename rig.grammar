@@ -70,7 +70,7 @@ bitwise_shift: term ((">>" | "<<") term)*;
 term: factor (("+" | "-") factor)*;
 factor: power (("*" | "/") power)*;
 power: unary ("**" unary)*;
-unary: ("!" | "-" | "~")? (unary | member_access);
+unary: ("!" | "-" | "~" | "*")? (unary | member_access);
 member_access: index ("." member_access)*;
 index: primary ("[" bin_number | hex_number | oct_number | dec_number "]")*;
 primary: ty_path | fn_call | hex_number | oct_number | bin_number | dec_number | true | false | str | array_literal;
