@@ -25,7 +25,7 @@ impl Session {
         let mut interner = INTERNER.get().unwrap().write();
 
         let file_name_interned = interner.intern(file_path.to_string());
-        let file_content_interned = interner.intern(file_content.to_string());
+        let file_content_interned = interner.intern(file_content.to_string().replace("\t", "    "));
         self.processed_files
             .insert(file_name_interned, file_content_interned);
 
