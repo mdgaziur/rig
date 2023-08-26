@@ -95,7 +95,7 @@ function::<i32>(123) ** 2 / PI
 ### Variables
 
 ```rust
-// immutble variable
+// immutable variable
 let x = 1;
 
 // mutable variable
@@ -116,6 +116,14 @@ fn function1() {
 }
 
 fn function_with_anon_arg(anon arg: i32) {
+    // body
+}
+
+fn function_with_mutable_anon_arg(anon arg: mut i32) {
+    // body
+}
+
+fn function_with_mutable_arg(arg: mut i32) {
     // body
 }
 
@@ -247,7 +255,7 @@ impl AmericanMeasurable for i32 {
 }
 ```
 
-### Ownership
+### Moving
 
 ```rust
 /// Moving a thing means caller is no longer allowed
@@ -255,14 +263,13 @@ impl AmericanMeasurable for i32 {
 /// function.
 fn move_thing(s: *String) {}
 
-/// Basically sends a reference to whatever being passed.
-/// Referenced thing is dropped when no one holds any
-/// reference to passed value.
+/// Allows you to reuse the data after this function
+/// returns.
 fn ref_thing(s: String) {}
 
 let x = "somestuff";
 ref_thing(x);
-move_thing(*x);
+move_thing(x); // Moving is implicit
 ```
 
 ### Module
