@@ -1,18 +1,27 @@
+use clap::Parser as ClapParser;
 use parking_lot::lock_api::RwLock;
-
 use rig_intern::{intern, Interner, INTERNER};
-
 use rig_lexer::Lexer;
 use rig_session::Session;
-
 use rig_parser::Parser;
-use std::env::args;
 use std::fs;
+
+#[derive(ClapParser)]
+struct Args {
+    /// Path to source file
+    source: String,
+
+    #[arg(long)]
+    /// Enables debug outputs
+    debug: bool,
+}
 
 fn main() {
     INTERNER.init_once(|| RwLock::new(Interner::new()));
 
-    let file_path = args().nth(1).unwrap();
+    let args = Args::parse();
+
+    let file_path = &args.source;
     let file_content = fs::read_to_string(&file_path).unwrap();
     let mut session = Session::new();
     session.insert_file(&file_path, file_content);
@@ -36,7 +45,10 @@ fn main() {
         diag.display(&session);
     }
 
-    if Vec::from_iter(args()).contains(&"--display_ast".to_string()) {
-        dbg!(ast);
+    if args.debug {
+        eprintln!("\x1b[033m\x1b[1m[Start Debug]\n\
+        File: {}:{}:{}\n\
+        Generated AST from source file `{file_path}`:", file!(), line!(), column!());
+        eprintln!("{:#?}\n[End Debug]\x1b[0m", ast);
     }
 }

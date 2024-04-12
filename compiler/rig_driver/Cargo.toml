@@ -13,3 +13,4 @@ rig_session = { path = "../rig_session" }
 rig_errors = { path = "../rig_errors" }
 rig_span = { path = "../rig_span" }
 parking_lot = "0.12.1"
+clap = { version = "4.5.4", features = ["derive"] }
