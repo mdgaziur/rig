@@ -395,7 +395,7 @@ impl<'l> Lexer<'l> {
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
             ch if ch.is_ascii_digit() => {
-                fn collect_digits(lexer: &mut Lexer, radix: u32) -> Result<String, CodeError> {
+                fn collect_digits(lexer: &mut Lexer, radix: u32) -> Result<(String, usize), CodeError> {
                     if lexer.is_eof() {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
@@ -416,10 +416,12 @@ impl<'l> Lexer<'l> {
                         });
                     }
 
+                    let mut end_pos = lexer.pos;
                     let mut number = String::new();
 
                     while !lexer.is_eof() {
                         number.push(lexer.current());
+                        end_pos = lexer.pos;
 
                         if let Some(ch) = lexer.try_peek_next() {
                             // NOTE: We keep eating dots in decimal numbers here. Decimal numbers
@@ -433,14 +435,15 @@ impl<'l> Lexer<'l> {
                         lexer.advance();
                     }
 
-                    Ok(number)
+                    Ok((number, end_pos))
                 }
                 let start_pos = self.pos;
                 let number_kind;
                 let number;
+                let end_pos;
 
                 if ch == '0' {
-                    number = match self.try_peek_next() {
+                    (number, end_pos) = match self.try_peek_next() {
                         Some('x') => {
                             self.advance();
                             self.advance();
@@ -465,12 +468,12 @@ impl<'l> Lexer<'l> {
                         }
                         _ => {
                             number_kind = NumberKind::Dec;
-                            String::from("0")
+                            (String::from("0"), self.pos)
                         }
                     };
                 } else {
                     number_kind = NumberKind::Dec;
-                    number = collect_digits(self, 10)?;
+                    (number, end_pos) = collect_digits(self, 10)?;
                 }
 
                 Ok(LexicalToken {
@@ -478,15 +481,17 @@ impl<'l> Lexer<'l> {
                         number: intern!(number),
                         kind: number_kind,
                     },
-                    span: Span::new(start_pos, self.pos, self.file_path),
+                    span: Span::new(start_pos, end_pos, self.file_path),
                     raw: intern!(number),
                 })
             }
             ch if ch.is_alphabetic() || ch == '_' => {
                 let start_pos = self.pos;
+                let mut end_pos = start_pos;
                 let mut ident = String::new();
                 while !self.is_eof() {
                     ident.push(self.current());
+                    end_pos = self.pos;
 
                     if let Some(ch) = self.try_peek_next() {
                         if !ch.is_alphanumeric() && ch != '_' {
@@ -528,7 +533,7 @@ impl<'l> Lexer<'l> {
 
                 Ok(LexicalToken {
                     kind,
-                    span: Span::new(start_pos, self.pos, self.file_path),
+                    span: Span::new(start_pos, end_pos, self.file_path),
                     raw: intern!(ident),
                 })
             }
