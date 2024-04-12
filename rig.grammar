@@ -10,7 +10,7 @@
 /// <~ ~> describes something that can only be described with words :^).
 
 program: (decl | impl)*;
-decl: "pub"? (struct_decl | const_stmt | let_stmt | static_stmt | fn_decl | mod_decl | trait_decl);
+decl: "pub"? (struct_decl | enum_decl | const_stmt | let_stmt | static_stmt | fn_decl | mod_decl | trait_decl);
 statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | conditional | fn_decl |
             let_stmt | const_stmt | trait_decl | type_alias;
 
@@ -22,7 +22,7 @@ enum_decl: "enum" ident generic_params_without_trait_bound? "{"
                 )*[","]!
             "}" ;
 struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path)*[","] "}";
-impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ident "{" (const_stmt | fn_decl | type_alias)!* "}";
+impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ty_path "{" (const_stmt | fn_decl | type_alias)!* "}";
 
 fn_decl: fn_prototype body;
 fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path)? ")"
@@ -73,9 +73,9 @@ power: unary ("**" unary)*;
 unary: ("!" | "-" | "~")? (unary | member_access);
 member_access: index ("." member_access)*;
 index: primary ("[" bin_number | hex_number | oct_number | dec_number "]")*;
-primary: ty_path | fn_call | hex_number | oct_number | bin_number | dec_number | true | false | str | array_literal;
+fn_call: primary "(" ((ident ":")? expression)*[","] ")";
+primary: "(" expression ")" | ty_path | array_literal | hex_number | oct_number | bin_number | dec_number | true | false | str;
 array_literal: "[" expression*[","] "]";
-fn_call: expr "(" ((ident ":")? expression)*[","] ")";
 ty_path: ident*["::"] ("::" generic_params_without_trait_bound);
 ident: UTF8_ALPHABET<>("_" | "$" | UTF8_ALPHANUM)<>*;
 bin_number: "0b"<>("0" | "1")<>!*;

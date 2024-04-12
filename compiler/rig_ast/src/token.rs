@@ -31,6 +31,7 @@ pub enum TokenKind {
     // Keywords
     Pub,
     Struct,
+    Enum,
     Fn,
     Trait,
     Mut,

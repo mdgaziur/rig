@@ -1,15 +1,18 @@
 [package]
-name = "rig_driver"
+name = "rig_parser"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rig_intern = { path = "../rig_intern" }
-rig_lexer = { path = "../rig_lexer" }
-rig_parser = { path = "../rig_parser" }
-rig_session = { path = "../rig_session" }
+rig_ast = { path = "../rig_ast" }
 rig_errors = { path = "../rig_errors" }
 rig_span = { path = "../rig_span" }
+rig_intern = { path = "../rig_intern" }
+
+[dev-dependencies]
+rig_lexer = { path = '../rig_lexer' }
 parking_lot = "0.12.1"
+rig_session = { path = '../rig_session' }
+

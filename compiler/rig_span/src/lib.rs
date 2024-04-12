@@ -13,6 +13,14 @@ impl Span {
         Self { lo, hi, file_path }
     }
 
+    pub fn merge(self, rhs: Span) -> Self {
+        Self {
+            lo: self.lo,
+            hi: rhs.hi,
+            file_path: self.file_path,
+        }
+    }
+
     pub fn contains(&self, rhs: Span) -> bool {
         self.lo <= rhs.lo && self.hi >= rhs.hi
     }

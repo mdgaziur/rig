@@ -1,3 +1,4 @@
+use crate::path::TyPath;
 use crate::token::NumberKind;
 use rig_intern::InternedString;
 use rig_span::Span;
@@ -6,6 +7,12 @@ use rig_span::Span;
 pub struct Expr {
     pub kind: ExprKind,
     pub span: Span,
+}
+
+impl Expr {
+    pub fn new(kind: ExprKind, span: Span) -> Self {
+        Self { kind, span }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +24,6 @@ pub enum ExprKind {
     Bin(BinExpr),
     Logical(LogicalExpr),
     Unary(UnaryExpr),
-    Path(PathExpr),
     FnCall(FnCallExpr),
     MemberAccess(MemberAccessExpr),
     Index(IndexExpr),
@@ -82,44 +88,9 @@ pub enum UnaryOp {
     BitwiseNot,
 }
 
-// FIXME: should type path be called PathExpr and be located inside
-//        expr.rs?
-#[derive(Debug, Clone, PartialEq)]
-pub struct PathExpr {
-    pub segments: Vec<PathSegment>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum PathSegment {
-    Ident(PathIdentSegment),
-    Generic(PathGenericSegment),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct PathIdentSegment {
-    pub ident: InternedString,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct PathGenericSegment {
-    pub tys: Vec<GenericSegmentType>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct GenericSegmentType {
-    pub ident: InternedString,
-    pub trait_bound: Option<Expr>,
-    pub span: Span,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructExpr {
-    /// Guaranteed to be a PathExpr.
-    /// Checked by compiler in semantic analysis step for whether
-    /// the path points to a struct type or not. Generic types are passed
-    /// in the path.
-    pub path: Box<Expr>,
+    pub path: TyPath,
     pub values: Vec<StructExprProperty>,
 }
 
@@ -132,7 +103,7 @@ pub struct StructExprProperty {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnCallExpr {
-    pub path: Box<Expr>,
+    pub path: TyPath,
     pub args: Vec<FnCallArg>,
     pub span: Span,
 }
@@ -151,6 +122,7 @@ pub enum FnCallArgKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemberAccessExpr {
+    pub expr: Box<Expr>,
     pub segments: Vec<MemberAccessSegment>,
 }
 

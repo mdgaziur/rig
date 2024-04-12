@@ -1,8 +1,9 @@
 use owo_colors::OwoColorize;
-use rig_intern::InternedString;
+use rig_intern::{intern, InternedString, INTERNER};
 use rig_session::Session;
 use rig_span::{FullLineSnippet, Span};
 use std::env::args;
+use std::fmt::Display;
 
 pub enum CompilerError {
     ErrorsInCode(Vec<CodeError>),
@@ -19,6 +20,39 @@ pub struct CodeError {
 }
 
 impl CodeError {
+    pub fn without_notes_and_hint(message: &str, pos: Span, error_code: ErrorCode) -> Self {
+        Self {
+            message: intern!(message),
+            pos,
+            error_code,
+            notes: vec![],
+            hints: vec![],
+        }
+    }
+
+    pub fn unexpected_token(pos: Span) -> Self {
+        Self {
+            error_code: ErrorCode::SyntaxError,
+            message: intern!("unexpected token"),
+            pos,
+            notes: vec![],
+            hints: vec![],
+        }
+    }
+
+    pub fn unexpected_token_with_hint(pos: Span, hint: impl ToString) -> Self {
+        Self {
+            error_code: ErrorCode::SyntaxError,
+            message: intern!("unexpected token"),
+            pos,
+            notes: vec![],
+            hints: vec![Diagnostic {
+                message: intern!(hint),
+                pos,
+            }],
+        }
+    }
+
     pub fn display(&self, session: &Session) {
         display_diag(
             session,
@@ -62,7 +96,7 @@ fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
     let snippet_lines = snippet.trim_end().split('\n').collect::<Vec<&str>>();
     let min_padding_before_bar = ending_line.to_string().len();
 
-    eprintln!("{}: {}", kind.to_string(), message.bold());
+    eprintln!("{}: {}", kind, message.bold());
     eprintln!(
         "{}{} {}:{}:{}",
         " ".repeat(min_padding_before_bar),
@@ -141,13 +175,14 @@ enum DiagKind {
     Hint,
 }
 
-impl ToString for DiagKind {
-    fn to_string(&self) -> String {
-        match self {
+impl Display for DiagKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
             DiagKind::Error(code) => format!("error[{code}]").red().bold().to_string(),
             DiagKind::Warning => "warning".yellow().bold().to_string(),
             DiagKind::Note => "note".blue().bold().to_string(),
             DiagKind::Hint => "hint".green().bold().to_string(),
-        }
+        };
+        write!(f, "{}", str)
     }
 }

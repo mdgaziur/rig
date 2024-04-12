@@ -111,6 +111,7 @@ dependencies = [
  "rig_errors",
  "rig_intern",
  "rig_lexer",
+ "rig_parser",
  "rig_session",
  "rig_span",
 ]
@@ -141,6 +142,19 @@ dependencies = [
  "rig_ast",
  "rig_errors",
  "rig_intern",
+ "rig_span",
+]
+
+[[package]]
+name = "rig_parser"
+version = "0.1.0"
+dependencies = [
+ "parking_lot",
+ "rig_ast",
+ "rig_errors",
+ "rig_intern",
+ "rig_lexer",
+ "rig_session",
  "rig_span",
 ]
 

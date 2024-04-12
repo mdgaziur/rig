@@ -21,11 +21,28 @@ impl<'l> Lexer<'l> {
         }
     }
 
+    pub fn lex(&mut self) -> Vec<Result<LexicalToken, CodeError>> {
+        let mut lexer_results = vec![];
+        while !self.is_eof() {
+            lexer_results.push(self.lex_once());
+            self.advance();
+        }
+        lexer_results.push(self.lex_once());
+
+        lexer_results
+    }
+
     // Does lexical analysis on the next character(s)
     // Caller must ensure that the lexer hasn't reached the end of
     // file
     pub fn lex_once(&mut self) -> Result<LexicalToken, CodeError> {
-        assert!(!self.is_eof());
+        if self.is_eof() {
+            return Ok(LexicalToken {
+                kind: TokenKind::Eof,
+                raw: intern!("<EOF>"),
+                span: Span::new(self.pos, self.pos, self.file_path),
+            });
+        }
 
         match self.current() {
             '(' => Ok(LexicalToken {
@@ -243,7 +260,7 @@ impl<'l> Lexer<'l> {
                     if depth != 0 && self.is_eof() {
                         Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
-                            message: intern!("Unterminated multiline comment"),
+                            message: intern!("unterminated multiline comment"),
                             pos: Span::new(self.pos, self.pos, self.file_path),
                             hints: vec![],
                             notes: vec![],
@@ -382,7 +399,7 @@ impl<'l> Lexer<'l> {
                     if lexer.is_eof() {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
-                            message: intern!("Expected a valid digit after this"),
+                            message: intern!("expected a valid digit after this"),
                             pos: Span::new(lexer.pos - 1, lexer.pos - 1, lexer.file_path),
                             hints: vec![],
                             notes: vec![],
@@ -392,7 +409,7 @@ impl<'l> Lexer<'l> {
                     {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
-                            message: intern!("Expected a valid digit"),
+                            message: intern!("expected a valid digit"),
                             pos: Span::new(lexer.pos, lexer.pos, lexer.file_path),
                             hints: vec![],
                             notes: vec![],
@@ -486,6 +503,7 @@ impl<'l> Lexer<'l> {
                     "fn" => TokenKind::Fn,
                     "pub" => TokenKind::Pub,
                     "struct" => TokenKind::Struct,
+                    "enum" => TokenKind::Enum,
                     "trait" => TokenKind::Trait,
                     "mut" => TokenKind::Mut,
                     "const" => TokenKind::Const,
@@ -539,7 +557,7 @@ impl<'l> Lexer<'l> {
                 if self.is_eof() {
                     Err(CodeError {
                         error_code: ErrorCode::SyntaxError,
-                        message: intern!("Unterminated string literal"),
+                        message: intern!("unterminated string literal"),
                         pos: Span::new(start_pos, self.pos - 1, self.file_path),
                         hints: vec![],
                         notes: vec![],
@@ -554,7 +572,7 @@ impl<'l> Lexer<'l> {
             }
             _ => Err(CodeError {
                 error_code: ErrorCode::SyntaxError,
-                message: intern!(format!("Unknown character: \"{}\"", self.current())),
+                message: intern!(format!("unknown character: \"{}\"", self.current())),
                 pos: Span::new(self.pos, self.pos, self.file_path),
                 hints: vec![],
                 notes: vec![],

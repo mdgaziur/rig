@@ -2,14 +2,15 @@
 //       be seen here as type path. This is the way for now. might
 //       add another more specific way to represent type path for
 //       statements in future.
-use crate::expr::{Expr, PathExpr};
+use crate::expr::Expr;
+use crate::path::{PathGenericSegment, TyPath};
 use rig_intern::InternedString;
 use rig_span::Span;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stmt {
-    kind: Box<StmtKind>,
-    span: Span,
+    pub kind: Box<StmtKind>,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -42,7 +43,7 @@ pub struct BodyStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumStmt {
     pub name: InternedString,
-    pub generic_params: Vec<GenericParam>,
+    pub generic_params: PathGenericSegment,
     pub variants: Vec<EnumVariant>,
     pub pub_: Pub,
 }
@@ -63,7 +64,7 @@ pub struct EnumVariantWithNoValue {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariantWithValue {
     pub name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub span: Span,
 }
 
@@ -77,29 +78,23 @@ pub struct EnumVariantStructLike {
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructStmt {
     pub name: InternedString,
-    pub generic_params: Vec<GenericParam>,
+    pub generic_params: PathGenericSegment,
     pub properties: Vec<EnumVariantOrStructProperty>,
     pub pub_: Pub,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct GenericParam {
-    pub name: InternedString,
-    pub trait_bound: Option<PathExpr>,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariantOrStructProperty {
     pub name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ImplStmt {
-    pub generic_params: Vec<GenericParam>,
-    pub impl_for: InternedString,
+    pub generic_params: Option<PathGenericSegment>,
+    pub trait_bound: Option<TyPath>,
+    pub impl_for: TyPath,
     pub items: Vec<Stmt>,
 }
 
@@ -113,7 +108,7 @@ pub struct FnStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnPrototype {
     pub name: InternedString,
-    pub generic_params: Vec<GenericParam>,
+    pub generic_params: PathGenericSegment,
     pub takes_self: bool,
     pub args: Vec<FnArg>,
     pub ret_ty: Option<FnRet>,
@@ -122,7 +117,7 @@ pub struct FnPrototype {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnRet {
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub span: Span,
 }
 
@@ -132,7 +127,7 @@ pub struct FnArg {
     pub mutable: Mutable,
     pub moves: bool,
     pub name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub span: Span,
 }
 
@@ -146,7 +141,7 @@ pub enum FnArgKind {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TyAliasStmt {
     pub alias_name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub pub_: Pub,
 }
 
@@ -160,8 +155,8 @@ pub struct ModStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitStmt {
     pub name: InternedString,
-    pub inherits_from: Option<PathExpr>,
-    pub generic_params: Vec<GenericParam>,
+    pub inherits_from: Option<Expr>,
+    pub generic_params: PathGenericSegment,
     pub body: Vec<Stmt>,
     pub pub_: Pub,
 }
@@ -219,7 +214,7 @@ pub enum MatchArmCond {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchArmEnumVariant {
-    pub path: PathExpr,
+    pub path: Expr,
     pub value: Expr,
     pub span: Span,
 }
@@ -234,7 +229,7 @@ pub struct MatchArmBindIf {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConstStmt {
     pub name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub expr: Expr,
     pub pub_: Pub,
 }
@@ -242,7 +237,7 @@ pub struct ConstStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct StaticStmt {
     pub name: InternedString,
-    pub ty: PathExpr,
+    pub ty: TyPath,
     pub expr: Expr,
     pub pub_: Pub,
 }
@@ -251,15 +246,24 @@ pub struct StaticStmt {
 pub struct LetStmt {
     pub mutable: Mutable,
     pub name: InternedString,
-    pub ty: Option<PathExpr>,
-    pub expr: Expr,
-    pub pub_: Pub,
+    pub ty: Option<TyPath>,
+    pub expr: Option<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Mutable {
     Yes,
     No,
+}
+
+impl From<bool> for Mutable {
+    fn from(value: bool) -> Self {
+        if value {
+            Mutable::Yes
+        } else {
+            Mutable::No
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
