@@ -68,5 +68,19 @@ fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
 }
 
 fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    todo!()
+    if is_pub {
+        parser.advance_without_eof()?;
+    }
+
+    match parser.peek().kind {
+        TokenKind::Struct => todo!(),
+        TokenKind::Enum => todo!(),
+        TokenKind::Const => todo!(),
+        TokenKind::Let => todo!(),
+        TokenKind::Static => todo!(),
+        TokenKind::Fn => todo!(),
+        TokenKind::Mod => todo!(),
+        TokenKind::Trait => todo!(),
+        _ => Err(CodeError::unexpected_token(parser.current_span()))
+    }
 }
