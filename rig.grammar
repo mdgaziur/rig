@@ -16,24 +16,25 @@ statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | 
 
 enum_decl: "enum" ident generic_params_without_trait_bound? "{"
                 (
-                    (ident("(" ty_path ")")?)
-                    | ident "{" ident ":" ty_path "}")
+                    (ident("(" ty_path_non_expr ")")?)
+                    | ident "{" ident ":" ty_path_non_expr "}")
                     | ident
                 )*[","]!
             "}" ;
-struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path)*[","] "}";
-impl: "impl" generic_params_with_trait_bound? (ty_path "for")? ty_path "{" (const_stmt | fn_decl | type_alias)!* "}";
+struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path_non_expr)*[","] "}";
+impl: "impl" generic_params_with_trait_bound? (ty_path_non_expr "for")? ty_path "{" (const_stmt | fn_decl | type_alias)!* "}";
 
 fn_decl: fn_prototype body;
-fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path)? ")"
-                "where" (ident ":" ty_path)*[","];
-fn_arg: (("anon" | "vararg") ident ":" ("mut" | "*")? ty_path);
+fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path_non_expr)? ")"
+                "where" (ident ":" ty_path_non_expr)*[","];
+fn_arg: (("anon" | "vararg") ident ":" ("mut" | "*")? ty_path_non_expr);
+ty_path_non_expr: ident*["::"] ("::"? generic_params_without_trait_bound);
 
-trait_decl: "trait" ident ("<" ty_path)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";
-let_stmt: "let" "mut"? ident (":" ty_path)? ("=" expression)?;
-const_stmt: "const" ident (":" ty_path) ("=" expression)?;
-static_stmt: "static" ident (":" ty_path) ("=" expression)?;
-type_alias: "type" ident generic_params_with_trait_bound ty_path;
+trait_decl: "trait" ident ("<" ty_path_non_expr)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";
+let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)?;
+const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)?;
+static_stmt: "static" ident (":" ty_path_non_expr) ("=" expression)?;
+type_alias: "type" ident generic_params_with_trait_bound ty_path_non_expr;
 use: "use" ident*["::"] ("{" ident*[","] "}")?;
 mod_decl: "mod" ident ("{" program "}" | ";");
 for: "for" ident "in" expression body;

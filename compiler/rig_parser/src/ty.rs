@@ -23,31 +23,42 @@ use rig_ast::path::{
 use rig_ast::token::TokenKind;
 use rig_errors::CodeError;
 
-pub fn parse_ty_path(parser: &mut Parser) -> Result<TyPath, CodeError> {
-    let mut segments = vec![{
-        let (ident, span) = parser.expect_ident()?;
-        PathSegment::Ident(PathIdentSegment { ident, span })
-    }];
-    parser.advance();
+pub fn parse_ty_path(parser: &mut Parser, in_expr: bool) -> Result<TyPath, CodeError> {
+    let mut segments = vec![];
 
-    while let Some(tok) = parser.try_peek()
-        && tok.kind == TokenKind::PathSep
-    {
-        parser.advance_without_eof()?;
-        let current = parser.peek();
-        if let TokenKind::Ident(ident) = current.kind {
-            segments.push(PathSegment::Ident(PathIdentSegment {
-                ident,
-                span: parser.current_span(),
-            }));
-            parser.advance();
-        } else if let TokenKind::Less = current.kind {
-            segments.push(PathSegment::Generic(parse_generic_params(parser, false)?));
-            break;
+    loop {
+        match parser.peek().kind {
+            TokenKind::Ident(ident) => {
+                segments.push(PathSegment::Ident(PathIdentSegment {
+                    ident,
+                    span: parser.current_span(),
+                }));
+                parser.advance();
+            }
+            TokenKind::Less => segments.push(PathSegment::Generic(parse_generic_params(
+                parser, !in_expr,
+            )?)),
+            _ => {
+                return Err(CodeError::unexpected_token_with_hint(
+                    parser.current_span(),
+                    "expected an identifier or a list of generic parameters here",
+                ))
+            }
+        }
+
+        if !parser.is_eof() {
+            match parser.peek().kind {
+                TokenKind::PathSep => parser.advance_without_eof()?,
+                TokenKind::Less if !in_expr => {}
+                _ => {
+                    break;
+                }
+            }
         } else {
             break;
         }
     }
+
     Ok(TyPath { segments })
 }
 
@@ -70,7 +81,7 @@ pub fn parse_generic_params(
                 parser.advance_without_eof()?;
 
                 if let TokenKind::Ident(_) = parser.peek().kind {
-                    trait_bound = Some(parse_ty_path(parser)?);
+                    trait_bound = Some(parse_ty_path(parser, false)?);
                 } else {
                     trait_bound = None;
                 }
@@ -146,7 +157,7 @@ mod test {
             .collect::<Vec<LexicalToken>>();
         let mut parser = Parser::new(file_name, &tokens);
         assert_eq!(
-            parse_ty_path(&mut parser).unwrap(),
+            parse_ty_path(&mut parser, true).unwrap(),
             TyPath {
                 segments: vec![
                     PathSegment::Ident(PathIdentSegment {
@@ -211,6 +222,85 @@ mod test {
                 ],
             }
         )
+    }
+    #[test]
+    fn test_ident_path_not_in_expr() {
+        INTERNER.init_once(|| RwLock::new(Interner::new()));
+        let file_name = intern!("<test>");
+        let source = "s1::s2::s3::s4<T1, T2>";
+        let mut lexer = Lexer::new(source.chars(), file_name);
+        let tokens = lexer
+            .lex()
+            .iter()
+            .map(|v| v.clone().unwrap())
+            .collect::<Vec<LexicalToken>>();
+        let mut parser = Parser::new(file_name, &tokens);
+        assert_eq!(
+            parse_ty_path(&mut parser, false).unwrap(),
+            TyPath {
+                segments: vec![
+                    PathSegment::Ident(PathIdentSegment {
+                        ident: intern!("s1"),
+                        span: Span {
+                            lo: 0,
+                            hi: 1,
+                            file_path: intern!("<test>"),
+                        },
+                    },),
+                    PathSegment::Ident(PathIdentSegment {
+                        ident: intern!("s2"),
+                        span: Span {
+                            lo: 4,
+                            hi: 5,
+                            file_path: intern!("<test>"),
+                        },
+                    },),
+                    PathSegment::Ident(PathIdentSegment {
+                        ident: intern!("s3"),
+                        span: Span {
+                            lo: 8,
+                            hi: 9,
+                            file_path: intern!("<test>"),
+                        },
+                    },),
+                    PathSegment::Ident(PathIdentSegment {
+                        ident: intern!("s4"),
+                        span: Span {
+                            lo: 12,
+                            hi: 13,
+                            file_path: intern!("<test>"),
+                        },
+                    },),
+                    PathSegment::Generic(PathGenericSegment {
+                        generic_params: vec![
+                            GenericSegmentType {
+                                ident: intern!("T1"),
+                                trait_bound: None,
+                                span: Span {
+                                    lo: 15,
+                                    hi: 16,
+                                    file_path: intern!("<test>"),
+                                },
+                            },
+                            GenericSegmentType {
+                                ident: intern!("T2"),
+                                trait_bound: None,
+                                span: Span {
+                                    lo: 19,
+                                    hi: 20,
+                                    file_path: intern!("<test>"),
+                                },
+                            },
+                        ],
+                        span: Span {
+                            lo: 14,
+                            hi: 21,
+                            file_path: intern!("<test>"),
+                        },
+                    },),
+                ],
+            }
+        );
     }
 
     #[test]

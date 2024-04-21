@@ -41,14 +41,14 @@ fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
     };
 
     let trait_bound = if let TokenKind::Ident(_) = parser.peek().kind {
-        let res = Some(parse_ty_path(parser)?);
+        let res = Some(parse_ty_path(parser, false)?);
         parser.expect_recoverable(TokenKind::For, "for");
         res
     } else {
         None
     };
 
-    let impl_for = parse_ty_path(parser)?;
+    let impl_for = parse_ty_path(parser, false)?;
 
     parser.expect_recoverable(TokenKind::LBrace, "{");
 
@@ -81,6 +81,6 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Fn => todo!(),
         TokenKind::Mod => todo!(),
         TokenKind::Trait => todo!(),
-        _ => Err(CodeError::unexpected_token(parser.current_span()))
+        _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
 }

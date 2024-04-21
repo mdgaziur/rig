@@ -2,8 +2,8 @@ use clap::Parser as ClapParser;
 use parking_lot::lock_api::RwLock;
 use rig_intern::{intern, Interner, INTERNER};
 use rig_lexer::Lexer;
-use rig_session::Session;
 use rig_parser::Parser;
+use rig_session::Session;
 use std::fs;
 
 #[derive(ClapParser)]
@@ -46,9 +46,14 @@ fn main() {
     }
 
     if args.debug {
-        eprintln!("\x1b[033m\x1b[1m[Start Debug]\n\
+        eprintln!(
+            "\x1b[033m\x1b[1m[Start Debug]\n\
         File: {}:{}:{}\n\
-        Generated AST from source file `{file_path}`:", file!(), line!(), column!());
+        Generated AST from source file `{file_path}`:",
+            file!(),
+            line!(),
+            column!()
+        );
         eprintln!("{:#?}\n[End Debug]\x1b[0m", ast);
     }
 }
