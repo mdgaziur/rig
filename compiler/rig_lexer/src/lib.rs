@@ -123,39 +123,11 @@ impl<'l> Lexer<'l> {
                     span: Span::new(self.pos, self.pos, self.file_path),
                 }),
             },
-            '>' => match self.try_peek_next() {
-                Some('>') => {
-                    self.advance();
-                    match self.try_peek_next() {
-                        Some('=') => {
-                            self.advance();
-                            Ok(LexicalToken {
-                                kind: TokenKind::RShiftEq,
-                                raw: intern!(">>="),
-                                span: Span::new(self.pos - 2, self.pos, self.file_path),
-                            })
-                        }
-                        _ => Ok(LexicalToken {
-                            kind: TokenKind::RShift,
-                            raw: intern!(">>"),
-                            span: Span::new(self.pos - 1, self.pos, self.file_path),
-                        }),
-                    }
-                }
-                Some('=') => {
-                    self.advance();
-                    Ok(LexicalToken {
-                        kind: TokenKind::GreaterEq,
-                        raw: intern!(">="),
-                        span: Span::new(self.pos - 1, self.pos, self.file_path),
-                    })
-                }
-                _ => Ok(LexicalToken {
-                    kind: TokenKind::Greater,
-                    raw: intern!(self.current()),
-                    span: Span::new(self.pos, self.pos, self.file_path),
-                }),
-            },
+            '>' => Ok(LexicalToken {
+                kind: TokenKind::Greater,
+                raw: intern!(self.current()),
+                span: Span::new(self.pos, self.pos, self.file_path),
+            }),
             '+' => match self.try_peek_next() {
                 Some('=') => {
                     self.advance();
@@ -395,7 +367,10 @@ impl<'l> Lexer<'l> {
                 span: Span::new(self.pos, self.pos, self.file_path),
             }),
             ch if ch.is_ascii_digit() => {
-                fn collect_digits(lexer: &mut Lexer, radix: u32) -> Result<(String, usize), CodeError> {
+                fn collect_digits(
+                    lexer: &mut Lexer,
+                    radix: u32,
+                ) -> Result<(String, usize), CodeError> {
                     if lexer.is_eof() {
                         return Err(CodeError {
                             error_code: ErrorCode::SyntaxError,
