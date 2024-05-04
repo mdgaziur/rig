@@ -2,12 +2,12 @@ use owo_colors::OwoColorize;
 use rig_intern::{intern, InternedString, INTERNER};
 use rig_session::Session;
 use rig_span::{FullLineSnippet, Span};
+
 use std::env::args;
 use std::fmt::Display;
 
-pub enum CompilerError {
-    ErrorsInCode(Vec<CodeError>),
-    OtherError(InternedString),
+pub fn display_compiler_error(message: impl ToString + std::fmt::Display) {
+    eprintln!("{}", message.red());
 }
 
 #[derive(Debug, Clone)]
@@ -50,6 +50,16 @@ impl CodeError {
                 message: intern!(hint),
                 pos,
             }],
+        }
+    }
+
+    pub fn warning(message: impl ToString, pos: Span) -> Self {
+        Self {
+            error_code: ErrorCode::Warning,
+            message: intern!(message),
+            pos,
+            notes: vec![],
+            hints: vec![],
         }
     }
 

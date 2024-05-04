@@ -16,9 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
-use rig_ast::stmt::{ImplStmt, Stmt, StmtKind};
+use rig_ast::stmt::{ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind};
 use rig_ast::token::TokenKind;
 use rig_errors::CodeError;
 
@@ -76,11 +77,57 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Struct => todo!(),
         TokenKind::Enum => todo!(),
         TokenKind::Const => todo!(),
-        TokenKind::Let => todo!(),
+        TokenKind::Let => parse_let_stmt(parser, is_pub),
         TokenKind::Static => todo!(),
         TokenKind::Fn => todo!(),
         TokenKind::Mod => todo!(),
         TokenKind::Trait => todo!(),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+fn parse_let_stmt(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = if is_pub {
+        parser.previous().span
+    } else {
+        parser.peek().span
+    };
+
+    parser.advance_without_eof()?;
+
+    let mutable = if parser.peek().kind == TokenKind::Mut {
+        parser.advance_without_eof()?;
+        Mutable::Yes
+    } else {
+        Mutable::No
+    };
+
+    let (name, _) = parser.expect_ident()?;
+
+    let ty = if parser.peek().kind == TokenKind::Colon {
+        parser.advance_without_eof()?;
+        Some(parse_ty_path(parser, false)?)
+    } else {
+        None
+    };
+
+    let expr = if parser.peek().kind == TokenKind::Assign {
+        parser.advance_without_eof()?;
+        Some(parse_expr(parser)?)
+    } else {
+        None
+    };
+
+    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Let(LetStmt {
+            name,
+            ty,
+            mutable,
+            expr,
+            pub_: Pub::from(is_pub),
+        })),
+        span: start_span.merge(parser.previous().span),
+    })
 }

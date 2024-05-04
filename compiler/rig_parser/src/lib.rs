@@ -51,9 +51,7 @@ impl<'p> Parser<'p> {
             match parse_program(self) {
                 Ok(stmt) => stmts.push(stmt),
                 Err(e) => {
-                    if !self.is_eof() {
-                        self.advance();
-                    }
+                    self.synchronize();
                     self.diags.push(e)
                 }
             }
@@ -63,7 +61,21 @@ impl<'p> Parser<'p> {
     }
 
     pub fn synchronize(&mut self) {
-        // TODO: implement this
+        while !self.is_eof() {
+            match self.peek().kind {
+                 TokenKind::Semi => {
+                     self.advance();
+                     return;
+                 }
+                TokenKind::Fn | TokenKind::Const | TokenKind::Let | TokenKind::Struct | TokenKind::Impl
+                 | TokenKind::For | TokenKind::Trait | TokenKind::Loop | TokenKind::While | TokenKind::Use
+                 | TokenKind::Mod => {
+                    return;
+                }
+                _ => (),
+            }
+            self.advance();
+        }
     }
 
     pub fn expect(&mut self, token_kind: TokenKind, name: &str) -> Result<LexicalToken, CodeError> {
@@ -98,17 +110,20 @@ impl<'p> Parser<'p> {
     }
 
     pub fn expect_ident(&mut self) -> Result<(InternedString, Span), CodeError> {
-        let current = self.peek();
+        let token = self.consume();
 
-        match current.kind {
+        match token.kind {
             TokenKind::Ident(ident) => Ok((ident, self.peek().span)),
-            _ => Err(CodeError {
-                error_code: ErrorCode::SyntaxError,
-                message: intern!("expected an identifier"),
-                pos: current.span,
-                hints: vec![],
-                notes: vec![],
-            }),
+            _ => {
+                self.go_back();
+                Err(CodeError {
+                    error_code: ErrorCode::SyntaxError,
+                    message: intern!("expected an identifier"),
+                    pos: token.span,
+                    hints: vec![],
+                    notes: vec![],
+                })
+            }
         }
     }
 
@@ -127,6 +142,10 @@ impl<'p> Parser<'p> {
 
     pub fn try_peek(&self) -> Option<&LexicalToken> {
         self.tokens.get(self.pos)
+    }
+
+    pub fn try_peek_next(&self, n: usize) -> Option<&LexicalToken> {
+        self.tokens.get(self.pos + n)
     }
 
     pub fn current_span(&self) -> Span {

@@ -48,7 +48,18 @@ pub fn parse_ty_path(parser: &mut Parser, in_expr: bool) -> Result<TyPath, CodeE
 
         if !parser.is_eof() {
             match parser.peek().kind {
-                TokenKind::PathSep => parser.advance_without_eof()?,
+                TokenKind::PathSep => {
+                    parser.advance_without_eof()?;
+
+                    if !in_expr && parser.peek().kind == TokenKind::Less {
+                        parser.diags.push(CodeError::warning(
+                            "unnecessary path separator. \
+                        Path separator is unnecessary in type path when \
+                        it's outside expressions.",
+                            parser.previous().span,
+                        ));
+                    }
+                }
                 TokenKind::Less if !in_expr => {}
                 _ => {
                     break;

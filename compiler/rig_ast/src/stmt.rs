@@ -248,6 +248,7 @@ pub struct LetStmt {
     pub name: InternedString,
     pub ty: Option<TyPath>,
     pub expr: Option<Expr>,
+    pub pub_: Pub,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -278,4 +279,14 @@ pub struct ConditionalStmt {
 pub enum Pub {
     Yes,
     No,
+}
+
+impl From<bool> for Pub {
+    fn from(value: bool) -> Self {
+        if value {
+            Pub::Yes
+        } else {
+            Pub::No
+        }
+    }
 }
