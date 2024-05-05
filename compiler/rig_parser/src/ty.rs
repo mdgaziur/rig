@@ -54,7 +54,7 @@ pub fn parse_ty_path(parser: &mut Parser, in_expr: bool) -> Result<TyPath, CodeE
                     if !in_expr && parser.peek().kind == TokenKind::Less {
                         parser.diags.push(CodeError::warning(
                             "unnecessary path separator. \
-                        Path separator is unnecessary in type path when \
+                        Path separator is unnecessary in type path in this position when \
                         it's outside expressions.",
                             parser.previous().span,
                         ));
