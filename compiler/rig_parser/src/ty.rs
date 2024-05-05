@@ -166,7 +166,7 @@ mod test {
             .iter()
             .map(|v| v.clone().unwrap())
             .collect::<Vec<LexicalToken>>();
-        let mut parser = Parser::new(file_name, &tokens);
+        let mut parser = Parser::new(&tokens);
         assert_eq!(
             parse_ty_path(&mut parser, true).unwrap(),
             TyPath {
@@ -245,7 +245,7 @@ mod test {
             .iter()
             .map(|v| v.clone().unwrap())
             .collect::<Vec<LexicalToken>>();
-        let mut parser = Parser::new(file_name, &tokens);
+        let mut parser = Parser::new(&tokens);
         assert_eq!(
             parse_ty_path(&mut parser, false).unwrap(),
             TyPath {
@@ -325,7 +325,7 @@ mod test {
             .iter()
             .map(|v| v.clone().unwrap())
             .collect::<Vec<LexicalToken>>();
-        let mut parser = Parser::new(file_name, &tokens);
+        let mut parser = Parser::new(&tokens);
         let mut session = Session::new();
         let res = parse_generic_params(&mut parser, true).unwrap();
         session.insert_file("<test>", source);

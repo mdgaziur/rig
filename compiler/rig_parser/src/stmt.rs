@@ -26,7 +26,7 @@ use rig_ast::stmt::{
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
-use rig_span::Span;
+
 
 pub fn parse_program(parser: &mut Parser) -> Result<Stmt, CodeError> {
     if parser.peek().kind == TokenKind::Impl {
@@ -157,14 +157,14 @@ fn parse_var_decl(
         VarDeclType::Const => {
             let span = start_span.merge(parser.previous().span);
 
-            if let None = ty {
+            if ty.is_none() {
                 parser.diags.push(CodeError::without_notes_and_hint(
                     "const variable declaration without explicit type isn't allowed",
                     span,
                     ErrorCode::SyntaxError,
                 ));
             }
-            if let None = expr {
+            if expr.is_none() {
                 parser.diags.push(CodeError::without_notes_and_hint(
                     "const variable declaration without value isn't allowed",
                     span,
