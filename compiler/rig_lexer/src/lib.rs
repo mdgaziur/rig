@@ -487,7 +487,6 @@ impl<'l> Lexer<'l> {
                     "trait" => TokenKind::Trait,
                     "mut" => TokenKind::Mut,
                     "const" => TokenKind::Const,
-                    "static" => TokenKind::Static,
                     "type" => TokenKind::Type,
                     "use" => TokenKind::Use,
                     "for" => TokenKind::For,

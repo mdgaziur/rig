@@ -10,7 +10,7 @@
 /// <~ ~> describes something that can only be described with words :^).
 
 program: (decl | impl)*;
-decl: "pub"? (struct_decl | enum_decl | const_stmt | let_stmt | static_stmt | fn_decl | mod_decl | trait_decl);
+decl: "pub"? (struct_decl | enum_decl | const_stmt | let_stmt | fn_decl | mod_decl | trait_decl);
 statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | conditional | fn_decl |
             let_stmt | const_stmt | trait_decl | type_alias;
 
@@ -33,7 +33,6 @@ ty_path_non_expr: ident*["::"] ("::"? generic_params_without_trait_bound);
 trait_decl: "trait" ident ("<" ty_path_non_expr)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";
 let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)?;
 const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)?;
-static_stmt: "static" ident (":" ty_path_non_expr) ("=" expression)?;
 type_alias: "type" ident generic_params_with_trait_bound ty_path_non_expr;
 use: "use" ident*["::"] ("{" ident*[","] "}")?;
 mod_decl: "mod" ident ("{" program "}" | ";");

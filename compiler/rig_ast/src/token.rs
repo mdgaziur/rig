@@ -36,7 +36,6 @@ pub enum TokenKind {
     Trait,
     Mut,
     Const,
-    Static,
     Type,
     Use,
     For,

@@ -28,7 +28,6 @@ pub enum StmtKind {
     While(WhileStmt),
     Loop(LoopStmt),
     Const(ConstStmt),
-    Static(StaticStmt),
     Let(LetStmt),
     Conditional(ConditionalStmt),
     TyAlias(TyAliasStmt),
@@ -228,14 +227,6 @@ pub struct MatchArmBindIf {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConstStmt {
-    pub name: InternedString,
-    pub ty: TyPath,
-    pub expr: Expr,
-    pub pub_: Pub,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct StaticStmt {
     pub name: InternedString,
     pub ty: TyPath,
     pub expr: Expr,
