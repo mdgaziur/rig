@@ -172,13 +172,6 @@ fn parse_comparison(parser: &mut Parser) -> Result<Expr, CodeError> {
         && matches!(
             parser.try_peek_next(1),
             Some(&LexicalToken {
-                kind: TokenKind::Greater,
-                ..
-            })
-        )
-        && !matches!(
-            parser.try_peek_next(2),
-            Some(&LexicalToken {
                 kind: TokenKind::Assign,
                 ..
             })
