@@ -34,7 +34,8 @@ trait_decl: "trait" ident ("<" ty_path_non_expr)? generic_params_with_trait_boun
 let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)?;
 const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)?;
 type_alias: "type" ident generic_params_with_trait_bound ty_path_non_expr;
-use: "use" ident*["::"] ("{" ident*[","] "}")?;
+use: "use" use_tree;
+use_tree: ident "::" (use_tree | ("{" use_tree*[","] "}"))?;
 mod_decl: "mod" ident ("{" program "}" | ";");
 for: "for" ident "in" expression body;
 while: "while" expression body;

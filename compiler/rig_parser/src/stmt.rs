@@ -20,9 +20,13 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind};
+use rig_ast::stmt::{
+    ConstStmt, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind, UseStmt, UseStmtTreeNode,
+};
 use rig_ast::token::TokenKind;
+use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
+use rig_span::Span;
 
 pub fn parse_program(parser: &mut Parser) -> Result<Stmt, CodeError> {
     if parser.peek().kind == TokenKind::Impl {
@@ -90,6 +94,7 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Fn => todo!(),
         TokenKind::Mod => todo!(),
         TokenKind::Trait => todo!(),
+        TokenKind::Use => parse_use(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
 }
@@ -186,4 +191,56 @@ fn parse_var_decl(
             })
         }
     }
+}
+
+pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    fn parse_use_tree(parser: &mut Parser) -> Result<UseStmtTreeNode, CodeError> {
+        let mut root_node = {
+            let (name, span) = parser.expect_ident()?;
+
+            UseStmtTreeNode {
+                name,
+                children: vec![],
+                span,
+            }
+        };
+
+        if parser.peek().kind == PathSep {
+            parser.advance_without_eof()?;
+            if matches!(parser.peek().kind, TokenKind::Ident(_)) {
+                root_node.children.push(parse_use_tree(parser)?);
+            } else {
+                parser.expect_recoverable(TokenKind::LBrace, "left brace");
+
+                loop {
+                    root_node.children.push(parse_use_tree(parser)?);
+
+                    if parser.peek().kind == TokenKind::Comma {
+                        parser.advance_without_eof()?;
+                    } else {
+                        break;
+                    }
+                }
+
+                parser.expect_recoverable(TokenKind::RBrace, "right brace");
+            }
+        }
+
+        Ok(root_node)
+    }
+
+    let tree = parse_use_tree(parser)?;
+
+    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Use(UseStmt {
+            tree,
+            pub_: Pub::from(is_pub),
+        })),
+        span: start_span.merge(parser.previous().span),
+    })
 }
