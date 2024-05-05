@@ -1,7 +1,3 @@
-// NOTE: Several uses of PathExpr from rig_expr::expr can be
-//       be seen here as type path. This is the way for now. might
-//       add another more specific way to represent type path for
-//       statements in future.
 use crate::expr::Expr;
 use crate::path::{PathGenericSegment, TyPath};
 use rig_intern::InternedString;
