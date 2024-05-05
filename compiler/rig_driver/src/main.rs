@@ -20,6 +20,9 @@ struct Args {
     #[arg(long)]
     /// Enables debug outputs
     debug: bool,
+
+    #[arg(long)]
+    debug_pretty: bool,
 }
 
 fn main() {
@@ -77,7 +80,14 @@ fn main() {
             line!(),
             column!()
         );
-        eprintln!("{:#?}\n[End Debug]\x1b[0m", &ast);
+
+        if args.debug_pretty {
+            eprintln!("{:#?}\n", &ast);
+        } else {
+            eprintln!("{:?\n}", &ast);
+        }
+
+        eprintln!("[End Debug]\x1b[0m");
     }
 
     for diag in parser.get_diags() {
