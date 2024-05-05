@@ -21,6 +21,7 @@ struct Args {
     /// Enables debug outputs
     debug: bool,
 
+    /// Prettify debug outputs
     #[arg(long)]
     debug_pretty: bool,
 }
