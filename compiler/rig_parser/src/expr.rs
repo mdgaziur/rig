@@ -18,7 +18,11 @@
 
 use crate::ty::parse_ty_path;
 use crate::Parser;
-use rig_ast::expr::{AssignExpr, BinExpr, BinOp, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, UnaryExpr, UnaryOp};
+use rig_ast::expr::{
+    AssignExpr, BinExpr, BinOp, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr,
+    LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, UnaryExpr,
+    UnaryOp,
+};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
 
@@ -457,12 +461,9 @@ fn parse_fn_call(parser: &mut Parser) -> Result<Expr, CodeError> {
             callable = Expr {
                 kind: ExprKind::MemberAccess(MemberAccessExpr {
                     expr: Box::new(callable),
-                    prop: MemberAccessProp {
-                        ident,
-                        span,
-                    }
+                    prop: MemberAccessProp { ident, span },
                 }),
-                span: start_sp.merge(parser.previous().span)
+                span: start_sp.merge(parser.previous().span),
             }
         } else {
             break;

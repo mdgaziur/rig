@@ -19,6 +19,7 @@
 use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
+use rig_ast::path::PathSegment;
 use rig_ast::stmt::{ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind};
 use rig_ast::token::TokenKind;
 use rig_errors::CodeError;
@@ -49,7 +50,15 @@ fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
         None
     };
 
+    let impl_for_span_start = parser.current_span();
     let impl_for = parse_ty_path(parser, false)?;
+    let impl_for_span_end = parser.previous().span;
+    if matches!(impl_for.segments[0], PathSegment::Generic(_)) {
+        parser.diags.push(CodeError::unexpected_token_with_note(
+            impl_for_span_start.merge(impl_for_span_end),
+            "expected a type path, not a list of generic params",
+        ));
+    }
 
     parser.expect_recoverable(TokenKind::LBrace, "{");
 

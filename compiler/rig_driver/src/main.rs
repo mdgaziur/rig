@@ -65,7 +65,7 @@ fn main() {
         }
     }
 
-    let mut parser = Parser::new(intern!(file_path), &tokens);
+    let mut parser = Parser::new(&tokens);
     let ast = parser.parse();
 
     if args.debug {

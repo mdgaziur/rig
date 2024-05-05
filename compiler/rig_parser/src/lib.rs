@@ -26,19 +26,15 @@ use rig_span::Span;
 /// to avoid invoking this.
 #[derive(Debug)]
 pub struct Parser<'p> {
-    pub file_name: InternedString,
-    pub tokens: &'p [LexicalToken],
-    pub nodes: Vec<Stmt>,
-    pub diags: Vec<CodeError>,
-    pub pos: usize,
+    tokens: &'p [LexicalToken],
+    diags: Vec<CodeError>,
+    pos: usize,
 }
 
 impl<'p> Parser<'p> {
-    pub fn new(file_name: InternedString, tokens: &'p [LexicalToken]) -> Self {
+    pub fn new(tokens: &'p [LexicalToken]) -> Self {
         Self {
-            file_name,
             tokens,
-            nodes: vec![],
             diags: vec![],
             pos: 0,
         }
@@ -63,13 +59,18 @@ impl<'p> Parser<'p> {
     pub fn synchronize(&mut self) {
         while !self.is_eof() {
             match self.peek().kind {
-                 TokenKind::Semi => {
-                     self.advance();
-                     return;
-                 }
-                TokenKind::Fn | TokenKind::Const | TokenKind::Let | TokenKind::Struct | TokenKind::Impl
-                 | TokenKind::For | TokenKind::Trait | TokenKind::Loop | TokenKind::While | TokenKind::Use
-                 | TokenKind::Mod => {
+                TokenKind::Semi => {
+                    self.advance();
+                    return;
+                }
+                TokenKind::Fn
+                | TokenKind::Const
+                | TokenKind::Let
+                | TokenKind::Struct
+                | TokenKind::Impl
+                | TokenKind::Trait
+                | TokenKind::Use
+                | TokenKind::Mod => {
                     return;
                 }
                 _ => (),
