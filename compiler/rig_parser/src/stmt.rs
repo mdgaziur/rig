@@ -20,9 +20,9 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind};
+use rig_ast::stmt::{ConstStmt, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind};
 use rig_ast::token::TokenKind;
-use rig_errors::CodeError;
+use rig_errors::{CodeError, ErrorCode};
 
 pub fn parse_program(parser: &mut Parser) -> Result<Stmt, CodeError> {
     if parser.peek().kind == TokenKind::Impl {
@@ -85,9 +85,8 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     match parser.peek().kind {
         TokenKind::Struct => todo!(),
         TokenKind::Enum => todo!(),
-        TokenKind::Const => todo!(),
-        TokenKind::Let => parse_let_stmt(parser, is_pub),
-        TokenKind::Static => todo!(),
+        TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
+        TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
         TokenKind::Fn => todo!(),
         TokenKind::Mod => todo!(),
         TokenKind::Trait => todo!(),
@@ -95,7 +94,17 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     }
 }
 
-fn parse_let_stmt(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+#[derive(PartialEq)]
+enum VarDeclType {
+    Let,
+    Const,
+}
+
+fn parse_var_decl(
+    parser: &mut Parser,
+    is_pub: bool,
+    decl_type: VarDeclType,
+) -> Result<Stmt, CodeError> {
     let start_span = if is_pub {
         parser.previous().span
     } else {
@@ -104,7 +113,7 @@ fn parse_let_stmt(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
 
     parser.advance_without_eof()?;
 
-    let mutable = if parser.peek().kind == TokenKind::Mut {
+    let mutable = if decl_type == VarDeclType::Let && parser.peek().kind == TokenKind::Mut {
         parser.advance_without_eof()?;
         Mutable::Yes
     } else {
@@ -129,14 +138,52 @@ fn parse_let_stmt(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
 
     parser.expect_recoverable(TokenKind::Semi, "semicolon");
 
-    Ok(Stmt {
-        kind: Box::new(StmtKind::Let(LetStmt {
-            name,
-            ty,
-            mutable,
-            expr,
-            pub_: Pub::from(is_pub),
-        })),
-        span: start_span.merge(parser.previous().span),
-    })
+    match decl_type {
+        VarDeclType::Let => Ok(Stmt {
+            kind: Box::new(StmtKind::Let(LetStmt {
+                name,
+                ty,
+                mutable,
+                expr,
+                pub_: Pub::from(is_pub),
+            })),
+            span: start_span.merge(parser.previous().span),
+        }),
+        VarDeclType::Const => {
+            let span = start_span.merge(parser.previous().span);
+
+            if let None = ty {
+                parser.diags.push(CodeError::without_notes_and_hint(
+                    "const variable declaration without explicit type isn't allowed",
+                    span,
+                    ErrorCode::SyntaxError,
+                ));
+            }
+            if let None = expr {
+                parser.diags.push(CodeError::without_notes_and_hint(
+                    "const variable declaration without value isn't allowed",
+                    span,
+                    ErrorCode::SyntaxError,
+                ));
+            }
+
+            if ty.is_none() || expr.is_none() {
+                return Err(CodeError::without_notes_and_hint(
+                    "invalid const declaration",
+                    span,
+                    ErrorCode::SyntaxError,
+                ));
+            }
+
+            Ok(Stmt {
+                kind: Box::new(StmtKind::Const(ConstStmt {
+                    name,
+                    ty: ty.unwrap(),
+                    expr: expr.unwrap(),
+                    pub_: Pub::from(is_pub),
+                })),
+                span: start_span.merge(parser.previous().span),
+            })
+        }
+    }
 }
