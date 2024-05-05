@@ -114,7 +114,7 @@ impl<'p> Parser<'p> {
         let token = self.consume();
 
         match token.kind {
-            TokenKind::Ident(ident) => Ok((ident, self.peek().span)),
+            TokenKind::Ident(ident) => Ok((ident, token.span)),
             _ => {
                 self.go_back();
                 Err(CodeError {
