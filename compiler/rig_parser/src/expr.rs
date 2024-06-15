@@ -20,13 +20,36 @@ use crate::ty::parse_ty_path;
 use crate::Parser;
 use rig_ast::expr::{
     AssignExpr, BinExpr, BinOp, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr,
-    LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, UnaryExpr,
-    UnaryOp,
+    LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, TypeCastExpr,
+    UnaryExpr, UnaryOp,
 };
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
 
 pub fn parse_expr(parser: &mut Parser) -> Result<Expr, CodeError> {
+    parse_typecast(parser)
+}
+
+fn parse_typecast(parser: &mut Parser) -> Result<Expr, CodeError> {
+    let expr = parse_assignment(parser)?;
+
+    Ok(if parser.peek().kind == TokenKind::As {
+        parser.advance_without_eof()?;
+        let typ = parse_ty_path(parser, true)?;
+
+        Expr {
+            span: expr.span.merge(parser.previous().span),
+            kind: ExprKind::TypeCast(TypeCastExpr {
+                expr: Box::new(expr),
+                typ,
+            }),
+        }
+    } else {
+        expr
+    })
+}
+
+fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_span = parser.peek().span;
     let mut expr = parse_logical_or(parser)?;
 

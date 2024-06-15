@@ -59,7 +59,9 @@ body: "{" statement* expression? "}";
 generic_params_without_trait_bound: "<" ident*[,] ">";
 generic_params_with_trait_bound: "<" (ident (":" ty_path)?)*[","] ">";
 
-expression: logical_or (("=" | "+=" | "-=" | "*=" | "/=" | ">>=" | "<<=" | "&=" | "|=" | "^=" | "**=" ) expression)?;
+expression: typecast;
+typecast: assignment ("as" ty_path)?;
+assignment: logical_or (("=" | "+=" | "-=" | "*=" | "/=" | ">>=" | "<<=" | "&=" | "|=" | "^=" | "**=" ) expression)?;
 logical_or: logical_and ("||" logical_and)*;
 logical_and: equality ("&&" equality)*;
 equality: comparison (("==" | "!=") comparison)*;

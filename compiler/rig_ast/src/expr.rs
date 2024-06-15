@@ -30,6 +30,7 @@ pub enum ExprKind {
     Assign(AssignExpr),
     Struct(StructExpr),
     Path(PathExpr),
+    TypeCast(TypeCastExpr),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -196,4 +197,10 @@ pub struct AssignExpr {
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathExpr {
     pub path: TyPath,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TypeCastExpr {
+    pub expr: Box<Expr>,
+    pub typ: TyPath,
 }
