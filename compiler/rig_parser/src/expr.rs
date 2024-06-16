@@ -243,7 +243,7 @@ fn parse_bitwise_or(parser: &mut Parser) -> Result<Expr, CodeError> {
         expr = Expr {
             kind: ExprKind::Bin(BinExpr {
                 lhs: Box::new(expr),
-                op: BinOp::from(parser.peek().kind),
+                op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_or(parser)?),
             }),
             span: start_span.merge(parser.previous().span),
@@ -262,7 +262,7 @@ fn parse_bitwise_xor(parser: &mut Parser) -> Result<Expr, CodeError> {
         expr = Expr {
             kind: ExprKind::Bin(BinExpr {
                 lhs: Box::new(expr),
-                op: BinOp::from(parser.peek().kind),
+                op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_xor(parser)?),
             }),
             span: start_span.merge(parser.previous().span),
@@ -281,7 +281,7 @@ fn parse_bitwise_and(parser: &mut Parser) -> Result<Expr, CodeError> {
         expr = Expr {
             kind: ExprKind::Bin(BinExpr {
                 lhs: Box::new(expr),
-                op: BinOp::from(parser.peek().kind),
+                op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_and(parser)?),
             }),
             span: start_span.merge(parser.previous().span),
@@ -361,7 +361,7 @@ fn parse_factor(parser: &mut Parser) -> Result<Expr, CodeError> {
         expr = Expr {
             kind: ExprKind::Bin(BinExpr {
                 lhs: Box::new(expr),
-                op: BinOp::from(parser.peek().kind),
+                op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_factor(parser)?),
             }),
             span: start_span.merge(parser.previous().span),
