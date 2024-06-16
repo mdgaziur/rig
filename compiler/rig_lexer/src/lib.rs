@@ -468,7 +468,7 @@ impl<'l> Lexer<'l> {
                     raw: intern!(number),
                 })
             }
-            ch if ch.is_alphabetic() || ch == '_' => {
+            ch if ch.is_alphabetic() || ch == '_' || ch == '$' => {
                 let start_pos = self.pos;
                 let mut end_pos = start_pos;
                 let mut ident = String::new();
@@ -477,7 +477,7 @@ impl<'l> Lexer<'l> {
                     end_pos = self.pos;
 
                     if let Some(ch) = self.try_peek_next() {
-                        if !ch.is_alphanumeric() && ch != '_' {
+                        if !ch.is_alphanumeric() && ch != '_' && ch != '$' {
                             break;
                         }
                     }
