@@ -20,9 +20,7 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{
-    ConstStmt, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind, UseStmt, UseStmtTreeNode,
-};
+use rig_ast::stmt::{ConstStmt, EnumVariantOrStructProperty, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, UseStmt, UseStmtTreeNode};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -86,7 +84,7 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     }
 
     match parser.peek().kind {
-        TokenKind::Struct => todo!(),
+        TokenKind::Struct => parse_struct_decl(parser, is_pub),
         TokenKind::Enum => todo!(),
         TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
@@ -96,6 +94,56 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Use => parse_use(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+fn parse_struct_decl(
+    parser: &mut Parser,
+    is_pub: bool
+) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (name, _) = parser.expect_ident()?;
+    let generic_params = if parser.peek().kind == TokenKind::Less {
+        Some(parse_generic_params(parser, true)?)
+    } else {
+        None
+    };
+
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    let mut properties = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        let field_span_start = parser.current_span();
+        let is_pub = if parser.peek().kind == TokenKind::Pub {
+            parser.advance_without_eof()?;
+            true
+        } else {
+            false
+        };
+        let (property_name, _) = parser.expect_ident()?;
+        parser.expect_recoverable(TokenKind::Colon, "colon");
+        let ty_path = parse_ty_path(parser, false)?;
+        properties.push(EnumVariantOrStructProperty {
+            name: property_name,
+            ty: ty_path,
+            span: field_span_start.merge(parser.previous().span),
+            pub_: Pub::from(is_pub),
+        });
+        if parser.peek().kind != TokenKind::RBrace {
+            parser.expect_recoverable(TokenKind::Comma, "comma");
+        }
+    }
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Struct(StructStmt {
+            name,
+            properties,
+            generic_params,
+            pub_: Pub::from(is_pub)
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
 }
 
 #[derive(PartialEq)]

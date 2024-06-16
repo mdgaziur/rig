@@ -21,7 +21,7 @@ enum_decl: "enum" ident generic_params_without_trait_bound? "{"
                     | ident
                 )*[","]!
             "}" ;
-struct_decl: "struct" ident generic_params_without_trait_bound? "{" (ident ":" ty_path_non_expr)*[","] "}";
+struct_decl: "struct" ident generic_params_without_trait_bound? "{" ("pub"? ident ":" ty_path_non_expr)*[","] "}";
 impl: "impl" generic_params_with_trait_bound? (ty_path_non_expr "for")? ty_path "{" (const_stmt | fn_decl | type_alias)!* "}";
 
 fn_decl: fn_prototype body;

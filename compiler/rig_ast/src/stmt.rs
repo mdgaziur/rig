@@ -73,7 +73,7 @@ pub struct EnumVariantStructLike {
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructStmt {
     pub name: InternedString,
-    pub generic_params: PathGenericSegment,
+    pub generic_params: Option<PathGenericSegment>,
     pub properties: Vec<EnumVariantOrStructProperty>,
     pub pub_: Pub,
 }
@@ -83,6 +83,7 @@ pub struct EnumVariantOrStructProperty {
     pub name: InternedString,
     pub ty: TyPath,
     pub span: Span,
+    pub pub_: Pub,
 }
 
 #[derive(Debug, Clone, PartialEq)]
