@@ -37,6 +37,14 @@ fn parse_typecast(parser: &mut Parser) -> Result<Expr, CodeError> {
         parser.advance_without_eof()?;
         let typ = parse_ty_path(parser, true)?;
 
+        if parser.peek().kind == TokenKind::LParen {
+            parser.diags.push(CodeError::unexpected_token_with_note(
+                parser.current_span(),
+                "this looks like a possible function call. You may want to wrap \
+                    the expression in parentheses before calling it",
+            ));
+        }
+
         Expr {
             span: expr.span.merge(parser.previous().span),
             kind: ExprKind::TypeCast(TypeCastExpr {
