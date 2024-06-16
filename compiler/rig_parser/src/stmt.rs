@@ -20,7 +20,7 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, UseStmt, UseStmtTreeNode};
+use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -92,8 +92,29 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Mod => parse_mod_decl(parser, is_pub),
         TokenKind::Trait => todo!(),
         TokenKind::Use => parse_use(parser, is_pub),
+        TokenKind::Type => parse_type_alias(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.peek().span;
+    parser.advance_without_eof()?;
+
+    let (alias, _) = parser.expect_ident()?;
+    parser.expect_recoverable(TokenKind::Assign, "equal");
+    let ty = parse_ty_path(parser, false)?;
+
+    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::TyAlias(TyAliasStmt {
+            pub_: Pub::from(is_pub),
+            alias_name: alias,
+            ty,
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
 }
 
 fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
