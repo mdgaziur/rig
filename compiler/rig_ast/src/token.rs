@@ -92,4 +92,5 @@ pub enum TokenKind {
     Semi,
     Dot,
     Eof,
+    RightArrow,
 }

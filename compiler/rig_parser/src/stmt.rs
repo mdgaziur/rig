@@ -20,10 +20,11 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode};
+use rig_ast::stmt::{BodyStmt, ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
+use rig_intern::{intern, INTERNER};
 
 pub fn parse_program(parser: &mut Parser) -> Result<Stmt, CodeError> {
     if parser.peek().kind == TokenKind::Impl {
@@ -88,13 +89,214 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Enum => parse_enum_decl(parser, is_pub),
         TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
-        TokenKind::Fn => todo!(),
+        TokenKind::Fn => parse_fn_decl(parser, is_pub, false),
         TokenKind::Mod => parse_mod_decl(parser, is_pub),
         TokenKind::Trait => todo!(),
         TokenKind::Use => parse_use(parser, is_pub),
         TokenKind::Type => parse_type_alias(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (name, _) = parser.expect_ident()?;
+    let generic_params = if parser.peek().kind == TokenKind::Less {
+        Some(parse_generic_params(parser, true)?)
+    } else {
+        None
+    };
+
+    parser.expect_recoverable(TokenKind::LParen, "left parenthesis");
+
+    let takes_self = if parser.peek().raw == intern!("self") {
+        parser.advance_without_eof()?;
+        if parser.peek().kind == TokenKind::Comma {
+            parser.advance_without_eof()?;
+        }
+
+        if inside_impl {
+            true
+        } else {
+            parser.diags.push(CodeError::unexpected_token_with_note(
+                parser.previous().span,
+                "`self` is only allowed in struct methods",
+            ));
+            false
+        }
+    } else {
+        false
+    };
+
+    let mut args = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RParen {
+        let span = parser.peek().span;
+        let kind = match parser.peek().kind {
+            TokenKind::Anon => FnArgKind::Anon,
+            TokenKind::Vararg => FnArgKind::Vararg,
+            _ => FnArgKind::NotAnon,
+        };
+
+        if kind != FnArgKind::NotAnon {
+            parser.advance_without_eof()?;
+        }
+
+        let (name, _) = parser.expect_ident()?;
+
+        parser.expect_recoverable(TokenKind::Colon, "colon");
+
+        let is_mut = if parser.peek().kind == TokenKind::Mut {
+            parser.advance_without_eof()?;
+            true
+        } else {
+            false
+        };
+
+        let is_move = if parser.peek().kind == TokenKind::Mul {
+            parser.advance_without_eof()?;
+            true
+        } else {
+            false
+        };
+
+        let ty = parse_ty_path(parser, false)?;
+
+        args.push(FnArg {
+            name,
+            ty,
+            mutable: Mutable::from(is_mut),
+            moves: is_move,
+            kind,
+            span: span.merge(parser.previous().span)
+        });
+
+        if parser.peek().kind != TokenKind::RParen {
+            parser.expect_recoverable(TokenKind::Comma, "comma");
+        }
+    }
+
+    parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+
+    let (ret_ty, ret_ty_span) = if parser.peek().kind == TokenKind::RightArrow {
+        parser.advance_without_eof()?;
+        let start_sp = parser.current_span();
+        (Some(parse_ty_path(parser, false)?), Some(start_sp.merge(parser.previous().span)))
+    } else {
+        (None, None)
+    };
+
+    let mut where_clauses = vec![];
+    if parser.peek().kind == TokenKind::Where {
+        parser.advance_without_eof()?;
+        loop {
+            let (name, span) = parser.expect_ident()?;
+            parser.expect_recoverable(TokenKind::Colon, "colon");
+
+            let ty = parse_ty_path(parser, false)?;
+            where_clauses.push(WhereClause {
+                name,
+                ty,
+                span: span.merge(parser.previous().span)
+            });
+
+            if parser.peek().kind == TokenKind::Comma {
+                parser.advance_without_eof()?;
+            } else {
+                break;
+            }
+        }
+    }
+
+    let prototype_span = start_span.merge(parser.previous().span);
+
+    let body = parse_body(parser)?;
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Fn(FnStmt {
+            pub_: Pub::from(is_pub),
+            prototype: FnPrototype {
+                name,
+                generic_params,
+                takes_self,
+                args,
+                where_clauses,
+                ret_ty: if let (Some(ret_ty), Some(ret_ty_span)) = (ret_ty, ret_ty_span) {
+                    Some(FnRet {
+                        ty: ret_ty,
+                        span: ret_ty_span
+                    })
+                } else {
+                    None
+                },
+                span: prototype_span,
+            },
+            body
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
+}
+
+fn parse_body(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_span = parser.peek().span;
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+
+    let mut stmts = vec![];
+    let mut return_expr = None;
+
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        match match parser.peek().kind {
+            TokenKind::Struct => parse_struct_decl(parser, false),
+            TokenKind::Enum => parse_enum_decl(parser, false),
+            TokenKind::Const => parse_var_decl(parser, false, VarDeclType::Const),
+            TokenKind::Let => parse_var_decl(parser, false, VarDeclType::Let),
+            TokenKind::Impl => parse_impl(parser),
+            TokenKind::Mod => parse_mod_decl(parser, false),
+            TokenKind::Use => parse_use(parser, false),
+            TokenKind::For => todo!(),
+            TokenKind::Loop => todo!(),
+            TokenKind::While => todo!(),
+            TokenKind::If => todo!(),
+            TokenKind::Fn => parse_fn_decl(parser, false, false),
+            TokenKind::Trait => todo!(),
+            TokenKind::Type => parse_type_alias(parser, false),
+            _ => {
+                match parse_expr(parser) {
+                    Ok(expr) => {
+                        if parser.peek().kind != TokenKind::RBrace {
+                            parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                        } else {
+                            return_expr = Some(expr);
+                            continue;
+                        }
+
+                        Ok(Stmt {
+                            span: expr.span,
+                            kind: Box::new(StmtKind::Expr(expr)),
+                        })
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+        } {
+            Ok(stmt) => stmts.push(stmt),
+            Err(e) => {
+                parser.diags.push(e);
+                parser.synchronize();
+            }
+        }
+    }
+
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Body(BodyStmt {
+            stmts,
+            expr: return_expr,
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
 }
 
 fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
@@ -113,7 +315,7 @@ fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError
             alias_name: alias,
             ty,
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }
 

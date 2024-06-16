@@ -94,7 +94,7 @@ impl<'p> Parser<'p> {
                 message: intern!("unexpected eof after this"),
                 hints: vec![Diagnostic {
                     message: intern!(format!("Expected {name} after this")),
-                    pos: self.previous().span
+                    pos: self.previous().span,
                 }],
                 notes: vec![],
                 pos: self.previous().span,

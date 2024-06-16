@@ -152,6 +152,14 @@ impl<'l> Lexer<'l> {
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
+                Some('>') => {
+                    self.advance();
+                    Ok(LexicalToken {
+                        kind: TokenKind::RightArrow,
+                        raw: intern!("->"),
+                        span: Span::new(self.pos - 1, self.pos, self.file_path),
+                    })
+                }
                 _ => Ok(LexicalToken {
                     kind: TokenKind::Minus,
                     raw: intern!(self.current()),

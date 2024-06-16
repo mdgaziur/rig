@@ -27,7 +27,7 @@ impl: "impl" generic_params_with_trait_bound? (ty_path_non_expr "for")? ty_path 
 fn_decl: fn_prototype body;
 fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_arg)) | fn_arg*[","])?      ")" ("->" ty_path_non_expr)? ")"
                 "where" (ident ":" ty_path_non_expr)*[","];
-fn_arg: (("anon" | "vararg") ident ":" ("mut" | "*")? ty_path_non_expr);
+fn_arg: (("anon" | "vararg") ident ":" "mut"? "*"? ty_path_non_expr);
 ty_path_non_expr: ident*["::"] ("::"? generic_params_without_trait_bound);
 
 trait_decl: "trait" ident ("<" ty_path_non_expr)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";

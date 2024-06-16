@@ -104,15 +104,23 @@ pub struct FnStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnPrototype {
     pub name: InternedString,
-    pub generic_params: PathGenericSegment,
+    pub generic_params: Option<PathGenericSegment>,
     pub takes_self: bool,
     pub args: Vec<FnArg>,
     pub ret_ty: Option<FnRet>,
+    pub where_clauses: Vec<WhereClause>,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnRet {
+    pub ty: TyPath,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct WhereClause {
+    pub name: InternedString,
     pub ty: TyPath,
     pub span: Span,
 }
