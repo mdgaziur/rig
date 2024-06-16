@@ -38,7 +38,7 @@ pub struct BodyStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumStmt {
     pub name: InternedString,
-    pub generic_params: PathGenericSegment,
+    pub generic_params: Option<PathGenericSegment>,
     pub variants: Vec<EnumVariant>,
     pub pub_: Pub,
 }

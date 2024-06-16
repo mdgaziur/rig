@@ -20,10 +20,7 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{
-    ConstStmt, EnumVariantOrStructProperty, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind,
-    StructStmt, UseStmt, UseStmtTreeNode,
-};
+use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, UseStmt, UseStmtTreeNode};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -88,7 +85,7 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
 
     match parser.peek().kind {
         TokenKind::Struct => parse_struct_decl(parser, is_pub),
-        TokenKind::Enum => todo!(),
+        TokenKind::Enum => parse_enum_decl(parser, is_pub),
         TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
         TokenKind::Fn => todo!(),
@@ -99,17 +96,7 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     }
 }
 
-fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
-    parser.advance_without_eof()?;
-
-    let (name, _) = parser.expect_ident()?;
-    let generic_params = if parser.peek().kind == TokenKind::Less {
-        Some(parse_generic_params(parser, true)?)
-    } else {
-        None
-    };
-
+fn parse_struct_or_enum_fields(parser: &mut Parser) -> Result<Vec<EnumVariantOrStructProperty>, CodeError> {
     parser.expect_recoverable(TokenKind::LBrace, "left brace");
     let mut properties = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
@@ -135,16 +122,90 @@ fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErro
     }
     parser.expect_recoverable(TokenKind::RBrace, "right brace");
 
+    Ok(properties)
+}
+
+fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (name, _) = parser.expect_ident()?;
+    let generic_params = if parser.peek().kind == TokenKind::Less {
+        Some(parse_generic_params(parser, true)?)
+    } else {
+        None
+    };
+
     Ok(Stmt {
         kind: Box::new(StmtKind::Struct(StructStmt {
             name,
-            properties,
+            properties: parse_struct_or_enum_fields(parser)?,
             generic_params,
             pub_: Pub::from(is_pub),
         })),
         span: start_span.merge(parser.previous().span),
     })
 }
+
+fn parse_enum_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (name, _) = parser.expect_ident()?;
+    let generic_params = if parser.peek().kind == TokenKind::Less {
+        Some(parse_generic_params(parser, true)?)
+    } else {
+        None
+    };
+
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    let mut variants = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        let (name, span) = parser.expect_ident()?;
+        if parser.peek().kind == TokenKind::Comma {
+            parser.advance_without_eof()?;
+            variants.push(EnumVariant::NoValue(EnumVariantWithNoValue {
+                name,
+                span,
+            }));
+            continue;
+        }
+
+        if parser.peek().kind == TokenKind::LBrace {
+            variants.push(EnumVariant::StructLike(EnumVariantStructLike {
+                name,
+                properties: parse_struct_or_enum_fields(parser)?,
+                span: span.merge(parser.previous().span)
+            }));
+        } else if parser.peek().kind == TokenKind::LParen {
+            parser.advance_without_eof()?;
+            let ty = parse_ty_path(parser, false)?;
+            variants.push(EnumVariant::WithValue(EnumVariantWithValue {
+                name,
+                span,
+                ty
+            }));
+            parser.expect_recoverable(TokenKind::RParen, "right brace");
+        }
+
+        if parser.peek().kind != TokenKind::RBrace {
+            parser.expect_recoverable(TokenKind::Comma, "comma");
+        }
+    }
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Enum(EnumStmt {
+            pub_: Pub::from(is_pub),
+            name,
+            generic_params,
+            variants,
+        })),
+        span: start_span.merge(parser.previous().span),
+    })
+}
+
+
 
 #[derive(PartialEq)]
 enum VarDeclType {
