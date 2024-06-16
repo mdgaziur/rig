@@ -143,7 +143,7 @@ pub struct TyAliasStmt {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ModStmt {
-    pub ident: InternedString,
+    pub name: InternedString,
     pub body: Vec<Stmt>,
     pub pub_: Pub,
 }

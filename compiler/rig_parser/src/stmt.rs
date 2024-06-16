@@ -20,11 +20,7 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{
-    ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike,
-    EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind,
-    StructStmt, UseStmt, UseStmtTreeNode,
-};
+use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, UseStmt, UseStmtTreeNode};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -93,11 +89,34 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
         TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
         TokenKind::Fn => todo!(),
-        TokenKind::Mod => todo!(),
+        TokenKind::Mod => parse_mod_decl(parser, is_pub),
         TokenKind::Trait => todo!(),
         TokenKind::Use => parse_use(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (name, _) = parser.expect_ident()?;
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    let mut body = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        body.push(parse_program(parser)?);
+    }
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Mod(ModStmt {
+            pub_: Pub::from(is_pub),
+            body,
+            name
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
 }
 
 fn parse_struct_or_enum_fields(
