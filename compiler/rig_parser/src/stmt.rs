@@ -125,7 +125,13 @@ fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
     parser.expect_recoverable(TokenKind::LBrace, "left brace");
     let mut body = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
-        body.push(parse_program(parser)?);
+        match parse_program(parser) {
+            Ok(stmt) => body.push(stmt),
+            Err(e) => {
+                parser.synchronize();
+                parser.diags.push(e)
+            }
+        }
     }
     parser.expect_recoverable(TokenKind::RBrace, "right brace");
     parser.expect_recoverable(TokenKind::Semi, "semicolon");
@@ -134,9 +140,9 @@ fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
         kind: Box::new(StmtKind::Mod(ModStmt {
             pub_: Pub::from(is_pub),
             body,
-            name
+            name,
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }
 
