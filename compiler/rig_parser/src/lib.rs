@@ -7,7 +7,7 @@ mod ty;
 use crate::stmt::parse_program;
 use rig_ast::stmt::Stmt;
 use rig_ast::token::{LexicalToken, TokenKind};
-use rig_errors::{CodeError, ErrorCode};
+use rig_errors::{CodeError, Diagnostic, ErrorCode};
 use rig_intern::{intern, InternedString, INTERNER};
 use rig_span::Span;
 
@@ -79,12 +79,39 @@ impl<'p> Parser<'p> {
         }
     }
 
+    fn get_span_for_expectation(&self) -> Span {
+        if self.is_eof() {
+            self.previous().span
+        } else {
+            self.current_span()
+        }
+    }
+
+    fn check_eof_with_expectation(&mut self, name: &str) -> Result<(), CodeError> {
+        if self.is_eof() {
+            Err(CodeError {
+                error_code: ErrorCode::SyntaxError,
+                message: intern!("unexpected eof after this"),
+                hints: vec![Diagnostic {
+                    message: intern!(format!("Expected {name} after this")),
+                    pos: self.previous().span
+                }],
+                notes: vec![],
+                pos: self.previous().span,
+            })
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn expect(&mut self, token_kind: TokenKind, name: &str) -> Result<LexicalToken, CodeError> {
+        self.check_eof_with_expectation(name)?;
+
         let tok = self.consume();
         if tok.kind != token_kind {
             self.go_back();
             Err(CodeError::unexpected_token_with_hint(
-                tok.span,
+                self.get_span_for_expectation(),
                 format!("expected a `{name}` here"),
             ))
         } else {
@@ -97,11 +124,16 @@ impl<'p> Parser<'p> {
         token_kind: TokenKind,
         name: &str,
     ) -> (LexicalToken, bool) {
+        if let Err(e) = self.check_eof_with_expectation(name) {
+            self.diags.push(e);
+            return (self.peek(), false);
+        }
         let tok = self.consume();
+
         if tok.kind != token_kind {
             self.go_back();
             self.diags.push(CodeError::unexpected_token_with_hint(
-                tok.span,
+                self.get_span_for_expectation(),
                 format!("expected a `{name}` here"),
             ));
             (tok, false)
@@ -111,6 +143,8 @@ impl<'p> Parser<'p> {
     }
 
     pub fn expect_ident(&mut self) -> Result<(InternedString, Span), CodeError> {
+        self.check_eof_with_expectation("an identifier")?;
+
         let token = self.consume();
 
         match token.kind {
@@ -120,7 +154,7 @@ impl<'p> Parser<'p> {
                 Err(CodeError {
                     error_code: ErrorCode::SyntaxError,
                     message: intern!("expected an identifier"),
-                    pos: token.span,
+                    pos: self.get_span_for_expectation(),
                     hints: vec![],
                     notes: vec![],
                 })
