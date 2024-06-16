@@ -17,14 +17,12 @@
  */
 
 use crate::ty::parse_ty_path;
-use crate::Parser;
-use rig_ast::expr::{
-    AssignExpr, BinExpr, BinOp, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr,
-    LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, TypeCastExpr,
-    UnaryExpr, UnaryOp,
-};
+use crate::{Parser, stmt};
+use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, TypeCastExpr, UnaryExpr, UnaryOp};
+use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
+use crate::stmt::VarDeclType;
 
 pub fn parse_expr(parser: &mut Parser) -> Result<Expr, CodeError> {
     parse_typecast(parser)
@@ -575,6 +573,68 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                 span: parser.previous().span,
             })
         }
+        TokenKind::LBrace => parse_body(parser),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
+}
+
+pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
+    let start_span = parser.peek().span;
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+
+    let mut stmts = vec![];
+    let mut return_expr = None;
+
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        match match parser.peek().kind {
+            TokenKind::Struct => stmt::parse_struct_decl(parser, false),
+            TokenKind::Enum => stmt::parse_enum_decl(parser, false),
+            TokenKind::Const => stmt::parse_var_decl(parser, false, VarDeclType::Const),
+            TokenKind::Let => stmt::parse_var_decl(parser, false, VarDeclType::Let),
+            TokenKind::Impl => stmt::parse_impl(parser),
+            TokenKind::Mod => stmt::parse_mod_decl(parser, false),
+            TokenKind::Use => stmt::parse_use(parser, false),
+            TokenKind::For => todo!(),
+            TokenKind::Loop => todo!(),
+            TokenKind::While => todo!(),
+            TokenKind::If => todo!(),
+            TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
+            TokenKind::Trait => todo!(),
+            TokenKind::Type => stmt::parse_type_alias(parser, false),
+            _ => {
+                match parse_expr(parser) {
+                    Ok(expr) => {
+                        if parser.peek().kind != TokenKind::RBrace {
+                            parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                        } else {
+                            return_expr = Some(expr);
+                            continue;
+                        }
+
+                        Ok(Stmt {
+                            span: expr.span,
+                            kind: Box::new(StmtKind::Expr(expr)),
+                        })
+                    }
+                    Err(e) => Err(e),
+                }
+            }
+        } {
+            Ok(stmt) => stmts.push(stmt),
+            Err(e) => {
+                parser.diags.push(e);
+                parser.synchronize();
+            }
+        }
+    }
+
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Expr {
+        kind: ExprKind::Body(Box::new(BodyExpr {
+            stmts,
+            expr: return_expr,
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
 }

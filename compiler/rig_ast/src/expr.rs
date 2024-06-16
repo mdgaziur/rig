@@ -2,6 +2,7 @@ use crate::path::TyPath;
 use crate::token::{NumberKind, TokenKind};
 use rig_intern::InternedString;
 use rig_span::Span;
+use crate::stmt::Stmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr {
@@ -31,6 +32,7 @@ pub enum ExprKind {
     Struct(StructExpr),
     Path(PathExpr),
     TypeCast(TypeCastExpr),
+    Body(Box<BodyExpr>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -203,4 +205,10 @@ pub struct PathExpr {
 pub struct TypeCastExpr {
     pub expr: Box<Expr>,
     pub typ: TyPath,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct BodyExpr {
+    pub stmts: Vec<Stmt>,
+    pub expr: Option<Expr>,
 }

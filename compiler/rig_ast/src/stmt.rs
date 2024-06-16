@@ -1,4 +1,4 @@
-use crate::expr::Expr;
+use crate::expr::{BodyExpr, Expr};
 use crate::path::{PathGenericSegment, TyPath};
 use rig_intern::InternedString;
 use rig_span::Span;
@@ -11,7 +11,7 @@ pub struct Stmt {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StmtKind {
-    Body(BodyStmt),
+    Body(BodyExpr),
     Expr(Expr),
     Enum(EnumStmt),
     Struct(StructStmt),
@@ -27,12 +27,6 @@ pub enum StmtKind {
     Let(LetStmt),
     Conditional(ConditionalStmt),
     TyAlias(TyAliasStmt),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct BodyStmt {
-    pub stmts: Vec<Stmt>,
-    pub expr: Option<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -97,7 +91,7 @@ pub struct ImplStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnStmt {
     pub prototype: FnPrototype,
-    pub body: Stmt,
+    pub body: Expr,
     pub pub_: Pub,
 }
 
@@ -182,18 +176,18 @@ pub struct UseStmtTreeNode {
 pub struct ForStmt {
     pub ident: InternedString,
     pub iterable: Expr,
-    pub body: Stmt,
+    pub body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WhileStmt {
     pub cond: Expr,
-    pub body: Stmt,
+    pub body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LoopStmt {
-    pub body: Stmt,
+    pub body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -205,7 +199,7 @@ pub struct MatchStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct MatchArm {
     pub cond: MatchArmCond,
-    pub body: Stmt,
+    pub body: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -266,9 +260,9 @@ impl From<bool> for Mutable {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConditionalStmt {
     pub condition: Expr,
-    pub body: Stmt,
+    pub body: Expr,
     pub elif: Option<Stmt>,
-    pub else_: Stmt,
+    pub else_: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]

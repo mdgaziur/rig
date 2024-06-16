@@ -76,7 +76,7 @@ power: unary ("**" unary)*;
 unary: ("!" | "-" | "~")? (unary | index);
 index: primary ("[" bin_number | hex_number | oct_number | dec_number "]")*;
 fn_call: primary (("(" ((ident ":")? expression)*[","] ")") | "." ident)*;
-primary: "(" expression ")" | ty_path | array_literal | hex_number | oct_number | bin_number | dec_number | true | false | str;
+primary: "(" expression ")" | ty_path | array_literal | hex_number | oct_number | bin_number | dec_number | true | false | str | body;
 array_literal: "[" expression*[","] "]";
 ty_path: ident*["::"] ("::" generic_params_without_trait_bound);
 ident: UTF8_ALPHABET<>("_" | "$" | UTF8_ALPHANUM)<>*;
