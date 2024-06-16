@@ -20,7 +20,10 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumVariantOrStructProperty, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, UseStmt, UseStmtTreeNode};
+use rig_ast::stmt::{
+    ConstStmt, EnumVariantOrStructProperty, ImplStmt, LetStmt, Mutable, Pub, Stmt, StmtKind,
+    StructStmt, UseStmt, UseStmtTreeNode,
+};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -96,10 +99,7 @@ fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     }
 }
 
-fn parse_struct_decl(
-    parser: &mut Parser,
-    is_pub: bool
-) -> Result<Stmt, CodeError> {
+fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
     let start_span = parser.current_span();
     parser.advance_without_eof()?;
 
@@ -140,9 +140,9 @@ fn parse_struct_decl(
             name,
             properties,
             generic_params,
-            pub_: Pub::from(is_pub)
+            pub_: Pub::from(is_pub),
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }
 
