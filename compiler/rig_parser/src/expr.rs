@@ -16,13 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+use crate::stmt::VarDeclType;
 use crate::ty::parse_ty_path;
-use crate::{Parser, stmt};
-use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
+use crate::{stmt, Parser};
+use rig_ast::expr::{
+    AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg,
+    FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr,
+    MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr,
+    UnaryExpr, UnaryOp,
+};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
-use crate::stmt::VarDeclType;
 
 pub fn parse_expr(parser: &mut Parser) -> Result<Expr, CodeError> {
     parse_typecast(parser)
@@ -518,11 +523,14 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
             // NOTE: in case labels are added in the future, this will need some changes to properly
             //       detect Struct expressions
             // I have no clue how to fix this with `if_chain`. I am so sorry for the mess you're about to see :(
-            if parser.peek().kind == TokenKind::LBrace && let Some(lookahead1) = parser.try_peek_next(1) {
+            if parser.peek().kind == TokenKind::LBrace
+                && let Some(lookahead1) = parser.try_peek_next(1)
+            {
                 match lookahead1.kind {
                     TokenKind::Ident(_) => {
                         if let Some(lookahead2) = parser.try_peek_next(2)
-                            && lookahead2.kind == TokenKind::Colon {
+                            && lookahead2.kind == TokenKind::Colon
+                        {
                             parser.advance(); // consume LBrace
 
                             let mut values = vec![];
@@ -570,15 +578,13 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                                 path: ty_path,
                                 values: vec![],
                             }),
-                            span: start_span.merge(parser.previous().span)
+                            span: start_span.merge(parser.previous().span),
                         })
                     }
-                    _ => {
-                        Ok(Expr {
-                            kind: ExprKind::Path(PathExpr { path: ty_path }),
-                            span: start_span.merge(end_span),
-                        })
-                    }
+                    _ => Ok(Expr {
+                        kind: ExprKind::Path(PathExpr { path: ty_path }),
+                        span: start_span.merge(end_span),
+                    }),
                 }
             } else {
                 Ok(Expr {
@@ -668,24 +674,22 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
             TokenKind::Trait => todo!(),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
-            _ => {
-                match parse_expr(parser) {
-                    Ok(expr) => {
-                        if parser.peek().kind != TokenKind::RBrace {
-                            parser.expect_recoverable(TokenKind::Semi, "semicolon");
-                        } else {
-                            return_expr = Some(expr);
-                            continue;
-                        }
-
-                        Ok(Stmt {
-                            span: expr.span,
-                            kind: Box::new(StmtKind::Expr(expr)),
-                        })
+            _ => match parse_expr(parser) {
+                Ok(expr) => {
+                    if parser.peek().kind != TokenKind::RBrace {
+                        parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                    } else {
+                        return_expr = Some(expr);
+                        continue;
                     }
-                    Err(e) => Err(e),
+
+                    Ok(Stmt {
+                        span: expr.span,
+                        kind: Box::new(StmtKind::Expr(expr)),
+                    })
                 }
-            }
+                Err(e) => Err(e),
+            },
         } {
             Ok(stmt) => stmts.push(stmt),
             Err(e) => {
@@ -702,7 +706,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             stmts,
             expr: return_expr,
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }
 
@@ -721,7 +725,6 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
 
         if parser.peek().kind == TokenKind::If {
             Some(parse_conditional(parser)?)
-
         } else {
             Some(parse_body(parser)?)
         }
@@ -735,6 +738,6 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
             body,
             else_,
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }

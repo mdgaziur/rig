@@ -20,7 +20,12 @@ use crate::expr::parse_expr;
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::{expr, Parser};
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause};
+use rig_ast::stmt::{
+    ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike,
+    EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt,
+    ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt,
+    UseStmtTreeNode, WhereClause,
+};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -98,7 +103,11 @@ pub fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
     }
 }
 
-pub fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Result<Stmt, CodeError> {
+pub fn parse_fn_decl(
+    parser: &mut Parser,
+    is_pub: bool,
+    inside_impl: bool,
+) -> Result<Stmt, CodeError> {
     let start_span = parser.current_span();
     parser.advance_without_eof()?;
 
@@ -169,7 +178,7 @@ pub fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Re
             mutable: Mutable::from(is_mut),
             moves: is_move,
             kind,
-            span: span.merge(parser.previous().span)
+            span: span.merge(parser.previous().span),
         });
 
         if parser.peek().kind != TokenKind::RParen {
@@ -182,7 +191,10 @@ pub fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Re
     let (ret_ty, ret_ty_span) = if parser.peek().kind == TokenKind::RightArrow {
         parser.advance_without_eof()?;
         let start_sp = parser.current_span();
-        (Some(parse_ty_path(parser, false)?), Some(start_sp.merge(parser.previous().span)))
+        (
+            Some(parse_ty_path(parser, false)?),
+            Some(start_sp.merge(parser.previous().span)),
+        )
     } else {
         (None, None)
     };
@@ -198,7 +210,7 @@ pub fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Re
             where_clauses.push(WhereClause {
                 name,
                 ty,
-                span: span.merge(parser.previous().span)
+                span: span.merge(parser.previous().span),
             });
 
             if parser.peek().kind == TokenKind::Comma {
@@ -225,16 +237,16 @@ pub fn parse_fn_decl(parser: &mut Parser, is_pub: bool, inside_impl: bool) -> Re
                 ret_ty: if let (Some(ret_ty), Some(ret_ty_span)) = (ret_ty, ret_ty_span) {
                     Some(FnRet {
                         ty: ret_ty,
-                        span: ret_ty_span
+                        span: ret_ty_span,
                     })
                 } else {
                     None
                 },
                 span: prototype_span,
             },
-            body
+            body,
         })),
-        span: start_span.merge(parser.previous().span)
+        span: start_span.merge(parser.previous().span),
     })
 }
 

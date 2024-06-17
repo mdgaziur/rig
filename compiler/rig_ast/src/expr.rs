@@ -1,8 +1,8 @@
 use crate::path::TyPath;
+use crate::stmt::Stmt;
 use crate::token::{NumberKind, TokenKind};
 use rig_intern::InternedString;
 use rig_span::Span;
-use crate::stmt::Stmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Expr {
