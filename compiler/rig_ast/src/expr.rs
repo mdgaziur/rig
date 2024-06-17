@@ -33,6 +33,7 @@ pub enum ExprKind {
     Path(PathExpr),
     TypeCast(TypeCastExpr),
     Body(Box<BodyExpr>),
+    Conditional(Box<ConditionalExpr>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -211,4 +212,12 @@ pub struct TypeCastExpr {
 pub struct BodyExpr {
     pub stmts: Vec<Stmt>,
     pub expr: Option<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ConditionalExpr {
+    pub condition: Expr,
+    pub body: Expr,
+    pub elif: Option<Expr>,
+    pub else_: Expr,
 }

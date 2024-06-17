@@ -25,7 +25,6 @@ pub enum StmtKind {
     Loop(LoopStmt),
     Const(ConstStmt),
     Let(LetStmt),
-    Conditional(ConditionalStmt),
     TyAlias(TyAliasStmt),
 }
 
@@ -255,14 +254,6 @@ impl From<bool> for Mutable {
             Mutable::No
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ConditionalStmt {
-    pub condition: Expr,
-    pub body: Expr,
-    pub elif: Option<Stmt>,
-    pub else_: Expr,
 }
 
 #[derive(Debug, Clone, PartialEq)]

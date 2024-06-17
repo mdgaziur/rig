@@ -11,7 +11,7 @@
 
 program: (decl | impl)*;
 decl: "pub"? (struct_decl | enum_decl | const_stmt | let_stmt | fn_decl | mod_decl | trait_decl);
-statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | conditional | fn_decl |
+statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | fn_decl |
             let_stmt | const_stmt | trait_decl | type_alias;
 
 enum_decl: "enum" ident generic_params_without_trait_bound? "{"
@@ -52,7 +52,6 @@ match_cond: "_"
             | str*["|"]!
             | ty_path "(" ident ")"
             | ident "if" expression ;
-conditional: "if" expression body ("else" (conditional | body)?)?;
 
 body: "{" statement* expression? "}";
 
@@ -76,9 +75,10 @@ power: unary ("**" unary)*;
 unary: ("!" | "-" | "~")? (unary | index);
 index: primary ("[" bin_number | hex_number | oct_number | dec_number "]")*;
 fn_call: primary (("(" ((ident ":")? expression)*[","] ")") | "." ident)*;
-primary: "(" expression ")" | ty_path | struct_expr | array_literal | hex_number | oct_number | bin_number | dec_number | true | false | str | body;
+primary: "(" expression ")" | ty_path | struct_expr | conditional | array_literal | hex_number | oct_number | bin_number | dec_number | true | false | str | body;
 array_literal: "[" expression*[","] "]";
 struct_expr: ty_path "{" (ident ":" expression)*[","] "}";
+conditional: "if" expression body ("else" (conditional | body)?)?;
 ty_path: ident*["::"] ("::" generic_params_without_trait_bound);
 ident: (UTF8_ALPHABET | "_" | "$")<>("_" | "$" | UTF8_ALPHANUM)<>*;
 bin_number: "0b"<>("0" | "1")<>!*;
