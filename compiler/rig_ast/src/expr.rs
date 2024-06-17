@@ -218,6 +218,5 @@ pub struct BodyExpr {
 pub struct ConditionalExpr {
     pub condition: Expr,
     pub body: Expr,
-    pub elif: Option<Expr>,
-    pub else_: Expr,
+    pub else_: Option<Expr>,
 }

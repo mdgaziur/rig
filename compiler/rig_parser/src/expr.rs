@@ -18,7 +18,7 @@
 
 use crate::ty::parse_ty_path;
 use crate::{Parser, stmt};
-use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
+use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
@@ -557,7 +557,11 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                             })
                         }
                     }
-                    TokenKind::RBrace => {
+                    // We won't allow instantiating structs with no fields anyway. However, we want
+                    // this to be parsed during parsing and reported later during the typechecking
+                    // phase. To prevent syntax error in cases like `if x {}`, we check if we're
+                    // parsing the condition of an if expr.
+                    TokenKind::RBrace if parser.parsing_condition.is_empty() => {
                         parser.advance(); // consume LBrace
                         parser.advance(); // consume RBrace
 
@@ -637,6 +641,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
             })
         }
         TokenKind::LBrace => parse_body(parser),
+        TokenKind::If => parse_conditional(parser),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
 }
@@ -660,7 +665,6 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::For => todo!(),
             TokenKind::Loop => todo!(),
             TokenKind::While => todo!(),
-            TokenKind::If => todo!(),
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
             TokenKind::Trait => todo!(),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
@@ -697,6 +701,39 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
         kind: ExprKind::Body(Box::new(BodyExpr {
             stmts,
             expr: return_expr,
+        })),
+        span: start_span.merge(parser.previous().span)
+    })
+}
+
+fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
+    let start_span = parser.current_span();
+    parser.advance_without_eof()?;
+
+    parser.parsing_condition.push(());
+    let condition = parse_expr(parser)?;
+    parser.parsing_condition.pop();
+
+    let body = parse_body(parser)?;
+
+    let else_ = if parser.peek().kind == TokenKind::Else {
+        parser.advance();
+
+        if parser.peek().kind == TokenKind::If {
+            Some(parse_conditional(parser)?)
+
+        } else {
+            Some(parse_body(parser)?)
+        }
+    } else {
+        None
+    };
+
+    Ok(Expr {
+        kind: ExprKind::Conditional(Box::new(ConditionalExpr {
+            condition,
+            body,
+            else_,
         })),
         span: start_span.merge(parser.previous().span)
     })
