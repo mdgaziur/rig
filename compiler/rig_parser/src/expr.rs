@@ -18,7 +18,7 @@
 
 use crate::ty::parse_ty_path;
 use crate::{Parser, stmt};
-use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, TypeCastExpr, UnaryExpr, UnaryOp};
+use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
@@ -515,10 +515,73 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
             let ty_path = parse_ty_path(parser, true)?;
             let end_span = parser.previous().span;
 
-            Ok(Expr {
-                kind: ExprKind::Path(PathExpr { path: ty_path }),
-                span: start_span.merge(end_span),
-            })
+            // NOTE: in case labels are added in the future, this will need some changes to properly
+            //       detect Struct expressions
+            // I have no clue how to fix this with `if_chain`. I am so sorry for the mess you're about to see :(
+            if parser.peek().kind == TokenKind::LBrace && let Some(lookahead1) = parser.try_peek_next(1) {
+                match lookahead1.kind {
+                    TokenKind::Ident(_) => {
+                        if let Some(lookahead2) = parser.try_peek_next(2)
+                            && lookahead2.kind == TokenKind::Colon {
+                            parser.advance(); // consume LBrace
+
+                            let mut values = vec![];
+                            while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+                                let (name, span) = parser.expect_ident()?;
+                                parser.expect_recoverable(TokenKind::Colon, "colon");
+
+                                let value = parse_expr(parser)?;
+                                values.push(StructExprProperty {
+                                    name,
+                                    value,
+                                    span: span.merge(parser.previous().span),
+                                });
+
+                                if parser.peek().kind != TokenKind::RBrace {
+                                    parser.expect_recoverable(TokenKind::Comma, "comma");
+                                }
+                            }
+                            parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+                            Ok(Expr {
+                                kind: ExprKind::Struct(StructExpr {
+                                    path: ty_path,
+                                    values,
+                                }),
+                                span: start_span.merge(parser.previous().span),
+                            })
+                        } else {
+                            Ok(Expr {
+                                kind: ExprKind::Path(PathExpr { path: ty_path }),
+                                span: start_span.merge(end_span),
+                            })
+                        }
+                    }
+                    TokenKind::RBrace => {
+                        parser.advance(); // consume LBrace
+                        parser.advance(); // consume RBrace
+
+                        Ok(Expr {
+                            kind: ExprKind::Struct(StructExpr {
+                                path: ty_path,
+                                values: vec![],
+                            }),
+                            span: start_span.merge(parser.previous().span)
+                        })
+                    }
+                    _ => {
+                        Ok(Expr {
+                            kind: ExprKind::Path(PathExpr { path: ty_path }),
+                            span: start_span.merge(end_span),
+                        })
+                    }
+                }
+            } else {
+                Ok(Expr {
+                    kind: ExprKind::Path(PathExpr { path: ty_path }),
+                    span: start_span.merge(end_span),
+                })
+            }
         }
         TokenKind::LBracket => {
             let start_span = parser.current_span();
