@@ -20,7 +20,7 @@ use crate::expr::{parse_body, parse_expr};
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::{expr, Parser};
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt};
+use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TraitStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -91,7 +91,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
             Ok(stmt) => items.push(stmt),
             Err(e) => {
                 parser.diags.push(e);
-                parser.synchronize();
+                parser.synchronize(&[]);
             }
         };
     }
@@ -121,18 +121,14 @@ pub fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
         TokenKind::Fn => parse_fn_decl(parser, is_pub, false),
         TokenKind::Mod => parse_mod_decl(parser, is_pub),
-        TokenKind::Trait => todo!(),
+        TokenKind::Trait => parse_trait(parser, is_pub),
         TokenKind::Use => parse_use(parser, is_pub),
         TokenKind::Type => parse_type_alias(parser, is_pub),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
 }
 
-pub fn parse_fn_decl(
-    parser: &mut Parser,
-    is_pub: bool,
-    inside_impl: bool,
-) -> Result<Stmt, CodeError> {
+pub fn parse_fn_prototype(parser: &mut Parser, inside_impl: bool) -> Result<FnPrototype, CodeError> {
     let start_span = parser.current_span();
     parser.advance_without_eof()?;
 
@@ -248,27 +244,38 @@ pub fn parse_fn_decl(
 
     let prototype_span = start_span.merge(parser.previous().span);
 
+    Ok(FnPrototype {
+        name,
+        generic_params,
+        takes_self,
+        args,
+        where_clauses,
+        ret_ty: if let (Some(ret_ty), Some(ret_ty_span)) = (ret_ty, ret_ty_span) {
+            Some(FnRet {
+                ty: ret_ty,
+                span: ret_ty_span,
+            })
+        } else {
+            None
+        },
+        span: prototype_span,
+    })
+}
+
+pub fn parse_fn_decl(
+    parser: &mut Parser,
+    is_pub: bool,
+    inside_impl: bool,
+) -> Result<Stmt, CodeError> {
+    let start_span = parser.current_span();
+
+    let prototype = parse_fn_prototype(parser, inside_impl)?;
     let body = expr::parse_body(parser)?;
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Fn(FnStmt {
             pub_: Pub::from(is_pub),
-            prototype: FnPrototype {
-                name,
-                generic_params,
-                takes_self,
-                args,
-                where_clauses,
-                ret_ty: if let (Some(ret_ty), Some(ret_ty_span)) = (ret_ty, ret_ty_span) {
-                    Some(FnRet {
-                        ty: ret_ty,
-                        span: ret_ty_span,
-                    })
-                } else {
-                    None
-                },
-                span: prototype_span,
-            },
+            prototype,
             body,
         })),
         span: start_span.merge(parser.previous().span),
@@ -306,7 +313,7 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
         match parse_program(parser) {
             Ok(stmt) => body.push(stmt),
             Err(e) => {
-                parser.synchronize();
+                parser.synchronize(&[]);
                 parser.diags.push(e)
             }
         }
@@ -620,6 +627,68 @@ pub fn parse_while(parser: &mut Parser) -> Result<Stmt, CodeError> {
         kind: Box::new(StmtKind::While(WhileStmt {
             cond,
             body
+        })),
+        span: start_sp.merge(parser.previous().span)
+    })
+}
+
+pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let generic_params = if parser.peek().kind == TokenKind::Less {
+        Some(parse_generic_params(parser, true)?)
+    } else {
+        None
+    };
+
+    let (name, _) = parser.expect_ident()?;
+    let inherits_from = if parser.peek().kind == TokenKind::Less {
+        parser.advance_without_eof()?;
+
+        Some(parse_ty_path(parser, false)?)
+    } else {
+        None
+    };
+
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+
+    let mut functions = vec![];
+    let mut type_aliases = vec![];
+
+    fn handle_err(parser: &mut Parser, error: CodeError) {
+        parser.diags.push(error);
+        parser.synchronize(&[TokenKind::Impl]);
+    }
+
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        match parser.peek().kind {
+            TokenKind::Type => match parse_type_alias(parser, true) {
+                Ok(alias) => type_aliases.push(match *alias.kind {
+                    StmtKind::TyAlias(alias) => alias,
+                    _ => unreachable!()
+                }),
+                Err(e) => handle_err(parser, e),
+            },
+            TokenKind::Fn => match parse_fn_prototype(parser, true) {
+                Ok(prototype) => functions.push(prototype),
+                Err(e) => handle_err(parser, e)
+            },
+            _ => handle_err(parser, CodeError::unexpected_token(parser.current_span()))
+        }
+        parser.expect_recoverable(TokenKind::Semi, "semicolon");
+    }
+
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Trait(TraitStmt {
+            pub_: Pub::from(is_pub),
+            generic_params,
+            name,
+            inherits_from,
+            type_aliases,
+            functions
         })),
         span: start_sp.merge(parser.previous().span)
     })

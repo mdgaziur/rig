@@ -152,9 +152,10 @@ pub struct ModStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitStmt {
     pub name: InternedString,
-    pub inherits_from: Option<Expr>,
-    pub generic_params: PathGenericSegment,
-    pub body: Vec<Stmt>,
+    pub inherits_from: Option<TyPath>,
+    pub generic_params: Option<PathGenericSegment>,
+    pub functions: Vec<FnPrototype>,
+    pub type_aliases: Vec<TyAliasStmt>,
     pub pub_: Pub,
 }
 

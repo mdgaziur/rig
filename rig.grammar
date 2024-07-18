@@ -30,7 +30,7 @@ fn_prototype: "fn" ident generic_params_with_trait_bound? "(" (("self" ("," fn_a
 fn_arg: (("anon" | "vararg") ident ":" "mut"? "*"? ty_path_non_expr);
 ty_path_non_expr: ident*["::"] ("::"? generic_params_without_trait_bound);
 
-trait_decl: "trait" ident ("<" ty_path_non_expr)? generic_params_with_trait_bound? "{" (type_alias | fn_decl)* "}";
+trait_decl: "trait" generic_params_with_trait_bound? ident ("<" ty_path_non_expr)? "{" (type_alias | fn_decl)* "}";
 let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)?;
 const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)?;
 type_alias: "type" ident generic_params_with_trait_bound "=" ty_path_non_expr ";";

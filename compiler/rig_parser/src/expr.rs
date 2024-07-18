@@ -693,7 +693,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::Loop => stmt::parse_loop(parser),
             TokenKind::While => stmt::parse_while(parser),
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
-            TokenKind::Trait => todo!(),
+            TokenKind::Trait => stmt::parse_trait(parser, false),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
             _ => match parse_expr(parser) {
                 Ok(expr) => {
@@ -716,7 +716,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             Ok(stmt) => stmts.push(stmt),
             Err(e) => {
                 parser.diags.push(e);
-                parser.synchronize();
+                parser.synchronize(&[]);
             }
         }
     }

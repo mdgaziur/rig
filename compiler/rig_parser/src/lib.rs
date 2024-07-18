@@ -49,7 +49,7 @@ impl<'p> Parser<'p> {
             match parse_program(self) {
                 Ok(stmt) => stmts.push(stmt),
                 Err(e) => {
-                    self.synchronize();
+                    self.synchronize(&[]);
                     self.diags.push(e)
                 }
             }
@@ -58,24 +58,26 @@ impl<'p> Parser<'p> {
         stmts
     }
 
-    pub fn synchronize(&mut self) {
+    pub fn synchronize(&mut self, ignore: &[TokenKind]) {
         while !self.is_eof() {
-            match self.peek().kind {
-                TokenKind::Semi => {
-                    self.advance();
-                    return;
+            if !ignore.contains(&self.peek().kind) {
+                match self.peek().kind {
+                    TokenKind::Semi => {
+                        self.advance();
+                        return;
+                    }
+                    TokenKind::Fn
+                    | TokenKind::Const
+                    | TokenKind::Let
+                    | TokenKind::Struct
+                    | TokenKind::Impl
+                    | TokenKind::Trait
+                    | TokenKind::Use
+                    | TokenKind::Mod => {
+                        return;
+                    }
+                    _ => (),
                 }
-                TokenKind::Fn
-                | TokenKind::Const
-                | TokenKind::Let
-                | TokenKind::Struct
-                | TokenKind::Impl
-                | TokenKind::Trait
-                | TokenKind::Use
-                | TokenKind::Mod => {
-                    return;
-                }
-                _ => (),
             }
             self.advance();
         }

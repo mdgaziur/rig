@@ -236,7 +236,7 @@ trait Human {
 }
 
 trait Asian < Human {
-    fn study_a_lot(self) -> !;
+    fn study_a_lot(self);
 }
 
 trait American < Human {
