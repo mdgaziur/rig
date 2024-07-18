@@ -675,15 +675,16 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::Impl => stmt::parse_impl(parser),
             TokenKind::Mod => stmt::parse_mod_decl(parser, false),
             TokenKind::Use => stmt::parse_use(parser, false),
-            TokenKind::For => todo!(),
-            TokenKind::Loop => todo!(),
+            TokenKind::For => stmt::parse_for(parser),
+            TokenKind::Loop => stmt::parse_loop(parser),
             TokenKind::While => todo!(),
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
             TokenKind::Trait => todo!(),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
             _ => match parse_expr(parser) {
                 Ok(expr) => {
-                    if parser.peek().kind != TokenKind::RBrace {
+                    if parser.peek().kind != TokenKind::RBrace
+                        && !matches!(expr.kind, ExprKind::Conditional(..)) {
                         parser.expect_recoverable(TokenKind::Semi, "semicolon");
                     } else {
                         return_expr = Some(expr);
