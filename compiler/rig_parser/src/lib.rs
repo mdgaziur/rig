@@ -17,7 +17,7 @@ use rig_span::Span;
 ///
 /// Functions that do the actual parsing generally have the following signature:
 ///
-///  `fn func(parser: &mut Parser) -> Result<..., CodeError>`
+///  `fn parse_XXX(parser: &mut Parser) -> Result<..., CodeError>`
 ///
 /// The functions try as much as possible to recover from user errors. When an unrecoverable error
 /// is encountered, the function returns a [`Result::Err`] containing a [`CodeError`] describing the
