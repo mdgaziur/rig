@@ -129,7 +129,7 @@ pub fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
 }
 
 pub fn parse_fn_prototype(parser: &mut Parser, inside_impl: bool) -> Result<FnPrototype, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
@@ -162,7 +162,7 @@ pub fn parse_fn_prototype(parser: &mut Parser, inside_impl: bool) -> Result<FnPr
 
     let mut args = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RParen {
-        let span = parser.peek().span;
+        let span = parser.current_span();
         let kind = match parser.peek().kind {
             TokenKind::Anon => FnArgKind::Anon,
             TokenKind::Vararg => FnArgKind::Vararg,
@@ -242,7 +242,7 @@ pub fn parse_fn_prototype(parser: &mut Parser, inside_impl: bool) -> Result<FnPr
         }
     }
 
-    let prototype_span = start_span.merge(parser.previous().span);
+    let prototype_span = start_sp.merge(parser.previous().span);
 
     Ok(FnPrototype {
         name,
@@ -267,7 +267,7 @@ pub fn parse_fn_decl(
     is_pub: bool,
     inside_impl: bool,
 ) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
 
     let prototype = parse_fn_prototype(parser, inside_impl)?;
     let body = expr::parse_body(parser)?;
@@ -278,12 +278,12 @@ pub fn parse_fn_decl(
             prototype,
             body,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
 pub fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.peek().span;
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     let (alias, _) = parser.expect_ident()?;
@@ -298,12 +298,12 @@ pub fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeE
             alias_name: alias,
             ty,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
 pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
@@ -327,7 +327,7 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
             body,
             name,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
@@ -363,7 +363,7 @@ fn parse_struct_or_enum_fields(
 }
 
 pub fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
@@ -380,12 +380,12 @@ pub fn parse_struct_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, Code
             generic_params,
             pub_: Pub::from(is_pub),
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
 pub fn parse_enum_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
@@ -435,7 +435,7 @@ pub fn parse_enum_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeEr
             generic_params,
             variants,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
@@ -450,10 +450,10 @@ pub fn parse_var_decl(
     is_pub: bool,
     decl_type: VarDeclType,
 ) -> Result<Stmt, CodeError> {
-    let start_span = if is_pub {
+    let start_sp = if is_pub {
         parser.previous().span
     } else {
-        parser.peek().span
+        parser.current_span()
     };
 
     parser.advance_without_eof()?;
@@ -492,10 +492,10 @@ pub fn parse_var_decl(
                 expr,
                 pub_: Pub::from(is_pub),
             })),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         }),
         VarDeclType::Const => {
-            let span = start_span.merge(parser.previous().span);
+            let span = start_sp.merge(parser.previous().span);
 
             if ty.is_none() {
                 parser.diags.push(CodeError::without_notes_and_hint(
@@ -527,14 +527,14 @@ pub fn parse_var_decl(
                     expr: expr.unwrap(),
                     pub_: Pub::from(is_pub),
                 })),
-                span: start_span.merge(parser.previous().span),
+                span: start_sp.merge(parser.previous().span),
             })
         }
     }
 }
 
 pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     fn parse_use_tree(parser: &mut Parser) -> Result<UseStmtTreeNode, CodeError> {
@@ -581,7 +581,7 @@ pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
             tree,
             pub_: Pub::from(is_pub),
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 

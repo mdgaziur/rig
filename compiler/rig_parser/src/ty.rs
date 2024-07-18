@@ -77,7 +77,7 @@ pub fn parse_generic_params(
     parser: &mut Parser,
     allow_trait_bound: bool,
 ) -> Result<PathGenericSegment, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut generic_params = vec![];
     parser.advance_without_eof()?;
 
@@ -136,7 +136,7 @@ pub fn parse_generic_params(
 
     Ok(PathGenericSegment {
         generic_params,
-        span: start_span.merge(end_span),
+        span: start_sp.merge(end_span),
     })
 }
 

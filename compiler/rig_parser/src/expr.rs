@@ -56,7 +56,7 @@ fn parse_typecast(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.peek().span;
+    let start_sp = parser.current_span();
     let mut expr = parse_range(parser)?;
 
     match parser.peek().kind {
@@ -66,7 +66,7 @@ fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
                     assignee: Box::new(expr),
                     value: Box::new(parse_expr(parser)?),
                 }),
-                span: start_span.merge(parser.previous().span),
+                span: start_sp.merge(parser.previous().span),
             }
         }
         TokenKind::Greater => {
@@ -89,7 +89,7 @@ fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
 
                 let rhs = parse_expr(parser)?;
                 expr = Expr {
-                    span: start_span.merge(rhs.span),
+                    span: start_sp.merge(rhs.span),
                     kind: ExprKind::Assign(AssignExpr {
                         assignee: Box::new(expr.clone()),
                         value: Box::new(Expr {
@@ -117,7 +117,7 @@ fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
             parser.advance_without_eof()?;
             let rhs = parse_expr(parser)?;
             expr = Expr {
-                span: start_span.merge(rhs.span),
+                span: start_sp.merge(rhs.span),
                 kind: ExprKind::Assign(AssignExpr {
                     assignee: Box::new(expr.clone()),
                     value: Box::new(Expr {
@@ -157,7 +157,7 @@ fn parse_range(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_logical_or(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_logical_and(parser)?;
 
     if parser.peek().kind == TokenKind::LogicalAnd {
@@ -169,7 +169,7 @@ fn parse_logical_or(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: LogicalOp::And,
                 rhs: Box::new(parse_logical_or(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -177,7 +177,7 @@ fn parse_logical_or(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_logical_and(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_equality(parser)?;
 
     if parser.peek().kind == TokenKind::LogicalAnd {
@@ -189,7 +189,7 @@ fn parse_logical_and(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: LogicalOp::And,
                 rhs: Box::new(parse_logical_and(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -197,7 +197,7 @@ fn parse_logical_and(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_equality(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_comparison(parser)?;
 
     if matches!(parser.peek().kind, TokenKind::Eq | TokenKind::NotEq) {
@@ -209,7 +209,7 @@ fn parse_equality(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: LogicalOp::from(parser.previous().kind),
                 rhs: Box::new(parse_equality(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -217,7 +217,7 @@ fn parse_equality(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_comparison(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_bitwise_or(parser)?;
 
     if parser.peek().kind == TokenKind::Greater
@@ -246,7 +246,7 @@ fn parse_comparison(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op,
                 rhs: Box::new(parse_comparison(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -254,7 +254,7 @@ fn parse_comparison(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_bitwise_or(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_bitwise_xor(parser)?;
 
     if parser.peek().kind == TokenKind::Or {
@@ -265,7 +265,7 @@ fn parse_bitwise_or(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_or(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -273,7 +273,7 @@ fn parse_bitwise_or(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_bitwise_xor(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_bitwise_and(parser)?;
 
     if parser.peek().kind == TokenKind::Xor {
@@ -284,7 +284,7 @@ fn parse_bitwise_xor(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_xor(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -292,7 +292,7 @@ fn parse_bitwise_xor(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_bitwise_and(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_bitwise_shift(parser)?;
 
     if parser.peek().kind == TokenKind::And {
@@ -303,7 +303,7 @@ fn parse_bitwise_and(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_bitwise_and(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -311,7 +311,7 @@ fn parse_bitwise_and(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_bitwise_shift(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_term(parser)?;
 
     if parser.peek().kind == TokenKind::Greater
@@ -345,7 +345,7 @@ fn parse_bitwise_shift(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op,
                 rhs: Box::new(parse_bitwise_shift(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -353,7 +353,7 @@ fn parse_bitwise_shift(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_term(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_factor(parser)?;
 
     if parser.peek().kind == TokenKind::Plus || parser.peek().kind == TokenKind::Minus {
@@ -364,7 +364,7 @@ fn parse_term(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_term(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -372,7 +372,7 @@ fn parse_term(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_factor(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_power(parser)?;
 
     if parser.peek().kind == TokenKind::Mul || parser.peek().kind == TokenKind::Div {
@@ -383,7 +383,7 @@ fn parse_factor(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::from(parser.previous().kind),
                 rhs: Box::new(parse_factor(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -391,7 +391,7 @@ fn parse_factor(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_power(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     let mut expr = parse_unary(parser)?;
 
     if parser.peek().kind == TokenKind::Power {
@@ -402,7 +402,7 @@ fn parse_power(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: BinOp::Power,
                 rhs: Box::new(parse_power(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         };
     }
 
@@ -410,7 +410,7 @@ fn parse_power(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 fn parse_unary(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
 
     if let Some(un_op) = match parser.peek().kind {
         TokenKind::Not => Some(UnaryOp::Not),
@@ -424,7 +424,7 @@ fn parse_unary(parser: &mut Parser) -> Result<Expr, CodeError> {
                 op: un_op,
                 value: Box::new(parse_unary(parser)?),
             }),
-            span: start_span.merge(parser.previous().span),
+            span: start_sp.merge(parser.previous().span),
         })
     } else {
         parse_index(parser)
@@ -532,7 +532,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
             Ok(expr)
         }
         TokenKind::Ident(_) => {
-            let start_span = parser.current_span();
+            let start_sp = parser.current_span();
             let ty_path = parse_ty_path(parser, true)?;
             let end_span = parser.previous().span;
 
@@ -572,12 +572,12 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                                     path: ty_path,
                                     values,
                                 }),
-                                span: start_span.merge(parser.previous().span),
+                                span: start_sp.merge(parser.previous().span),
                             })
                         } else {
                             Ok(Expr {
                                 kind: ExprKind::Path(PathExpr { path: ty_path }),
-                                span: start_span.merge(end_span),
+                                span: start_sp.merge(end_span),
                             })
                         }
                     }
@@ -594,23 +594,23 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                                 path: ty_path,
                                 values: vec![],
                             }),
-                            span: start_span.merge(parser.previous().span),
+                            span: start_sp.merge(parser.previous().span),
                         })
                     }
                     _ => Ok(Expr {
                         kind: ExprKind::Path(PathExpr { path: ty_path }),
-                        span: start_span.merge(end_span),
+                        span: start_sp.merge(end_span),
                     }),
                 }
             } else {
                 Ok(Expr {
                     kind: ExprKind::Path(PathExpr { path: ty_path }),
-                    span: start_span.merge(end_span),
+                    span: start_sp.merge(end_span),
                 })
             }
         }
         TokenKind::LBracket => {
-            let start_span = parser.current_span();
+            let start_sp = parser.current_span();
 
             let mut values = vec![];
             loop {
@@ -628,7 +628,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
 
             Ok(Expr {
                 kind: ExprKind::Array(values),
-                span: start_span.merge(end_span),
+                span: start_sp.merge(end_span),
             })
         }
         TokenKind::Number { number, kind } => {
@@ -669,7 +669,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
 }
 
 pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.peek().span;
+    let start_sp = parser.current_span();
     parser.expect_recoverable(TokenKind::LBrace, "left brace");
 
     let mut stmts = vec![];
@@ -728,12 +728,12 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             stmts,
             expr: return_expr,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
 fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
-    let start_span = parser.current_span();
+    let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
     parser.parsing_condition.push(());
@@ -760,6 +760,6 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
             body,
             else_,
         })),
-        span: start_span.merge(parser.previous().span),
+        span: start_sp.merge(parser.previous().span),
     })
 }
