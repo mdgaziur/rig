@@ -27,6 +27,7 @@ pub enum ExprKind {
     Unary(UnaryExpr),
     FnCall(FnCallExpr),
     MemberAccess(MemberAccessExpr),
+    Range(Box<RangeExpr>),
     Index(IndexExpr),
     Assign(AssignExpr),
     Struct(StructExpr),
@@ -219,4 +220,10 @@ pub struct ConditionalExpr {
     pub condition: Expr,
     pub body: Expr,
     pub else_: Option<Expr>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RangeExpr {
+    pub from: Expr,
+    pub to: Expr,
 }

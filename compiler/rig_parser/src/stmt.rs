@@ -16,16 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-use crate::expr::parse_expr;
+use crate::expr::{parse_body, parse_expr};
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::{expr, Parser};
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{
-    ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike,
-    EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt,
-    ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt,
-    UseStmtTreeNode, WhereClause,
-};
+use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -550,5 +545,52 @@ pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
             pub_: Pub::from(is_pub),
         })),
         span: start_span.merge(parser.previous().span),
+    })
+}
+
+pub fn parse_for(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let (ident, _) = parser.expect_ident()?;
+
+    parser.expect_recoverable(TokenKind::In, "in");
+
+    let iterable = parse_expr(parser)?;
+    let body = parse_body(parser)?;
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::For(ForStmt {
+            ident,
+            iterable,
+            body,
+        })),
+        span: start_sp.merge(parser.previous().span),
+    })
+}
+
+pub fn parse_loop(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.advance_without_eof()?;
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Expr(parse_body(parser)?)),
+        span: start_sp.merge(parser.previous().span),
+    })
+}
+
+pub fn parse_while(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let cond = parse_expr(parser)?;
+    let body = parse_body(parser)?;
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::While(WhileStmt {
+            cond,
+            body
+        })),
+        span: start_sp.merge(parser.previous().span)
     })
 }

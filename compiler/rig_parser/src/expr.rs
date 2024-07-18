@@ -19,12 +19,7 @@
 use crate::stmt::VarDeclType;
 use crate::ty::parse_ty_path;
 use crate::{stmt, Parser};
-use rig_ast::expr::{
-    AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg,
-    FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr,
-    MemberAccessProp, NumberExpr, PathExpr, StructExpr, StructExprProperty, TypeCastExpr,
-    UnaryExpr, UnaryOp,
-};
+use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, RangeExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
@@ -62,7 +57,7 @@ fn parse_typecast(parser: &mut Parser) -> Result<Expr, CodeError> {
 
 fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_span = parser.peek().span;
-    let mut expr = parse_logical_or(parser)?;
+    let mut expr = parse_range(parser)?;
 
     match parser.peek().kind {
         TokenKind::Assign => {
@@ -137,6 +132,25 @@ fn parse_assignment(parser: &mut Parser) -> Result<Expr, CodeError> {
             }
         }
         _ => (),
+    }
+
+    Ok(expr)
+}
+
+fn parse_range(parser: &mut Parser) -> Result<Expr, CodeError> {
+    let start_sp = parser.current_span();
+    let mut expr = parse_logical_or(parser)?;
+
+    if parser.peek().kind == TokenKind::RightArrow {
+        parser.advance_without_eof()?;
+
+        expr = Expr {
+            kind: ExprKind::Range(Box::new(RangeExpr {
+                from: expr,
+                to: parse_logical_or(parser)?,
+            })),
+            span: start_sp.merge(parser.previous().span)
+        }
     }
 
     Ok(expr)
@@ -677,7 +691,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::Use => stmt::parse_use(parser, false),
             TokenKind::For => stmt::parse_for(parser),
             TokenKind::Loop => stmt::parse_loop(parser),
-            TokenKind::While => todo!(),
+            TokenKind::While => stmt::parse_while(parser),
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
             TokenKind::Trait => todo!(),
             TokenKind::Type => stmt::parse_type_alias(parser, false),

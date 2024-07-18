@@ -61,6 +61,7 @@ generic_params_with_trait_bound: "<" (ident (":" ty_path)?)*[","] ">";
 expression: typecast;
 typecast: assignment ("as" ty_path)?;
 assignment: logical_or (("=" | "+=" | "-=" | "*=" | "/=" | ">>=" | "<<=" | "&=" | "|=" | "^=" | "**=" ) expression)?;
+range: logical_or ("->" logical_or);
 logical_or: logical_and ("||" logical_and)*;
 logical_and: equality ("&&" equality)*;
 equality: comparison (("==" | "!=") comparison)*;
