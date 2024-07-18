@@ -102,10 +102,7 @@ let x = 1;
 let y = 2;
 
 // eval'd at compile time
-const cx = 1 + 3 * 3.1416 - 6;
-
-// mutable global variable
-static is_cool = true;
+const cx: f32 = 1 + 3 * 3.1416 - 6;
 ```
 
 ### Functions
