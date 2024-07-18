@@ -44,27 +44,57 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
         None
     };
 
-    let trait_bound = if let TokenKind::Ident(_) = parser.peek().kind {
-        let res = Some(parse_ty_path(parser, false)?);
-        parser.expect_recoverable(TokenKind::For, "for");
-        res
+    let mut impl_for_span_start = parser.current_span();
+    let mut impl_for = parse_ty_path(parser, false)?;
+    let mut impl_for_span_end = parser.previous().span;
+    if matches!(impl_for.segments[0], PathSegment::Generic(_)) {
+        parser.diags.push(CodeError::unexpected_token_with_note(
+            impl_for_span_start.merge(impl_for_span_end),
+            "invalid type path for this position",
+        ));
+    }
+
+    let trait_bound = if parser.peek().kind == TokenKind::For {
+        parser.advance_without_eof()?;
+        let trait_bound = impl_for;
+
+        impl_for_span_start = parser.current_span();
+        impl_for = parse_ty_path(parser, false)?;
+        impl_for_span_end = parser.previous().span;
+        if matches!(impl_for.segments[0], PathSegment::Generic(_)) {
+            parser.diags.push(CodeError::unexpected_token_with_note(
+                impl_for_span_start.merge(impl_for_span_end),
+                "invalid type path for this position",
+            ));
+        }
+
+        Some(trait_bound)
     } else {
         None
     };
 
-    let impl_for_span_start = parser.current_span();
-    let impl_for = parse_ty_path(parser, false)?;
-    let impl_for_span_end = parser.previous().span;
-    if matches!(impl_for.segments[0], PathSegment::Generic(_)) {
-        parser.diags.push(CodeError::unexpected_token_with_note(
-            impl_for_span_start.merge(impl_for_span_end),
-            "expected a type path, not a list of generic params",
-        ));
-    }
-
     parser.expect_recoverable(TokenKind::LBrace, "{");
 
-    // TODO: parse the body
+    let mut items = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        let is_pub = parser.peek().kind == TokenKind::Pub;
+        if is_pub {
+            parser.advance_without_eof()?;
+        }
+
+        match match parser.peek().kind {
+            TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
+            TokenKind::Fn => parse_fn_decl(parser, is_pub, true),
+            TokenKind::Type => parse_type_alias(parser, is_pub),
+            _ => Err(CodeError::unexpected_token(parser.current_span()))
+        } {
+            Ok(stmt) => items.push(stmt),
+            Err(e) => {
+                parser.diags.push(e);
+                parser.synchronize();
+            }
+        };
+    }
 
     parser.expect_recoverable(TokenKind::RBrace, "}");
 
@@ -73,7 +103,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
             generic_params,
             trait_bound,
             impl_for,
-            items: vec![],
+            items,
         })),
         span: start_sp.merge(parser.previous().span),
     })

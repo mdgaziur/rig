@@ -64,7 +64,7 @@ fn main() {
         i += 1;
     }
     
-    for x in 0..10 {
+    for x in 0->10 {
         println("{}", x);
     }
 }
@@ -208,8 +208,8 @@ struct BasicStruct {
 impl BasicStruct {
     fn new(a: i32, b: String) -> Self {
         Self {
-            a,
-            b,
+            a: a,
+            b: b,
         }
     }
 }
@@ -221,7 +221,7 @@ struct StructWithGeneric<T> {
 impl<T: As<i32>> StructWithGeneric<T> {
     pub fn new(a: T) -> Self {
         Self {
-            a,
+            a: a,
         }
     }
 }
