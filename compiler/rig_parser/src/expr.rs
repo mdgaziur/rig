@@ -662,6 +662,11 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
     let mut return_expr = None;
 
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        if parser.peek().kind == TokenKind::Semi {
+            parser.advance();
+            continue;
+        }
+
         match match parser.peek().kind {
             TokenKind::Struct => stmt::parse_struct_decl(parser, false),
             TokenKind::Enum => stmt::parse_enum_decl(parser, false),
