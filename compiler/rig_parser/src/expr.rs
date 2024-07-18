@@ -207,17 +207,19 @@ fn parse_comparison(parser: &mut Parser) -> Result<Expr, CodeError> {
     let mut expr = parse_bitwise_or(parser)?;
 
     if parser.peek().kind == TokenKind::Greater
-        && matches!(
+        && !matches!(
             parser.try_peek_next(1),
             Some(&LexicalToken {
-                kind: TokenKind::Assign,
+                kind: TokenKind::Greater, // In case a "left shift assign" was found
                 ..
             })
         )
         || matches!(parser.peek().kind, TokenKind::Less | TokenKind::LessEq)
     {
         parser.advance_without_eof()?;
-        let op = if parser.peek().kind == TokenKind::Assign {
+        let op = if parser.peek().kind == TokenKind::Assign
+            && parser.previous().kind == TokenKind::Greater
+        {
             parser.advance_without_eof()?;
             LogicalOp::GreaterEq
         } else {
