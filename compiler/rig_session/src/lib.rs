@@ -17,7 +17,7 @@ impl Session {
         Self {
             modules: HashMap::new(),
             debug,
-            debug_pretty
+            debug_pretty,
         }
     }
 
@@ -28,10 +28,11 @@ impl Session {
     pub fn create_module(&mut self, file_path: &str) -> Result<(), String> {
         let file_content = match fs::read_to_string(file_path) {
             Ok(file_content) => file_content,
-            Err(e) => return Err(format!("Failed to open file at `{file_path}: {e}"))
+            Err(e) => return Err(format!("Failed to open file at `{file_path}: {e}")),
         };
 
-        self.modules.insert(intern!(file_path), Module::new(file_path, &file_content));
+        self.modules
+            .insert(intern!(file_path), Module::new(file_path, &file_content));
 
         Ok(())
     }

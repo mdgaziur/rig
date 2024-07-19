@@ -765,7 +765,7 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
         Ok(expr) => expr,
         Err(e) => {
             parser.do_not_parse_empty_struct -= 1;
-            return Err(e)
+            return Err(e);
         }
     };
     parser.do_not_parse_empty_struct -= 1;
@@ -803,7 +803,7 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
         Ok(expr) => expr,
         Err(e) => {
             parser.do_not_parse_empty_struct -= 1;
-            return Err(e)
+            return Err(e);
         }
     };
     parser.do_not_parse_empty_struct -= 1;

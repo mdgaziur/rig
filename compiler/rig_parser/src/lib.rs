@@ -126,10 +126,7 @@ impl<'p> Parser<'p> {
         }
     }
 
-    pub fn expect_recoverable(
-        &mut self,
-        token_kind: TokenKind,
-    ) -> (LexicalToken, bool) {
+    pub fn expect_recoverable(&mut self, token_kind: TokenKind) -> (LexicalToken, bool) {
         if let Err(e) = self.check_eof_with_expectation(token_kind.name()) {
             self.diags.push(e);
             return (self.peek(), false);
@@ -141,7 +138,7 @@ impl<'p> Parser<'p> {
             self.diags.push(CodeError::unexpected_token_with_hintpos(
                 tok.span,
                 format!("expected a `{}` after this", token_kind.name()),
-                self.previous().span
+                self.previous().span,
             ));
             (tok, false)
         } else {
@@ -276,7 +273,6 @@ pub fn parse_module(session: &mut Session, module_path: InternedString) -> bool 
     for diag in diags {
         diag.display(session);
     }
-
 
     had_error
 }

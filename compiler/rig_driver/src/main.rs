@@ -6,7 +6,7 @@ use parking_lot::lock_api::RwLock;
 use rig_errors::display_compiler_error;
 use rig_intern::{intern, Interner, INTERNER};
 
-use rig_parser::{parse_module};
+use rig_parser::parse_module;
 
 use rig_session::Session;
 use std::backtrace::Backtrace;

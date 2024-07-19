@@ -152,8 +152,7 @@ mod test {
     use rig_ast::token::LexicalToken;
     use rig_intern::{intern, Interner, INTERNER};
     use rig_lexer::Lexer;
-    
-    
+
     use rig_span::Span;
 
     #[test]
