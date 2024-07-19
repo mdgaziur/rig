@@ -95,14 +95,27 @@ impl CodeError {
             self.message.get(),
             self.pos,
             self.error_code.to_diag_kind(),
+            true,
         );
 
         for hint in self.hints.iter() {
-            display_diag(session, hint.message.get(), hint.pos, DiagKind::Hint);
+            display_diag(
+                session,
+                hint.message.get(),
+                hint.pos,
+                DiagKind::Hint,
+                self.pos != hint.pos,
+            );
         }
 
         for note in self.notes.iter() {
-            display_diag(session, note.message.get(), note.pos, DiagKind::Note);
+            display_diag(
+                session,
+                note.message.get(),
+                note.pos,
+                DiagKind::Note,
+                self.pos != note.pos,
+            );
         }
 
         if self.error_code != ErrorCode::Warning {
@@ -119,7 +132,13 @@ impl CodeError {
     }
 }
 
-fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
+fn display_diag(
+    session: &Session,
+    message: String,
+    pos: Span,
+    kind: DiagKind,
+    display_snippet: bool,
+) {
     let interner = INTERNER.get().unwrap().read();
     let FullLineSnippet {
         snippet,
@@ -134,6 +153,10 @@ fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
     let min_padding_before_bar = ending_line.to_string().len();
 
     eprintln!("{}: {}", kind, message.bold());
+    if !display_snippet {
+        return;
+    }
+
     eprintln!(
         "{}{} {}:{}:{}",
         " ".repeat(min_padding_before_bar),
