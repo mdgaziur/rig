@@ -57,11 +57,9 @@ fn main() -> ExitCode {
     if let Err(e) = session.create_module(&args.source) {
         display_compiler_error(e);
         ExitCode::FAILURE
+    } else if parse_module(&mut session, intern!(args.source)) {
+        ExitCode::FAILURE
     } else {
-        if parse_module(&mut session, intern!(args.source)) {
-            ExitCode::FAILURE
-        } else {
-            ExitCode::SUCCESS
-        }
+        ExitCode::SUCCESS
     }
 }
