@@ -145,7 +145,7 @@ pub struct TyAliasStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ModStmt {
     pub name: InternedString,
-    pub body: Vec<Stmt>,
+    pub body: Option<Vec<Stmt>>,
     pub pub_: Pub,
 }
 

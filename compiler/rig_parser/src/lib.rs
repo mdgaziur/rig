@@ -70,6 +70,7 @@ impl<'p> Parser<'p> {
                     }
                     TokenKind::Fn
                     | TokenKind::Const
+                    | TokenKind::Type
                     | TokenKind::Let
                     | TokenKind::Struct
                     | TokenKind::Impl

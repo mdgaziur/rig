@@ -96,7 +96,14 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
             Ok(stmt) => items.push(stmt),
             Err(e) => {
                 parser.diags.push(e);
-                parser.synchronize(&[]);
+                parser.synchronize(&[
+                    TokenKind::Let,
+                    TokenKind::Struct,
+                    TokenKind::Impl,
+                    TokenKind::Trait,
+                    TokenKind::Use,
+                    TokenKind::Mod,
+                ]);
             }
         };
     }
@@ -331,19 +338,26 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
-    parser.expect_recoverable(TokenKind::LBrace);
-    let mut body = vec![];
-    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
-        match parse_program(parser) {
-            Ok(stmt) => body.push(stmt),
-            Err(e) => {
-                parser.synchronize(&[]);
-                parser.diags.push(e)
+    let mut body = None;
+    if parser.peek().kind == TokenKind::LBrace {
+        parser.advance_without_eof()?;
+
+        let mut stmts = vec![];
+        while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+            match parse_program(parser) {
+                Ok(stmt) => stmts.push(stmt),
+                Err(e) => {
+                    parser.synchronize(&[]);
+                    parser.diags.push(e)
+                }
             }
         }
+        parser.expect_recoverable(TokenKind::RBrace);
+
+        body = Some(stmts);
+    } else {
+        parser.expect_recoverable(TokenKind::Semi);
     }
-    parser.expect_recoverable(TokenKind::RBrace);
-    parser.expect_recoverable(TokenKind::Semi);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Mod(ModStmt {

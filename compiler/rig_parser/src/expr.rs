@@ -633,24 +633,22 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
         }
         TokenKind::LBracket => {
             let start_sp = parser.current_span();
+            parser.advance_without_eof()?;
 
             let mut values = vec![];
-            loop {
+            while !parser.is_eof() && parser.peek().kind != TokenKind::RBracket {
                 values.push(parse_expr(parser)?);
 
-                if parser.peek().kind == TokenKind::Comma {
-                    parser.advance_without_eof()?;
-                } else {
-                    break;
+                if parser.peek().kind != TokenKind::RBracket {
+                    parser.expect_recoverable(TokenKind::Comma);
                 }
             }
 
-            let (token, _) = parser.expect_recoverable(TokenKind::RBracket);
-            let end_span = token.span;
+            parser.expect_recoverable(TokenKind::RBracket);
 
             Ok(Expr {
                 kind: ExprKind::Array(values),
-                span: start_sp.merge(end_span),
+                span: start_sp.merge(parser.previous().span),
             })
         }
         TokenKind::Number { number, kind } => {
