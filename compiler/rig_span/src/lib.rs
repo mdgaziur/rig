@@ -1,5 +1,4 @@
-use rig_intern::{InternedString, INTERNER};
-use rig_session::Session;
+use rig_intern::InternedString;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Span {
@@ -29,7 +28,7 @@ impl Span {
         self.lo >= rhs.lo && self.hi <= rhs.hi
     }
 
-    pub fn get_snippet(&self, sess: &Session) -> FullLineSnippet {
+    pub fn get_snippet(&self, file_content: &str) -> FullLineSnippet {
         fn get_line_for_offset(file_content: &str, offset: usize) -> (usize, usize, usize, usize) {
             let mut line = 1;
             let mut line_start = 0;
@@ -60,8 +59,6 @@ impl Span {
             (line, line_pos_offset, line_start, line_end)
         }
 
-        let interner = INTERNER.get().unwrap().read();
-        let file_content = interner.get_interned_string(sess.get_file_content(self.file_path));
         let (starting_line, starting_line_offset, starting_line_start_offset, _) =
             get_line_for_offset(file_content, self.lo);
         let (ending_line, ending_line_offset, _, ending_line_end_offset) =
@@ -94,20 +91,18 @@ pub struct FullLineSnippet {
 #[cfg(test)]
 mod test {
     use super::*;
-    use rig_intern::{intern, Interner};
+    use rig_intern::{intern, Interner, INTERNER};
 
     fn test_wrapper(file_path: &str, file_content: &str, lo: usize, hi: usize) -> FullLineSnippet {
         use parking_lot::RwLock;
 
         INTERNER.init_once(|| RwLock::new(Interner::new()));
-        let mut session = Session::new();
-        session.insert_file(file_path, file_content);
         Span {
             hi,
             lo,
             file_path: intern!(file_path),
         }
-        .get_snippet(&session)
+        .get_snippet(file_content)
     }
 
     #[test]

@@ -107,6 +107,7 @@ impl CodeError {
 }
 
 fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
+    let interner = INTERNER.get().unwrap().read();
     let FullLineSnippet {
         snippet,
         starting_line,
@@ -114,7 +115,7 @@ fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
         starting_line_offset,
         ending_line_offset,
         ..
-    } = pos.get_snippet(session);
+    } = pos.get_snippet(interner.get_interned_string(session.get_file_content(pos.file_path)));
     let snippet = snippet.replace('\t', "    ");
     let snippet_lines = snippet.trim_end().split('\n').collect::<Vec<&str>>();
     let min_padding_before_bar = ending_line.to_string().len();

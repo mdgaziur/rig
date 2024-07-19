@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 rig_intern = { path = "../rig_intern" }
-rig_session = { path = "../rig_session" }
 parking_lot = "0.12.1"

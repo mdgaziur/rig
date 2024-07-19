@@ -281,6 +281,7 @@ dependencies = [
 name = "rig_session"
 version = "0.1.0"
 dependencies = [
+ "rig_ast",
  "rig_intern",
 ]
 
@@ -290,7 +291,6 @@ version = "0.1.0"
 dependencies = [
  "parking_lot",
  "rig_intern",
- "rig_session",
 ]
 
 [[package]]
