@@ -607,7 +607,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                     // this to be parsed during parsing and reported later during the typechecking
                     // phase. To prevent syntax error in cases like `if x {}`, we check if we're
                     // parsing the condition of an if expr.
-                    TokenKind::RBrace if parser.parsing_condition == 0 => {
+                    TokenKind::RBrace if parser.do_not_parse_empty_struct == 0 => {
                         parser.advance(); // consume LBrace
                         parser.advance(); // consume RBrace
 
@@ -760,9 +760,15 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
-    parser.parsing_condition += 1;
-    let condition = parse_expr(parser)?;
-    parser.parsing_condition -= 1;
+    parser.do_not_parse_empty_struct += 1;
+    let condition = match parse_expr(parser) {
+        Ok(expr) => expr,
+        Err(e) => {
+            parser.do_not_parse_empty_struct -= 1;
+            return Err(e)
+        }
+    };
+    parser.do_not_parse_empty_struct -= 1;
 
     let body = parse_body(parser)?;
 
@@ -792,7 +798,15 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
-    let expr = parse_expr(parser)?;
+    parser.do_not_parse_empty_struct += 1;
+    let expr = match parse_expr(parser) {
+        Ok(expr) => expr,
+        Err(e) => {
+            parser.do_not_parse_empty_struct -= 1;
+            return Err(e)
+        }
+    };
+    parser.do_not_parse_empty_struct -= 1;
 
     parser.expect_recoverable(TokenKind::LBrace);
 

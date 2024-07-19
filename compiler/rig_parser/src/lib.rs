@@ -31,7 +31,7 @@ pub struct Parser<'p> {
     tokens: &'p [LexicalToken],
     diags: Vec<CodeError>,
     pos: usize,
-    parsing_condition: usize,
+    do_not_parse_empty_struct: usize,
 }
 
 impl<'p> Parser<'p> {
@@ -40,7 +40,7 @@ impl<'p> Parser<'p> {
             tokens,
             diags: vec![],
             pos: 0,
-            parsing_condition: 0,
+            do_not_parse_empty_struct: 0,
         }
     }
 
