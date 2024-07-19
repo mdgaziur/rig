@@ -4,7 +4,6 @@ use crate::module::Module;
 use rig_intern::{intern, InternedString};
 use std::collections::HashMap;
 use std::fs;
-use owo_colors::OwoColorize;
 
 #[derive(Debug, Clone)]
 pub struct Session {

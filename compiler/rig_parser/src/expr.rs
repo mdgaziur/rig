@@ -445,7 +445,7 @@ fn parse_index(parser: &mut Parser) -> Result<Expr, CodeError> {
     if parser.peek().kind == TokenKind::LBracket {
         parser.advance_without_eof()?;
         let index = Box::new(parse_expr(parser)?);
-        parser.expect_recoverable(TokenKind::RBracket, "right bracket");
+        parser.expect_recoverable(TokenKind::RBracket);
 
         indexable = Expr {
             kind: ExprKind::Index(IndexExpr {
@@ -503,7 +503,7 @@ fn parse_fn_call(parser: &mut Parser) -> Result<Expr, CodeError> {
         if parser.peek().kind == TokenKind::LParen {
             parser.advance();
             let args = args(parser)?;
-            parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+            parser.expect_recoverable(TokenKind::RParen);
 
             callable = Expr {
                 kind: ExprKind::FnCall(FnCallExpr {
@@ -535,7 +535,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
         TokenKind::LParen => {
             parser.advance_without_eof()?;
             let expr = parse_expr(parser)?;
-            parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+            parser.expect_recoverable(TokenKind::RParen);
             Ok(expr)
         }
         TokenKind::Ident(_) => {
@@ -584,10 +584,10 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                                 }
 
                                 if parser.peek().kind != TokenKind::RBrace {
-                                    parser.expect_recoverable(TokenKind::Comma, "comma");
+                                    parser.expect_recoverable(TokenKind::Comma);
                                 }
                             }
-                            parser.expect_recoverable(TokenKind::RBrace, "right brace");
+                            parser.expect_recoverable(TokenKind::RBrace);
 
                             Ok(Expr {
                                 kind: ExprKind::Struct(StructExpr {
@@ -645,7 +645,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                 }
             }
 
-            let (token, _) = parser.expect_recoverable(TokenKind::RBracket, "right bracket");
+            let (token, _) = parser.expect_recoverable(TokenKind::RBracket);
             let end_span = token.span;
 
             Ok(Expr {
@@ -693,7 +693,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
 
 pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_sp = parser.current_span();
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
 
     let mut stmts = vec![];
     let mut return_expr = None;
@@ -723,7 +723,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
                     if parser.peek().kind != TokenKind::RBrace
                         && !matches!(expr.kind, ExprKind::Conditional(..))
                     {
-                        parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                        parser.expect_recoverable(TokenKind::Semi);
                     } else {
                         return_expr = Some(expr);
                         continue;
@@ -745,7 +745,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
         }
     }
 
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(Expr {
         kind: ExprKind::Body(Box::new(BodyExpr {
@@ -794,7 +794,7 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
 
     let expr = parse_expr(parser)?;
 
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
 
     fn parse_match_arm_cond(
         parser: &mut Parser,
@@ -856,7 +856,7 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
                         parser.peek().kind,
                         TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
                     ) {
-                        parser.expect_recoverable(TokenKind::Or, "|");
+                        parser.expect_recoverable(TokenKind::Or);
                     }
                 }
 
@@ -889,7 +889,7 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
                         parser.peek().kind,
                         TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
                     ) {
-                        parser.expect_recoverable(TokenKind::Or, "|");
+                        parser.expect_recoverable(TokenKind::Or);
                     }
                 }
 
@@ -906,11 +906,11 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
                         conds.push(parse_match_arm_cond(parser, true)?);
 
                         if parser.peek().kind != TokenKind::RParen {
-                            parser.expect_recoverable(TokenKind::Comma, "comma");
+                            parser.expect_recoverable(TokenKind::Comma);
                         }
                     }
 
-                    parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+                    parser.expect_recoverable(TokenKind::RParen);
                     Some(conds)
                 } else {
                     None
@@ -929,14 +929,14 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
         let cond = parse_match_arm_cond(parser, false)?;
 
-        parser.expect_recoverable(TokenKind::FatRightArrow, "=>");
+        parser.expect_recoverable(TokenKind::FatRightArrow);
 
         let body = parse_body(parser)?;
 
         arms.push(MatchArm { cond, body });
     }
 
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(Expr {
         kind: ExprKind::Match(Box::new(MatchExpr { expr, arms })),

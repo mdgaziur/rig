@@ -78,7 +78,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
         None
     };
 
-    parser.expect_recoverable(TokenKind::LBrace, "{");
+    parser.expect_recoverable(TokenKind::LBrace);
 
     let mut items = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
@@ -101,7 +101,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
         };
     }
 
-    parser.expect_recoverable(TokenKind::RBrace, "}");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Impl(ImplStmt {
@@ -147,7 +147,7 @@ pub fn parse_fn_prototype(
         None
     };
 
-    parser.expect_recoverable(TokenKind::LParen, "left parenthesis");
+    parser.expect_recoverable(TokenKind::LParen);
 
     let takes_self = if parser.peek().raw == intern!("self") {
         parser.advance_without_eof()?;
@@ -183,7 +183,7 @@ pub fn parse_fn_prototype(
 
         let (name, _) = parser.expect_ident()?;
 
-        parser.expect_recoverable(TokenKind::Colon, "colon");
+        parser.expect_recoverable(TokenKind::Colon);
 
         let is_mut = if parser.peek().kind == TokenKind::Mut {
             parser.advance_without_eof()?;
@@ -211,11 +211,11 @@ pub fn parse_fn_prototype(
         });
 
         if parser.peek().kind != TokenKind::RParen {
-            parser.expect_recoverable(TokenKind::Comma, "comma");
+            parser.expect_recoverable(TokenKind::Comma);
         }
     }
 
-    parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+    parser.expect_recoverable(TokenKind::RParen);
 
     let (ret_ty, ret_ty_span) = if parser.peek().kind == TokenKind::RightArrow {
         parser.advance_without_eof()?;
@@ -233,7 +233,7 @@ pub fn parse_fn_prototype(
         parser.advance_without_eof()?;
         loop {
             let (name, span) = parser.expect_ident()?;
-            parser.expect_recoverable(TokenKind::Colon, "colon");
+            parser.expect_recoverable(TokenKind::Colon);
 
             let ty = parse_ty_path(parser, false)?;
             where_clauses.push(WhereClause {
@@ -291,7 +291,7 @@ pub fn parse_fn_decl(
                 pos: prototype.span,
             });
         }
-        parser.expect_recoverable(TokenKind::Semi, "semicolon");
+        parser.expect_recoverable(TokenKind::Semi);
 
         None
     };
@@ -311,10 +311,10 @@ pub fn parse_type_alias(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeE
     parser.advance_without_eof()?;
 
     let (alias, _) = parser.expect_ident()?;
-    parser.expect_recoverable(TokenKind::Assign, "equal");
+    parser.expect_recoverable(TokenKind::Assign);
     let ty = parse_ty_path(parser, false)?;
 
-    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+    parser.expect_recoverable(TokenKind::Semi);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::TyAlias(TyAliasStmt {
@@ -331,7 +331,7 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
     parser.advance_without_eof()?;
 
     let (name, _) = parser.expect_ident()?;
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
     let mut body = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
         match parse_program(parser) {
@@ -342,8 +342,8 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
             }
         }
     }
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
-    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+    parser.expect_recoverable(TokenKind::RBrace);
+    parser.expect_recoverable(TokenKind::Semi);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Mod(ModStmt {
@@ -358,7 +358,7 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
 pub fn parse_struct_or_enum_fields(
     parser: &mut Parser,
 ) -> Result<Vec<EnumVariantOrStructProperty>, CodeError> {
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
     let mut properties = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
         let field_span_start = parser.current_span();
@@ -369,7 +369,7 @@ pub fn parse_struct_or_enum_fields(
             false
         };
         let (property_name, _) = parser.expect_ident()?;
-        parser.expect_recoverable(TokenKind::Colon, "colon");
+        parser.expect_recoverable(TokenKind::Colon);
         let ty_path = parse_ty_path(parser, false)?;
         properties.push(EnumVariantOrStructProperty {
             name: property_name,
@@ -378,10 +378,10 @@ pub fn parse_struct_or_enum_fields(
             pub_: Pub::from(is_pub),
         });
         if parser.peek().kind != TokenKind::RBrace {
-            parser.expect_recoverable(TokenKind::Comma, "comma");
+            parser.expect_recoverable(TokenKind::Comma);
         }
     }
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(properties)
 }
@@ -419,7 +419,7 @@ pub fn parse_enum_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeEr
         None
     };
 
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
     let mut variants = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
         let (name, span) = parser.expect_ident()?;
@@ -443,14 +443,14 @@ pub fn parse_enum_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeEr
                 span,
                 ty,
             }));
-            parser.expect_recoverable(TokenKind::RParen, "right brace");
+            parser.expect_recoverable(TokenKind::RParen);
         }
 
         if parser.peek().kind != TokenKind::RBrace {
-            parser.expect_recoverable(TokenKind::Comma, "comma");
+            parser.expect_recoverable(TokenKind::Comma);
         }
     }
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Enum(EnumStmt {
@@ -505,7 +505,7 @@ pub fn parse_var_decl(
         None
     };
 
-    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+    parser.expect_recoverable(TokenKind::Semi);
 
     match decl_type {
         VarDeclType::Let => Ok(Stmt {
@@ -577,7 +577,7 @@ pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
             if matches!(parser.peek().kind, TokenKind::Ident(_)) {
                 root_node.children.push(parse_use_tree(parser)?);
             } else {
-                parser.expect_recoverable(TokenKind::LBrace, "left brace");
+                parser.expect_recoverable(TokenKind::LBrace);
 
                 loop {
                     root_node.children.push(parse_use_tree(parser)?);
@@ -589,7 +589,7 @@ pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
                     }
                 }
 
-                parser.expect_recoverable(TokenKind::RBrace, "right brace");
+                parser.expect_recoverable(TokenKind::RBrace);
             }
         }
 
@@ -598,7 +598,7 @@ pub fn parse_use(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> {
 
     let tree = parse_use_tree(parser)?;
 
-    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+    parser.expect_recoverable(TokenKind::Semi);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Use(UseStmt {
@@ -615,7 +615,7 @@ pub fn parse_for(parser: &mut Parser) -> Result<Stmt, CodeError> {
 
     let (ident, _) = parser.expect_ident()?;
 
-    parser.expect_recoverable(TokenKind::In, "in");
+    parser.expect_recoverable(TokenKind::In);
 
     let iterable = parse_expr(parser)?;
     let body = parse_body(parser)?;
@@ -672,7 +672,7 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
         None
     };
 
-    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+    parser.expect_recoverable(TokenKind::LBrace);
 
     let mut items = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
@@ -680,7 +680,7 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
             TokenKind::Type => {
                 let res = parse_type_alias(parser, true);
                 if res.is_ok() {
-                    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                    parser.expect_recoverable(TokenKind::Semi);
                 }
 
                 res
@@ -696,7 +696,7 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
         }
     }
 
-    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+    parser.expect_recoverable(TokenKind::RBrace);
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Trait(TraitStmt {

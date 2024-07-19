@@ -110,15 +110,15 @@ impl<'p> Parser<'p> {
         }
     }
 
-    pub fn expect(&mut self, token_kind: TokenKind, name: &str) -> Result<LexicalToken, CodeError> {
-        self.check_eof_with_expectation(name)?;
+    pub fn expect(&mut self, token_kind: TokenKind) -> Result<LexicalToken, CodeError> {
+        self.check_eof_with_expectation(token_kind.name())?;
 
         let tok = self.consume();
         if tok.kind != token_kind {
             self.go_back();
             Err(CodeError::unexpected_token_with_hint(
-                self.get_span_for_expectation(),
-                format!("expected a `{name}` after this"),
+                tok.span,
+                format!("expected a `{}` after this", token_kind.name()),
             ))
         } else {
             Ok(tok)
@@ -128,9 +128,8 @@ impl<'p> Parser<'p> {
     pub fn expect_recoverable(
         &mut self,
         token_kind: TokenKind,
-        name: &str,
     ) -> (LexicalToken, bool) {
-        if let Err(e) = self.check_eof_with_expectation(name) {
+        if let Err(e) = self.check_eof_with_expectation(token_kind.name()) {
             self.diags.push(e);
             return (self.peek(), false);
         }
@@ -140,7 +139,7 @@ impl<'p> Parser<'p> {
             self.go_back();
             self.diags.push(CodeError::unexpected_token_with_hint(
                 self.get_span_for_expectation(),
-                format!("expected a `{name}` after this"),
+                format!("expected a `{}` after this", token_kind.name()),
             ));
             (tok, false)
         } else {
@@ -159,7 +158,7 @@ impl<'p> Parser<'p> {
                 self.go_back();
                 Err(CodeError {
                     error_code: ErrorCode::SyntaxError,
-                    message: intern!("expected an identifier"),
+                    message: intern!("expected an identifier after this"),
                     pos: self.get_span_for_expectation(),
                     hints: vec![],
                     notes: vec![],
