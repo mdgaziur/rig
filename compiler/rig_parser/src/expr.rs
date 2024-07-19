@@ -25,6 +25,7 @@ use rig_ast::expr::{
     MatchArmCond, MatchArmEnumVariant, MatchExpr, MemberAccessExpr, MemberAccessProp, NumberExpr,
     PathExpr, RangeExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp,
 };
+use rig_ast::path::{PathIdentSegment, PathSegment, TyPath};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
@@ -551,21 +552,36 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                 match lookahead1.kind {
                     TokenKind::Ident(_) => {
                         if let Some(lookahead2) = parser.try_peek_next(2)
-                            && lookahead2.kind == TokenKind::Colon
+                            && matches!(lookahead2.kind, TokenKind::Colon | TokenKind::Comma)
                         {
                             parser.advance(); // consume LBrace
 
                             let mut values = vec![];
                             while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
                                 let (name, span) = parser.expect_ident()?;
-                                parser.expect_recoverable(TokenKind::Colon, "colon");
 
-                                let value = parse_expr(parser)?;
-                                values.push(StructExprProperty {
-                                    name,
-                                    value,
-                                    span: span.merge(parser.previous().span),
-                                });
+                                if parser.peek().kind == TokenKind::Colon {
+                                    parser.advance_without_eof()?;
+
+                                    let value = parse_expr(parser)?;
+                                    values.push(StructExprProperty {
+                                        name,
+                                        value,
+                                        span: span.merge(parser.previous().span),
+                                    });
+                                } else {
+                                    let value = Expr {
+                                        kind: ExprKind::Path(PathExpr {
+                                            path: TyPath {
+                                                segments: vec![PathSegment::Ident(
+                                                    PathIdentSegment { ident: name, span },
+                                                )],
+                                            },
+                                        }),
+                                        span,
+                                    };
+                                    values.push(StructExprProperty { name, value, span })
+                                }
 
                                 if parser.peek().kind != TokenKind::RBrace {
                                     parser.expect_recoverable(TokenKind::Comma, "comma");
@@ -591,7 +607,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
                     // this to be parsed during parsing and reported later during the typechecking
                     // phase. To prevent syntax error in cases like `if x {}`, we check if we're
                     // parsing the condition of an if expr.
-                    TokenKind::RBrace if parser.parsing_condition.is_empty() => {
+                    TokenKind::RBrace if parser.parsing_condition == 0 => {
                         parser.advance(); // consume LBrace
                         parser.advance(); // consume RBrace
 
@@ -744,9 +760,9 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
     let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
-    parser.parsing_condition.push(());
+    parser.parsing_condition += 1;
     let condition = parse_expr(parser)?;
-    parser.parsing_condition.pop();
+    parser.parsing_condition -= 1;
 
     let body = parse_body(parser)?;
 

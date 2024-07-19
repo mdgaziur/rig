@@ -163,15 +163,9 @@ match 123 {
     _ => {},
 }
 
-match Y {
-    S { f1, .. } => {},
-    S { f2: 23, .. } => {},
-    _ => {}
-}
-
 match Z {
     E(123, 456, 789) => {},
-    E(i, j, ..) => {}
+    E(i, j) => {}
 }
 ```
 
@@ -205,8 +199,8 @@ struct BasicStruct {
 impl BasicStruct {
     fn new(a: i32, b: String) -> Self {
         Self {
-            a: a,
-            b: b,
+            a,
+            b,
         }
     }
 }
@@ -218,7 +212,7 @@ struct StructWithGeneric<T> {
 impl<T: As<i32>> StructWithGeneric<T> {
     pub fn new(a: T) -> Self {
         Self {
-            a: a,
+            a,
         }
     }
 }
