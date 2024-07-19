@@ -10,6 +10,8 @@ rig_ast = { path = "../rig_ast" }
 rig_errors = { path = "../rig_errors" }
 rig_span = { path = "../rig_span" }
 rig_intern = { path = "../rig_intern" }
+rig_lexer = { path = "../rig_lexer" }
+rig_session = { path = "../rig_session" }
 
 [dev-dependencies]
 rig_lexer = { path = '../rig_lexer' }

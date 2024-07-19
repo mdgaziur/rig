@@ -1,40 +1,47 @@
-use rig_intern::{InternedString, INTERNER};
+pub mod module;
+
+use crate::module::Module;
+use rig_intern::{intern, InternedString};
 use std::collections::HashMap;
+use std::fs;
+use owo_colors::OwoColorize;
 
 #[derive(Debug, Clone)]
 pub struct Session {
-    processed_files: HashMap<InternedString, InternedString>,
+    modules: HashMap<InternedString, Module>,
+    pub debug: bool,
+    pub debug_pretty: bool,
 }
 
 impl Session {
-    pub fn new() -> Self {
+    pub fn new(debug: bool, debug_pretty: bool) -> Self {
         Self {
-            processed_files: HashMap::new(),
+            modules: HashMap::new(),
+            debug,
+            debug_pretty
         }
     }
 
     pub fn get_file_content(&self, file_path: InternedString) -> InternedString {
-        self.processed_files[&file_path]
+        self.modules[&file_path].file_content
     }
 
-    pub fn insert_file(
-        &mut self,
-        file_path: impl ToString,
-        file_content: impl ToString,
-    ) -> InternedString {
-        let mut interner = INTERNER.get().unwrap().write();
+    pub fn create_module(&mut self, file_path: &str) -> Result<(), String> {
+        let file_content = match fs::read_to_string(file_path) {
+            Ok(file_content) => file_content,
+            Err(e) => return Err(format!("Failed to open file at `{file_path}: {e}"))
+        };
 
-        let file_name_interned = interner.intern(file_path.to_string());
-        let file_content_interned = interner.intern(file_content.to_string().replace('\t', "    "));
-        self.processed_files
-            .insert(file_name_interned, file_content_interned);
+        self.modules.insert(intern!(file_path), Module::new(file_path, &file_content));
 
-        file_content_interned
+        Ok(())
     }
-}
 
-impl Default for Session {
-    fn default() -> Self {
-        Self::new()
+    pub fn get_module(&self, module_path: InternedString) -> Option<&Module> {
+        self.modules.get(&module_path)
+    }
+
+    pub fn get_module_mut(&mut self, module_path: InternedString) -> Option<&mut Module> {
+        self.modules.get_mut(&module_path)
     }
 }

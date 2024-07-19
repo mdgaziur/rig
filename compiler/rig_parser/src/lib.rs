@@ -9,6 +9,8 @@ use rig_ast::stmt::Stmt;
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::{CodeError, Diagnostic, ErrorCode};
 use rig_intern::{intern, InternedString};
+use rig_lexer::Lexer;
+use rig_session::Session;
 use rig_span::Span;
 
 /// Recursive descendant parser for RIG programming language.
@@ -222,8 +224,58 @@ impl<'p> Parser<'p> {
     pub fn is_eof(&self) -> bool {
         self.peek().kind == TokenKind::Eof
     }
+}
 
-    pub fn get_diags(self) -> Vec<CodeError> {
-        self.diags
+pub fn parse_module(session: &mut Session, module_path: InternedString) -> bool {
+    let mut had_error = false;
+    let debug = session.debug;
+    let debug_pretty = session.debug_pretty;
+    let module = session.get_module_mut(module_path).unwrap();
+    let file_path = module.file_path;
+    let file_content = module.file_content.get();
+
+    let lex_res = Lexer::new(file_content.chars(), file_path).lex();
+    let mut lexical_tokens = vec![];
+
+    let mut diags = vec![];
+    for res in lex_res {
+        match res {
+            Ok(token) => lexical_tokens.push(token),
+            Err(e) => {
+                had_error = true;
+                diags.push(e);
+            }
+        }
     }
+
+    let mut parser = Parser::new(&lexical_tokens);
+    let ast = parser.parse();
+    if debug {
+        eprintln!(
+            "\x1b[033m\x1b[1m[Start Debug]\n\
+        File: {}:{}:{}\n\
+        Generated AST from source file `{file_path}`:",
+            file!(),
+            line!(),
+            column!()
+        );
+
+        if debug_pretty {
+            eprintln!("{:#?}\n", ast);
+        } else {
+            eprintln!("{:?\n}", ast);
+        }
+
+        eprintln!("[End Debug]\x1b[0m");
+    }
+    module.ast = ast;
+
+    had_error = had_error || !parser.diags.is_empty();
+    diags.extend(parser.diags);
+    for diag in diags {
+        diag.display(session);
+    }
+
+
+    had_error
 }

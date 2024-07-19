@@ -5,12 +5,14 @@ use clap::Parser as ClapParser;
 use parking_lot::lock_api::RwLock;
 use rig_errors::display_compiler_error;
 use rig_intern::{intern, Interner, INTERNER};
-use rig_lexer::Lexer;
-use rig_parser::Parser;
+
+use rig_parser::{parse_module};
+
 use rig_session::Session;
 use std::backtrace::Backtrace;
-use std::fs;
+
 use std::panic::{set_backtrace_style, set_hook, BacktraceStyle};
+use std::process::ExitCode;
 
 #[derive(ClapParser)]
 struct Args {
@@ -26,7 +28,7 @@ struct Args {
     debug_pretty: bool,
 }
 
-fn main() {
+fn main() -> ExitCode {
     INTERNER.init_once(|| RwLock::new(Interner::new()));
 
     set_backtrace_style(BacktraceStyle::Full);
@@ -51,47 +53,15 @@ fn main() {
 
     let args = Args::parse();
 
-    let file_path = &args.source;
-    let file_content = fs::read_to_string(file_path).unwrap();
-    let mut session = Session::new();
-    session.insert_file(file_path, file_content);
-    let file_content_temp = session.get_file_content(intern!(file_path)).get();
-
-    let mut lexer = Lexer::new(file_content_temp.chars(), intern!(file_path));
-    let lexer_results = lexer.lex();
-    let mut tokens = vec![];
-    for lexer_result in lexer_results {
-        if let Ok(tok) = lexer_result {
-            tokens.push(tok);
-        }
-        if let Err(err) = lexer_result {
-            err.display(&session);
-        }
-    }
-
-    let mut parser = Parser::new(&tokens);
-    let ast = parser.parse();
-
-    if args.debug {
-        eprintln!(
-            "\x1b[033m\x1b[1m[Start Debug]\n\
-        File: {}:{}:{}\n\
-        Generated AST from source file `{file_path}`:",
-            file!(),
-            line!(),
-            column!()
-        );
-
-        if args.debug_pretty {
-            eprintln!("{:#?}\n", &ast);
+    let mut session = Session::new(args.debug, args.debug_pretty);
+    if let Err(e) = session.create_module(&args.source) {
+        display_compiler_error(e);
+        ExitCode::FAILURE
+    } else {
+        if parse_module(&mut session, intern!(args.source)) {
+            ExitCode::FAILURE
         } else {
-            eprintln!("{:?\n}", &ast);
+            ExitCode::SUCCESS
         }
-
-        eprintln!("[End Debug]\x1b[0m");
-    }
-
-    for diag in parser.get_diags() {
-        diag.display(&session);
     }
 }

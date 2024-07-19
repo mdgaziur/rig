@@ -152,7 +152,8 @@ mod test {
     use rig_ast::token::LexicalToken;
     use rig_intern::{intern, Interner, INTERNER};
     use rig_lexer::Lexer;
-    use rig_session::Session;
+    
+    
     use rig_span::Span;
 
     #[test]
@@ -326,12 +327,7 @@ mod test {
             .map(|v| v.clone().unwrap())
             .collect::<Vec<LexicalToken>>();
         let mut parser = Parser::new(&tokens);
-        let mut session = Session::new();
         let res = parse_generic_params(&mut parser, true).unwrap();
-        session.insert_file("<test>", source);
-        for diag in parser.get_diags() {
-            diag.display(&session);
-        }
         assert_eq!(
             res,
             PathGenericSegment {
