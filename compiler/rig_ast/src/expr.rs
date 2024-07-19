@@ -35,6 +35,7 @@ pub enum ExprKind {
     TypeCast(TypeCastExpr),
     Body(Box<BodyExpr>),
     Conditional(Box<ConditionalExpr>),
+    Match(Box<MatchExpr>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -226,4 +227,40 @@ pub struct ConditionalExpr {
 pub struct RangeExpr {
     pub from: Expr,
     pub to: Expr,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchExpr {
+    pub expr: Expr,
+    pub arms: Vec<MatchArm>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchArm {
+    pub cond: MatchArmCond,
+    pub body: Expr,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MatchArmCond {
+    WildCard,
+    Boolean(bool),
+    MatchNumbers(Vec<NumberExpr>),
+    MatchStrs(Vec<InternedString>),
+    EnumVariant(MatchArmEnumVariant),
+    BindIf(MatchArmBindIf),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchArmEnumVariant {
+    pub ty_path: TyPath,
+    pub cond: Option<Vec<MatchArmCond>>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchArmBindIf {
+    pub binding: InternedString,
+    pub cond: Expr,
+    pub span: Span,
 }

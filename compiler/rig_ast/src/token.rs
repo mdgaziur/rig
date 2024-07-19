@@ -51,6 +51,7 @@ pub enum TokenKind {
     In,
     Mod,
     As,
+    Match,
 
     LParen,
     RParen,
@@ -93,4 +94,5 @@ pub enum TokenKind {
     Dot,
     Eof,
     RightArrow,
+    FatRightArrow,
 }

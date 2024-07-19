@@ -84,6 +84,14 @@ impl<'l> Lexer<'l> {
                         span: Span::new(self.pos - 1, self.pos, self.file_path),
                     })
                 }
+                Some('>') => {
+                    self.advance();
+                    Ok(LexicalToken {
+                        kind: TokenKind::FatRightArrow,
+                        raw: intern!("=>"),
+                        span: Span::new(self.pos - 1, self.pos, self.file_path),
+                    })
+                }
                 _ => Ok(LexicalToken {
                     kind: TokenKind::Assign,
                     raw: intern!(self.current()),
@@ -510,6 +518,7 @@ impl<'l> Lexer<'l> {
                     "in" => TokenKind::In,
                     "mod" => TokenKind::Mod,
                     "as" => TokenKind::As,
+                    "match" => TokenKind::Match,
                     _ => TokenKind::Ident(intern!(ident)),
                 };
 

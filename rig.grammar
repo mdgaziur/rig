@@ -50,7 +50,8 @@ match_cond: "_"
             | false
             | (bin_number | oct_number | hex_number | dec_number)*["|"]!
             | str*["|"]!
-            | ty_path "(" ident ")"
+            /// FIXME: match_cond inside a pattern should not allow `if`
+            | ty_path "(" match_cond*[","] ")"
             | ident "if" expression ;
 
 body: "{" statement* expression? "}";

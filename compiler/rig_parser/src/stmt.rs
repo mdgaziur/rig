@@ -20,7 +20,12 @@ use crate::expr::{parse_body, parse_expr};
 use crate::ty::{parse_generic_params, parse_ty_path};
 use crate::Parser;
 use rig_ast::path::PathSegment;
-use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TraitStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt};
+use rig_ast::stmt::{
+    ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike,
+    EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt,
+    ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TraitStmt,
+    TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt,
+};
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
@@ -86,7 +91,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
             TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
             TokenKind::Fn => parse_fn_decl(parser, is_pub, true, true),
             TokenKind::Type => parse_type_alias(parser, is_pub),
-            _ => Err(CodeError::unexpected_token(parser.current_span()))
+            _ => Err(CodeError::unexpected_token(parser.current_span())),
         } {
             Ok(stmt) => items.push(stmt),
             Err(e) => {
@@ -128,7 +133,10 @@ pub fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
     }
 }
 
-pub fn parse_fn_prototype(parser: &mut Parser, inside_impl: bool) -> Result<FnPrototype, CodeError> {
+pub fn parse_fn_prototype(
+    parser: &mut Parser,
+    inside_impl: bool,
+) -> Result<FnPrototype, CodeError> {
     let start_sp = parser.current_span();
     parser.advance_without_eof()?;
 
@@ -280,7 +288,7 @@ pub fn parse_fn_decl(
                 message: intern!("function in this position must have a body"),
                 hints: vec![],
                 notes: vec![],
-                pos: prototype.span
+                pos: prototype.span,
             });
         }
         parser.expect_recoverable(TokenKind::Semi, "semicolon");
@@ -347,7 +355,7 @@ pub fn parse_mod_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeErr
     })
 }
 
-fn parse_struct_or_enum_fields(
+pub fn parse_struct_or_enum_fields(
     parser: &mut Parser,
 ) -> Result<Vec<EnumVariantOrStructProperty>, CodeError> {
     parser.expect_recoverable(TokenKind::LBrace, "left brace");
@@ -640,11 +648,8 @@ pub fn parse_while(parser: &mut Parser) -> Result<Stmt, CodeError> {
     let body = parse_body(parser)?;
 
     Ok(Stmt {
-        kind: Box::new(StmtKind::While(WhileStmt {
-            cond,
-            body
-        })),
-        span: start_sp.merge(parser.previous().span)
+        kind: Box::new(StmtKind::While(WhileStmt { cond, body })),
+        span: start_sp.merge(parser.previous().span),
     })
 }
 
@@ -674,14 +679,14 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
         match match parser.peek().kind {
             TokenKind::Type => {
                 let res = parse_type_alias(parser, true);
-                if let Ok(_) = res {
+                if res.is_ok() {
                     parser.expect_recoverable(TokenKind::Semi, "semicolon");
                 }
 
                 res
-            },
+            }
             TokenKind::Fn => parse_fn_decl(parser, true, true, false),
-            _ => Err(CodeError::unexpected_token(parser.current_span()))
+            _ => Err(CodeError::unexpected_token(parser.current_span())),
         } {
             Ok(stmt) => items.push(stmt),
             Err(e) => {
@@ -701,6 +706,6 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
             inherits_from,
             items,
         })),
-        span: start_sp.merge(parser.previous().span)
+        span: start_sp.merge(parser.previous().span),
     })
 }

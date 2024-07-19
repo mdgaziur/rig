@@ -19,10 +19,16 @@
 use crate::stmt::VarDeclType;
 use crate::ty::parse_ty_path;
 use crate::{stmt, Parser};
-use rig_ast::expr::{AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg, FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MemberAccessExpr, MemberAccessProp, NumberExpr, PathExpr, RangeExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp};
+use rig_ast::expr::{
+    AssignExpr, BinExpr, BinOp, BodyExpr, ConditionalExpr, Expr, ExprKind, FnCallArg,
+    FnCallArgKind, FnCallExpr, IndexExpr, LogicalExpr, LogicalOp, MatchArm, MatchArmBindIf,
+    MatchArmCond, MatchArmEnumVariant, MatchExpr, MemberAccessExpr, MemberAccessProp, NumberExpr,
+    PathExpr, RangeExpr, StructExpr, StructExprProperty, TypeCastExpr, UnaryExpr, UnaryOp,
+};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::CodeError;
+use rig_intern::intern;
 
 pub fn parse_expr(parser: &mut Parser) -> Result<Expr, CodeError> {
     parse_typecast(parser)
@@ -149,7 +155,7 @@ fn parse_range(parser: &mut Parser) -> Result<Expr, CodeError> {
                 from: expr,
                 to: parse_logical_or(parser)?,
             })),
-            span: start_sp.merge(parser.previous().span)
+            span: start_sp.merge(parser.previous().span),
         }
     }
 
@@ -664,6 +670,7 @@ fn parse_primary(parser: &mut Parser) -> Result<Expr, CodeError> {
         }
         TokenKind::LBrace => parse_body(parser),
         TokenKind::If => parse_conditional(parser),
+        TokenKind::Match => parse_match(parser),
         _ => Err(CodeError::unexpected_token(parser.current_span())),
     }
 }
@@ -698,7 +705,8 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             _ => match parse_expr(parser) {
                 Ok(expr) => {
                     if parser.peek().kind != TokenKind::RBrace
-                        && !matches!(expr.kind, ExprKind::Conditional(..)) {
+                        && !matches!(expr.kind, ExprKind::Conditional(..))
+                    {
                         parser.expect_recoverable(TokenKind::Semi, "semicolon");
                     } else {
                         return_expr = Some(expr);
@@ -760,6 +768,162 @@ fn parse_conditional(parser: &mut Parser) -> Result<Expr, CodeError> {
             body,
             else_,
         })),
+        span: start_sp.merge(parser.previous().span),
+    })
+}
+
+pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
+    let start_sp = parser.current_span();
+    parser.advance_without_eof()?;
+
+    let expr = parse_expr(parser)?;
+
+    parser.expect_recoverable(TokenKind::LBrace, "left brace");
+
+    fn parse_match_arm_cond(
+        parser: &mut Parser,
+        inside_pattern: bool,
+    ) -> Result<MatchArmCond, CodeError> {
+        let start_sp = parser.current_span();
+
+        match parser.peek().kind {
+            TokenKind::Ident(_)
+                if matches!(
+                    parser.try_peek_next(1),
+                    Some(LexicalToken {
+                        kind: TokenKind::If,
+                        ..
+                    })
+                ) && !inside_pattern =>
+            {
+                let (binding, _) = parser.expect_ident()?;
+                parser.advance(); // consume 'if'
+
+                let cond = parse_expr(parser)?;
+                Ok(MatchArmCond::BindIf(MatchArmBindIf {
+                    binding,
+                    cond,
+                    span: start_sp.merge(parser.previous().span),
+                }))
+            }
+            TokenKind::Ident(ident) if ident == intern!("_") => {
+                parser.advance_without_eof()?;
+                Ok(MatchArmCond::WildCard)
+            }
+            TokenKind::True | TokenKind::False => {
+                parser.advance_without_eof()?;
+                Ok(MatchArmCond::Boolean(
+                    parser.previous().kind == TokenKind::True,
+                ))
+            }
+            TokenKind::String(_) => {
+                let mut strings = vec![];
+
+                while !parser.is_eof()
+                    && !matches!(
+                        parser.peek().kind,
+                        TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
+                    )
+                {
+                    match parser.peek().kind {
+                        TokenKind::String(string) => strings.push(string),
+                        _ => {
+                            parser.diags.push(CodeError::unexpected_token_with_note(
+                                parser.current_span(),
+                                "expected a string literal here",
+                            ));
+                        }
+                    }
+                    parser.advance_without_eof()?;
+
+                    if !matches!(
+                        parser.peek().kind,
+                        TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
+                    ) {
+                        parser.expect_recoverable(TokenKind::Or, "|");
+                    }
+                }
+
+                Ok(MatchArmCond::MatchStrs(strings))
+            }
+            TokenKind::Number { .. } => {
+                let mut numbers = vec![];
+
+                while !parser.is_eof()
+                    && !matches!(
+                        parser.peek().kind,
+                        TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
+                    )
+                {
+                    match parser.peek().kind {
+                        TokenKind::Number { number, kind } => numbers.push(NumberExpr {
+                            value: number,
+                            kind,
+                        }),
+                        _ => {
+                            parser.diags.push(CodeError::unexpected_token_with_note(
+                                parser.current_span(),
+                                "expected a number here",
+                            ));
+                        }
+                    }
+                    parser.advance_without_eof()?;
+
+                    if !matches!(
+                        parser.peek().kind,
+                        TokenKind::FatRightArrow | TokenKind::RParen | TokenKind::Comma
+                    ) {
+                        parser.expect_recoverable(TokenKind::Or, "|");
+                    }
+                }
+
+                Ok(MatchArmCond::MatchNumbers(numbers))
+            }
+            _ => {
+                let ty_path = parse_ty_path(parser, false)?;
+
+                let cond = if parser.peek().kind == TokenKind::LParen {
+                    parser.advance_without_eof()?;
+
+                    let mut conds = vec![];
+                    while !parser.is_eof() && parser.peek().kind != TokenKind::RParen {
+                        conds.push(parse_match_arm_cond(parser, true)?);
+
+                        if parser.peek().kind != TokenKind::RParen {
+                            parser.expect_recoverable(TokenKind::Comma, "comma");
+                        }
+                    }
+
+                    parser.expect_recoverable(TokenKind::RParen, "right parenthesis");
+                    Some(conds)
+                } else {
+                    None
+                };
+
+                Ok(MatchArmCond::EnumVariant(MatchArmEnumVariant {
+                    ty_path,
+                    cond,
+                    span: start_sp.merge(parser.previous().span),
+                }))
+            }
+        }
+    }
+
+    let mut arms = vec![];
+    while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
+        let cond = parse_match_arm_cond(parser, false)?;
+
+        parser.expect_recoverable(TokenKind::FatRightArrow, "=>");
+
+        let body = parse_body(parser)?;
+
+        arms.push(MatchArm { cond, body });
+    }
+
+    parser.expect_recoverable(TokenKind::RBrace, "right brace");
+
+    Ok(Expr {
+        kind: ExprKind::Match(Box::new(MatchExpr { expr, arms })),
         span: start_sp.merge(parser.previous().span),
     })
 }

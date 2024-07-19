@@ -190,40 +190,6 @@ pub struct LoopStmt {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct MatchStmt {
-    pub expr: Expr,
-    pub arms: Vec<MatchArm>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchArm {
-    pub cond: MatchArmCond,
-    pub body: Expr,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum MatchArmCond {
-    WildCard,
-    MatchExprs(Vec<Expr>),
-    EnumVariant(EnumVariant),
-    BindIf(MatchArmBindIf),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchArmEnumVariant {
-    pub path: Expr,
-    pub value: Expr,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct MatchArmBindIf {
-    pub binding: InternedString,
-    pub cond: Expr,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct ConstStmt {
     pub name: InternedString,
     pub ty: TyPath,
