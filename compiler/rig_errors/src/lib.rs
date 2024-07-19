@@ -6,7 +6,7 @@ use rig_span::{FullLineSnippet, Span};
 use std::env::args;
 use std::fmt::Display;
 
-pub fn display_compiler_error(message: impl ToString + std::fmt::Display) {
+pub fn display_compiler_error(message: impl ToString + Display) {
     eprintln!("{}", message.red());
 }
 
