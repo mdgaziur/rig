@@ -181,6 +181,7 @@ pub enum ErrorCode {
     SyntaxError,
     Warning,
     MissingFunctionBody,
+    EmptyMatchExpression,
 }
 
 impl ErrorCode {
@@ -189,6 +190,7 @@ impl ErrorCode {
             ErrorCode::SyntaxError => "E0001",
             ErrorCode::Warning => "Warning",
             ErrorCode::MissingFunctionBody => "E0002",
+            ErrorCode::EmptyMatchExpression => "E0003",
         }
     }
 
@@ -197,6 +199,7 @@ impl ErrorCode {
             ErrorCode::SyntaxError => DiagKind::Error("0001".to_string()),
             ErrorCode::Warning => DiagKind::Warning,
             ErrorCode::MissingFunctionBody => DiagKind::Error("0002".to_string()),
+            ErrorCode::EmptyMatchExpression => DiagKind::Error("0003".to_string()),
         }
     }
 }

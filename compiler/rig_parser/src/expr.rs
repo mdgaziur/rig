@@ -28,7 +28,7 @@ use rig_ast::expr::{
 use rig_ast::path::{PathIdentSegment, PathSegment, TyPath};
 use rig_ast::stmt::{Stmt, StmtKind};
 use rig_ast::token::{LexicalToken, TokenKind};
-use rig_errors::CodeError;
+use rig_errors::{CodeError, ErrorCode};
 use rig_intern::intern;
 
 pub fn parse_expr(parser: &mut Parser) -> Result<Expr, CodeError> {
@@ -937,6 +937,16 @@ pub fn parse_match(parser: &mut Parser) -> Result<Expr, CodeError> {
     }
 
     parser.expect_recoverable(TokenKind::RBrace);
+
+    if arms.is_empty() {
+        parser.diags.push(CodeError {
+            error_code: ErrorCode::EmptyMatchExpression,
+            message: intern!("empty match expressions aren't allowed"),
+            pos: start_sp.merge(parser.previous().span),
+            notes: vec![],
+            hints: vec![],
+        });
+    }
 
     Ok(Expr {
         kind: ExprKind::Match(Box::new(MatchExpr { expr, arms })),
