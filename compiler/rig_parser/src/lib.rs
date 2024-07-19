@@ -116,9 +116,10 @@ impl<'p> Parser<'p> {
         let tok = self.consume();
         if tok.kind != token_kind {
             self.go_back();
-            Err(CodeError::unexpected_token_with_hint(
+            Err(CodeError::unexpected_token_with_hintpos(
                 tok.span,
                 format!("expected a `{}` after this", token_kind.name()),
+                self.previous().span,
             ))
         } else {
             Ok(tok)
@@ -137,9 +138,10 @@ impl<'p> Parser<'p> {
 
         if tok.kind != token_kind {
             self.go_back();
-            self.diags.push(CodeError::unexpected_token_with_hint(
-                self.get_span_for_expectation(),
+            self.diags.push(CodeError::unexpected_token_with_hintpos(
+                tok.span,
                 format!("expected a `{}` after this", token_kind.name()),
+                self.previous().span
             ));
             (tok, false)
         } else {

@@ -53,6 +53,19 @@ impl CodeError {
         }
     }
 
+    pub fn unexpected_token_with_hintpos(pos: Span, hint: impl ToString, hint_pos: Span) -> Self {
+        Self {
+            error_code: ErrorCode::SyntaxError,
+            message: intern!("unexpected token"),
+            pos,
+            notes: vec![],
+            hints: vec![Diagnostic {
+                message: intern!(hint),
+                pos: hint_pos,
+            }],
+        }
+    }
+
     pub fn unexpected_token_with_note(pos: Span, note: impl ToString) -> Self {
         Self {
             error_code: ErrorCode::SyntaxError,
