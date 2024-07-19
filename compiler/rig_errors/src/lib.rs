@@ -167,6 +167,7 @@ fn display_diag(session: &Session, message: String, pos: Span, kind: DiagKind) {
 pub enum ErrorCode {
     SyntaxError,
     Warning,
+    MissingFunctionBody,
 }
 
 impl ErrorCode {
@@ -174,6 +175,7 @@ impl ErrorCode {
         match self {
             ErrorCode::SyntaxError => "E0001",
             ErrorCode::Warning => "Warning",
+            ErrorCode::MissingFunctionBody => "E0002",
         }
     }
 
@@ -181,6 +183,7 @@ impl ErrorCode {
         match self {
             ErrorCode::SyntaxError => DiagKind::Error("0001".to_string()),
             ErrorCode::Warning => DiagKind::Warning,
+            ErrorCode::MissingFunctionBody => DiagKind::Error("0002".to_string()),
         }
     }
 }

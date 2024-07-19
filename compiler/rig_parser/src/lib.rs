@@ -84,7 +84,7 @@ impl<'p> Parser<'p> {
     }
 
     fn get_span_for_expectation(&self) -> Span {
-        if self.is_eof() {
+        if self.is_eof() || self.pos != 0 {
             self.previous().span
         } else {
             self.current_span()
@@ -116,7 +116,7 @@ impl<'p> Parser<'p> {
             self.go_back();
             Err(CodeError::unexpected_token_with_hint(
                 self.get_span_for_expectation(),
-                format!("expected a `{name}` here"),
+                format!("expected a `{name}` after this"),
             ))
         } else {
             Ok(tok)
@@ -138,7 +138,7 @@ impl<'p> Parser<'p> {
             self.go_back();
             self.diags.push(CodeError::unexpected_token_with_hint(
                 self.get_span_for_expectation(),
-                format!("expected a `{name}` here"),
+                format!("expected a `{name}` after this"),
             ));
             (tok, false)
         } else {

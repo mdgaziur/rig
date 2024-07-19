@@ -692,7 +692,7 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::For => stmt::parse_for(parser),
             TokenKind::Loop => stmt::parse_loop(parser),
             TokenKind::While => stmt::parse_while(parser),
-            TokenKind::Fn => stmt::parse_fn_decl(parser, false, false),
+            TokenKind::Fn => stmt::parse_fn_decl(parser, false, false, true),
             TokenKind::Trait => stmt::parse_trait(parser, false),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
             _ => match parse_expr(parser) {

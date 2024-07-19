@@ -18,7 +18,7 @@
 
 use crate::expr::{parse_body, parse_expr};
 use crate::ty::{parse_generic_params, parse_ty_path};
-use crate::{expr, Parser};
+use crate::Parser;
 use rig_ast::path::PathSegment;
 use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructProperty, EnumVariantStructLike, EnumVariantWithNoValue, EnumVariantWithValue, FnArg, FnArgKind, FnPrototype, FnRet, FnStmt, ForStmt, ImplStmt, LetStmt, ModStmt, Mutable, Pub, Stmt, StmtKind, StructStmt, TraitStmt, TyAliasStmt, UseStmt, UseStmtTreeNode, WhereClause, WhileStmt};
 use rig_ast::token::TokenKind;
@@ -84,7 +84,7 @@ pub fn parse_impl(parser: &mut Parser) -> Result<Stmt, CodeError> {
 
         match match parser.peek().kind {
             TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
-            TokenKind::Fn => parse_fn_decl(parser, is_pub, true),
+            TokenKind::Fn => parse_fn_decl(parser, is_pub, true, true),
             TokenKind::Type => parse_type_alias(parser, is_pub),
             _ => Err(CodeError::unexpected_token(parser.current_span()))
         } {
@@ -119,7 +119,7 @@ pub fn parse_decl(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError> 
         TokenKind::Enum => parse_enum_decl(parser, is_pub),
         TokenKind::Const => parse_var_decl(parser, is_pub, VarDeclType::Const),
         TokenKind::Let => parse_var_decl(parser, is_pub, VarDeclType::Let),
-        TokenKind::Fn => parse_fn_decl(parser, is_pub, false),
+        TokenKind::Fn => parse_fn_decl(parser, is_pub, false, true),
         TokenKind::Mod => parse_mod_decl(parser, is_pub),
         TokenKind::Trait => parse_trait(parser, is_pub),
         TokenKind::Use => parse_use(parser, is_pub),
@@ -266,11 +266,27 @@ pub fn parse_fn_decl(
     parser: &mut Parser,
     is_pub: bool,
     inside_impl: bool,
+    require_body: bool,
 ) -> Result<Stmt, CodeError> {
     let start_sp = parser.current_span();
 
     let prototype = parse_fn_prototype(parser, inside_impl)?;
-    let body = expr::parse_body(parser)?;
+    let body = if parser.peek().kind == TokenKind::LBrace {
+        Some(parse_body(parser)?)
+    } else {
+        if require_body {
+            parser.diags.push(CodeError {
+                error_code: ErrorCode::MissingFunctionBody,
+                message: intern!("function in this position must have a body"),
+                hints: vec![],
+                notes: vec![],
+                pos: prototype.span
+            });
+        }
+        parser.expect_recoverable(TokenKind::Semi, "semicolon");
+
+        None
+    };
 
     Ok(Stmt {
         kind: Box::new(StmtKind::Fn(FnStmt {
@@ -653,30 +669,26 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
 
     parser.expect_recoverable(TokenKind::LBrace, "left brace");
 
-    let mut functions = vec![];
-    let mut type_aliases = vec![];
-
-    fn handle_err(parser: &mut Parser, error: CodeError) {
-        parser.diags.push(error);
-        parser.synchronize(&[TokenKind::Impl]);
-    }
-
+    let mut items = vec![];
     while !parser.is_eof() && parser.peek().kind != TokenKind::RBrace {
-        match parser.peek().kind {
-            TokenKind::Type => match parse_type_alias(parser, true) {
-                Ok(alias) => type_aliases.push(match *alias.kind {
-                    StmtKind::TyAlias(alias) => alias,
-                    _ => unreachable!()
-                }),
-                Err(e) => handle_err(parser, e),
+        match match parser.peek().kind {
+            TokenKind::Type => {
+                let res = parse_type_alias(parser, true);
+                if let Ok(_) = res {
+                    parser.expect_recoverable(TokenKind::Semi, "semicolon");
+                }
+
+                res
             },
-            TokenKind::Fn => match parse_fn_prototype(parser, true) {
-                Ok(prototype) => functions.push(prototype),
-                Err(e) => handle_err(parser, e)
-            },
-            _ => handle_err(parser, CodeError::unexpected_token(parser.current_span()))
+            TokenKind::Fn => parse_fn_decl(parser, true, true, false),
+            _ => Err(CodeError::unexpected_token(parser.current_span()))
+        } {
+            Ok(stmt) => items.push(stmt),
+            Err(e) => {
+                parser.diags.push(e);
+                parser.synchronize(&[TokenKind::Impl]);
+            }
         }
-        parser.expect_recoverable(TokenKind::Semi, "semicolon");
     }
 
     parser.expect_recoverable(TokenKind::RBrace, "right brace");
@@ -687,8 +699,7 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
             generic_params,
             name,
             inherits_from,
-            type_aliases,
-            functions
+            items,
         })),
         span: start_sp.merge(parser.previous().span)
     })

@@ -90,7 +90,7 @@ pub struct ImplStmt {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FnStmt {
     pub prototype: FnPrototype,
-    pub body: Expr,
+    pub body: Option<Expr>,
     pub pub_: Pub,
 }
 
@@ -154,8 +154,7 @@ pub struct TraitStmt {
     pub name: InternedString,
     pub inherits_from: Option<TyPath>,
     pub generic_params: Option<PathGenericSegment>,
-    pub functions: Vec<FnPrototype>,
-    pub type_aliases: Vec<TyAliasStmt>,
+    pub items: Vec<Stmt>,
     pub pub_: Pub,
 }
 
