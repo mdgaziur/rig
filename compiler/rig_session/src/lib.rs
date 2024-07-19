@@ -4,6 +4,7 @@ use crate::module::Module;
 use rig_intern::{intern, InternedString};
 use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone)]
 pub struct Session {
@@ -25,16 +26,20 @@ impl Session {
         self.modules[&file_path].file_content
     }
 
-    pub fn create_module(&mut self, file_path: &str) -> Result<(), String> {
-        let file_content = match fs::read_to_string(file_path) {
+    pub fn create_module(&mut self, file_path: &str) -> Result<InternedString, String> {
+        let file_path = file_path.to_string();
+        let file_path = Path::new(&file_path).canonicalize().unwrap().to_str().unwrap().to_string();
+        let file_path_interned = intern!(file_path);
+
+        let file_content = match fs::read_to_string(&file_path) {
             Ok(file_content) => file_content,
             Err(e) => return Err(format!("Failed to open file at `{file_path}: {e}")),
         };
 
         self.modules
-            .insert(intern!(file_path), Module::new(file_path, &file_content));
+            .insert(intern!(file_path), Module::new(&file_path, &file_content));
 
-        Ok(())
+        Ok(file_path_interned)
     }
 
     pub fn get_module(&self, module_path: InternedString) -> Option<&Module> {

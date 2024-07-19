@@ -4,7 +4,7 @@
 use clap::Parser as ClapParser;
 use parking_lot::lock_api::RwLock;
 use rig_errors::display_compiler_error;
-use rig_intern::{intern, Interner, INTERNER};
+use rig_intern::{Interner, INTERNER};
 
 use rig_parser::parse_module;
 
@@ -54,12 +54,14 @@ fn main() -> ExitCode {
     let args = Args::parse();
 
     let mut session = Session::new(args.debug, args.debug_pretty);
-    if let Err(e) = session.create_module(&args.source) {
-        display_compiler_error(e);
-        ExitCode::FAILURE
-    } else if parse_module(&mut session, intern!(args.source)) {
-        ExitCode::FAILURE
-    } else {
-        ExitCode::SUCCESS
+    match session.create_module(&args.source) {
+        Ok(module_path) => match parse_module(&mut session, module_path) {
+            true => ExitCode::SUCCESS,
+            false => ExitCode::FAILURE
+        }
+        Err(e) => {
+            display_compiler_error(e);
+            ExitCode::FAILURE
+        }
     }
 }
