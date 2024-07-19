@@ -78,7 +78,7 @@ macro_rules! intern {
     ($s:expr) => {
         {
             // To prevent deadlock(apparently the read lock to INTERNER stays alive after getting interned string)
-            let interned = INTERNER
+            let interned = ::rig_intern::INTERNER
                 .get()
                 .unwrap()
                 .write()

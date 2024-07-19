@@ -1,6 +1,6 @@
 use rig_ast::token::{LexicalToken, NumberKind, TokenKind};
 use rig_errors::{CodeError, ErrorCode};
-use rig_intern::{intern, InternedString, INTERNER};
+use rig_intern::{intern, InternedString};
 use rig_span::Span;
 use std::str::Chars;
 

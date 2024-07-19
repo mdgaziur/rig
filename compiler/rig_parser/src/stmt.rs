@@ -24,7 +24,7 @@ use rig_ast::stmt::{ConstStmt, EnumStmt, EnumVariant, EnumVariantOrStructPropert
 use rig_ast::token::TokenKind;
 use rig_ast::token::TokenKind::PathSep;
 use rig_errors::{CodeError, ErrorCode};
-use rig_intern::{intern, INTERNER};
+use rig_intern::intern;
 
 pub fn parse_program(parser: &mut Parser) -> Result<Stmt, CodeError> {
     if parser.peek().kind == TokenKind::Impl {

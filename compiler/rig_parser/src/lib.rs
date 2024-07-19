@@ -8,7 +8,7 @@ use crate::stmt::parse_program;
 use rig_ast::stmt::Stmt;
 use rig_ast::token::{LexicalToken, TokenKind};
 use rig_errors::{CodeError, Diagnostic, ErrorCode};
-use rig_intern::{intern, InternedString, INTERNER};
+use rig_intern::{intern, InternedString};
 use rig_span::Span;
 
 /// Recursive descendant parser for RIG programming language.
