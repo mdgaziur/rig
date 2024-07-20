@@ -519,6 +519,8 @@ impl<'l> Lexer<'l> {
                     "mod" => TokenKind::Mod,
                     "as" => TokenKind::As,
                     "match" => TokenKind::Match,
+                    "break" => TokenKind::Break,
+                    "continue" => TokenKind::Continue,
                     _ => TokenKind::Ident(intern!(ident)),
                 };
 

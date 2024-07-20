@@ -716,6 +716,8 @@ pub fn parse_body(parser: &mut Parser) -> Result<Expr, CodeError> {
             TokenKind::Fn => stmt::parse_fn_decl(parser, false, false, true),
             TokenKind::Trait => stmt::parse_trait(parser, false),
             TokenKind::Type => stmt::parse_type_alias(parser, false),
+            TokenKind::Break => stmt::parse_break(parser),
+            TokenKind::Continue => stmt::parse_continue(parser),
             _ => match parse_expr(parser) {
                 Ok(expr) => {
                     if parser.peek().kind != TokenKind::RBrace

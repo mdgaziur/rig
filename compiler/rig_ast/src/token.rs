@@ -52,6 +52,8 @@ pub enum TokenKind {
     Mod,
     As,
     Match,
+    Break,
+    Continue,
 
     LParen,
     RParen,
@@ -170,6 +172,8 @@ impl TokenKind {
             TokenKind::Eof => "<eof>",
             TokenKind::RightArrow => "->",
             TokenKind::FatRightArrow => "=>",
+            TokenKind::Break => "break",
+            TokenKind::Continue => "continue",
         }
     }
 }

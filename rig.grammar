@@ -12,7 +12,7 @@
 program: (decl | impl)*;
 decl: "pub"? (struct_decl | enum_decl | const_stmt | let_stmt | fn_decl | mod_decl | trait_decl);
 statement: (expression ";") | enum_decl | struct_decl | impl | mod_decl | use | for | loop | while | fn_decl |
-            let_stmt | const_stmt | trait_decl | type_alias;
+            let_stmt | const_stmt | trait_decl | type_alias | break | continue;
 
 enum_decl: "enum" ident generic_params_without_trait_bound? "{"
                 (
@@ -31,8 +31,8 @@ fn_arg: (("anon" | "vararg") ident ":" "mut"? "*"? ty_path_non_expr);
 ty_path_non_expr: ident*["::"] ("::"? generic_params_without_trait_bound);
 
 trait_decl: "trait" generic_params_with_trait_bound? ident ("<" ty_path_non_expr)? "{" (type_alias | fn_decl)* "}";
-let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)?;
-const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)?;
+let_stmt: "let" "mut"? ident (":" ty_path_non_expr)? ("=" expression)? ";";
+const_stmt: "const" ident (":" ty_path_non_expr) ("=" expression)? ";";
 type_alias: "type" ident generic_params_with_trait_bound "=" ty_path_non_expr ";";
 use: "use" use_tree ";";
 use_tree: ident "::" (use_tree | ("{" use_tree*[","] "}"))?;
@@ -53,6 +53,8 @@ match_cond: "_"
             /// FIXME: match_cond inside a pattern should not allow `if`
             | ty_path "(" match_cond*[","] ")"
             | ident "if" expression ;
+break: "break" ";";
+continue: "continue" ";";
 
 body: "{" statement* expression? "}";
 

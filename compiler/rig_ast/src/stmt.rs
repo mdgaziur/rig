@@ -26,6 +26,8 @@ pub enum StmtKind {
     Const(ConstStmt),
     Let(LetStmt),
     TyAlias(TyAliasStmt),
+    Break,
+    Continue,
 }
 
 #[derive(Debug, Clone, PartialEq)]

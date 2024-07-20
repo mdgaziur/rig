@@ -723,3 +723,23 @@ pub fn parse_trait(parser: &mut Parser, is_pub: bool) -> Result<Stmt, CodeError>
         span: start_sp.merge(parser.previous().span),
     })
 }
+
+pub fn parse_break(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.expect_recoverable(TokenKind::Semi);
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Break),
+        span: start_sp.merge(parser.previous().span)
+    })
+}
+
+pub fn parse_continue(parser: &mut Parser) -> Result<Stmt, CodeError> {
+    let start_sp = parser.current_span();
+    parser.expect_recoverable(TokenKind::Semi);
+
+    Ok(Stmt {
+        kind: Box::new(StmtKind::Continue),
+        span: start_sp.merge(parser.previous().span)
+    })
+}
