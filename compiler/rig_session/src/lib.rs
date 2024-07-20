@@ -28,12 +28,15 @@ impl Session {
 
     pub fn create_module(&mut self, file_path: &str) -> Result<InternedString, String> {
         let file_path = file_path.to_string();
-        let file_path = Path::new(&file_path).canonicalize().unwrap().to_str().unwrap().to_string();
+        let file_path = match Path::new(&file_path).canonicalize() {
+            Ok(file_path) => file_path.to_str().unwrap().to_string(),
+            Err(e) => return Err(format!("Failed to open file at `{file_path}`: {e}`"))
+        };
         let file_path_interned = intern!(file_path);
 
         let file_content = match fs::read_to_string(&file_path) {
             Ok(file_content) => file_content,
-            Err(e) => return Err(format!("Failed to open file at `{file_path}: {e}")),
+            Err(e) => return Err(format!("Failed to open file at `{file_path}`: {e}")),
         };
 
         self.modules
